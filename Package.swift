@@ -7,6 +7,7 @@ let package = Package(
     products: [
         .library(name: "Retro98Settings", targets: ["Retro98Settings"]),
         .library(name: "Retro98UI", targets: ["Retro98UI"]),
+        .library(name: "Retro98ShellCore", targets: ["Retro98ShellCore"]),
         .executable(name: "retro98-settings", targets: ["retro98-settings"]),
     ],
     targets: [
@@ -15,5 +16,7 @@ let package = Package(
         .testTarget(name: "Retro98SettingsTests", dependencies: ["Retro98Settings"]),
         .target(name: "Retro98UI"),
         .testTarget(name: "Retro98UITests", dependencies: ["Retro98UI"]),
+        .target(name: "Retro98ShellCore", dependencies: ["Retro98Settings"]),
+        .testTarget(name: "Retro98ShellCoreTests", dependencies: ["Retro98ShellCore", "Retro98Settings"]),
     ]
 )
