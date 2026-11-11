@@ -25,7 +25,7 @@ if [[ $status -ne 0 ]]; then
 fi
 
 # Remove only Retro98's own files, never the whole folder blindly.
-rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png
+rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store"
 rmdir "$SUPPORT_DIR/bin" 2>/dev/null || true
 rmdir "$SUPPORT_DIR" 2>/dev/null || true
 say "Pronto: seu Mac voltou ao normal e o Retro98 foi removido." "Done: your Mac is back to normal and Retro98 was removed."

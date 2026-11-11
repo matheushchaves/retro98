@@ -54,7 +54,7 @@ func printReport(_ report: EngineReport, restoring: Bool) {
         return keys.contains { $0.domain == universalAccessDomain }
     }
     if deniedAccessibility {
-        printError(messages.accessibilityDenied)
+        print(messages.accessibilityDenied)
         _ = ProcessCommandRunner().run("/usr/bin/open", [fullDiskAccessSettingsURL])
     }
     if report.warnings.contains(.appearanceNeedsLogout) {

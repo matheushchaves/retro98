@@ -17,6 +17,7 @@ run_case() {
     local support="$WORK/support-$name"
     mkdir -p "$support/bin"
     echo "<plist/>" > "$support/backup.plist"
+    [[ "$name" == "dsstore" ]] && echo "finder" > "$support/.DS_Store"
 
     PATH="${extra_path:+$extra_path:}$PATH" \
         STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
@@ -40,6 +41,7 @@ run_case() {
 run_case restored 0 0 absent
 run_case partial 2 2 present
 run_case corrupted 3 3 present
+run_case dsstore 0 0 absent
 
 # A failing `defaults read` (language lookup) must not abort the script before restore runs.
 BROKEN_DEFAULTS="$WORK/broken-defaults"

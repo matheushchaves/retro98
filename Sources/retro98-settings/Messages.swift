@@ -28,9 +28,11 @@ struct Messages {
     var accessibilityDenied: String {
         text(
             en: "macOS did not allow this change. I opened System Settings › Privacy & Security › Full Disk Access: "
-                + "turn on your terminal app there and run the same command again.",
+                + "turn on your terminal app there and run the same command again. "
+                + "After turning it on, quit and reopen the terminal app.",
             ptBR: "O macOS não deixou mudar este ajuste. Abri Ajustes do Sistema › Privacidade e Segurança › "
-                + "Acesso Total ao Disco: ative lá o seu app de terminal e rode o mesmo comando de novo."
+                + "Acesso Total ao Disco: ative lá o seu app de terminal e rode o mesmo comando de novo. "
+                + "Depois de ativar, feche e abra de novo o app de terminal."
         )
     }
 
