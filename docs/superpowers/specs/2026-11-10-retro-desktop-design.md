@@ -108,6 +108,20 @@ A base visual da seção 5, mais o Shell, que tem três partes:
 - Desligar o Shell, pelo Painel de Controle ou pelo desinstalador, também devolve os dois.
 
 ### Fase 3 — Explorer (gerenciador de arquivos)
+**Decisões de 2026-11-11 (depois do esboço aprovado):**
+- É um **app próprio, o "Retro98 Explorer"**, e não uma modificação do Finder. Mexe nos mesmos arquivos, e o Finder continua inteiro. **[decidido]**
+- **Abre por padrão em "Área de Trabalho"**: um local virtual com Meu Computador, Meus Documentos, Lixeira e o conteúdo de `~/Desktop`. Soltar algo ali leva para `~/Desktop`. **[decidido]**
+- **Atalhos:** área de "Início rápido" na barra de tarefas, ao lado do Iniciar, com um ícone que abre a Área de Trabalho; "Programas › Retro98 Explorer" no menu Iniciar. O "Localizar" do Iniciar abre a busca do Explorer (3C). **[minha escolha]**
+- **Ícones:** pastas, documentos, imagens, discos etc. com ícones retrô por tipo; apps com o próprio ícone pixelado. **[minha escolha]**
+- **Entregas [minha escolha]:**
+  - **3A, navegar:**
+    - janela redimensionável com minimizar, maximizar e fechar, menus na janela, barra de ferramentas, endereço, árvore, ícones grandes e barra de status;
+    - Área de Trabalho, Meu Computador e as pastas;
+    - Voltar, Avançar e Acima; abrir arquivos e Quick Look;
+    - Início rápido e item no menu Iniciar.
+  - **3B, operações:** copiar, recortar e colar (com o Finder), arrastar e soltar, renomear, nova pasta, Lixeira, desfazer, conflitos e progresso.
+  - **3C, o resto:** ícones pequenos, lista e detalhes; procurar; ejetar; "Abrir com…"; Propriedades; ocultos; Explorer como padrão (opcional).
+
 **Janela**
 - Menus: Arquivo, Editar, Exibir, Ir, Favoritos e Ajuda.
 - Barra de ferramentas: Voltar, Avançar, Acima, Recortar, Copiar, Colar, Desfazer, Excluir, Propriedades e Modos de exibição.
