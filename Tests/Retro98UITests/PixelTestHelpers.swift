@@ -10,3 +10,9 @@ func render(_ icon: PixelIcon) -> PixelImage {
         icon.draw(at: .zero, context: context)
     }
 }
+
+@MainActor func renderView(_ view: PixelView) -> PixelImage {
+    PixelCanvas.render(width: Int(view.bounds.width), height: Int(view.bounds.height)) {
+        view.drawPixels(in: $0, size: view.bounds.size)
+    }
+}
