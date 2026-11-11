@@ -8,6 +8,7 @@ public enum TweakCatalog {
     static let graphiteAquaVariant = 6
     static let fillDoubleClickMinimumMacOS = 15
     static let smallestDockTileSize = 16
+    static let dockRevealDelaySeconds = 1000.0
 
     public static func phase1(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
         let universalAccess = PreferenceDomain.app("com.apple.universalaccess")
@@ -101,17 +102,20 @@ public enum TweakCatalog {
         ]
     }
 
-    /// Tweaks that only make sense while the Retro98 Shell taskbar runs.
+    /// Tweaks that only make sense while the Retro98 Shell taskbar runs. The Dock is hidden for good
+    /// (autohide with a huge delay) so it never shows labels over the taskbar or pops up at the edge.
     public static func shell() -> [Tweak] {
         let dock = PreferenceDomain.app("com.apple.dock")
         return [
             Tweak(
                 id: .dockUnderTaskbar,
-                title: LocalizedText(en: "Small Dock under the taskbar", ptBR: "Dock pequeno sob a barra de tarefas"),
+                title: LocalizedText(en: "Dock hidden under the taskbar", ptBR: "Dock escondido sob a barra de tarefas"),
                 changes: [
                     change(dock, "tilesize", .int(smallestDockTileSize)),
                     change(dock, "magnification", .bool(false)),
-                    change(dock, "autohide", .bool(false)),
+                    change(dock, "autohide", .bool(true)),
+                    change(dock, "autohide-delay", .double(dockRevealDelaySeconds)),
+                    change(dock, "autohide-time-modifier", .double(0)),
                     change(dock, "orientation", .string("bottom")),
                 ],
                 effects: [.restartDock],

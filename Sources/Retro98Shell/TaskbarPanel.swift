@@ -28,6 +28,7 @@ final class TaskbarController {
     private let windowButtons: TaskButtonsView
     private let windowModel: TaskButtonsView.Model
     private let windowMonitor: WindowChangeMonitor
+    private let guardian: WorkAreaGuardian
     private var observers: [NSObjectProtocol] = []
 
     init(languages: [String]) {
@@ -42,6 +43,9 @@ final class TaskbarController {
         windowModel = model
         windowButtons = TaskButtonsView(model: model, languages: languages)
         windowMonitor = WindowChangeMonitor { model.refresh() }
+        let panel = self.panel
+        guardian = WorkAreaGuardian { panel.frame.height }
+        windowMonitor.onWindowGeometry = { [guardian] window in guardian.windowChanged(window) }
         toggle = { [weak self] in self?.toggleStartMenu() }
         panel.contentView = view
         view.addSubview(startButton)
@@ -53,9 +57,11 @@ final class TaskbarController {
     /// Window buttons need the Accessibility permission; the gate turns them on and off.
     func setWindowButtons(enabled: Bool) {
         windowButtons.isHidden = !enabled
+        guardian.isEnabled = enabled
         if enabled {
             windowMonitor.start()
             windowModel.refresh()
+            guardian.sweep()
         } else {
             windowMonitor.stop()
         }
@@ -111,6 +117,7 @@ final class TaskbarController {
         tray.setFrameOrigin(CGPoint(x: frame.width - tray.frame.width - Self.startMargin,
                                     y: ((frame.height - tray.frame.height) / 2).rounded(.down) + 1))
         layoutWindowButtons()
+        guardian.sweep()
     }
 
     private func layoutWindowButtons() {

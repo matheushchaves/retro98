@@ -23,10 +23,12 @@ private func target(_ id: TweakID, _ domain: PreferenceDomain, _ name: String) -
     #expect(dock?.changes == [
         PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "tilesize"), target: .int(16)),
         PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "magnification"), target: .bool(false)),
-        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "autohide"), target: .bool(false)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "autohide"), target: .bool(true)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "autohide-delay"), target: .double(1000)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "autohide-time-modifier"), target: .double(0)),
         PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "orientation"), target: .string("bottom")),
     ])
-    #expect(dock?.title == LocalizedText(en: "Small Dock under the taskbar", ptBR: "Dock pequeno sob a barra de tarefas"))
+    #expect(dock?.title == LocalizedText(en: "Dock hidden under the taskbar", ptBR: "Dock escondido sob a barra de tarefas"))
 }
 
 @Test func allCatalogIsPhase1PlusShell() {

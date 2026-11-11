@@ -45,6 +45,26 @@ enum AX {
         return unsafeDowncast(value, to: AXUIElement.self)
     }
 
+    /// Window frame in Accessibility coordinates (top-left origin of the main screen).
+    static func frame(_ element: AXUIElement) -> CGRect? {
+        guard let position = attribute(element, kAXPositionAttribute), CFGetTypeID(position) == AXValueGetTypeID(),
+              let size = attribute(element, kAXSizeAttribute), CFGetTypeID(size) == AXValueGetTypeID()
+        else { return nil }
+        var origin = CGPoint.zero
+        var extent = CGSize.zero
+        guard AXValueGetValue(unsafeDowncast(position, to: AXValue.self), .cgPoint, &origin),
+              AXValueGetValue(unsafeDowncast(size, to: AXValue.self), .cgSize, &extent)
+        else { return nil }
+        return CGRect(origin: origin, size: extent)
+    }
+
+    @discardableResult
+    static func setSize(_ element: AXUIElement, _ size: CGSize) -> Bool {
+        var value = size
+        guard let wrapped = AXValueCreate(.cgSize, &value) else { return false }
+        return AXUIElementSetAttributeValue(element, kAXSizeAttribute as CFString, wrapped) == .success
+    }
+
     static func windows(of application: AXUIElement) throws -> [AXUIElement] {
         var value: CFTypeRef?
         let status = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &value)
@@ -113,9 +133,15 @@ final class WindowChangeMonitor {
     static let windowNotifications = [
         kAXWindowCreatedNotification, kAXUIElementDestroyedNotification, kAXTitleChangedNotification,
         kAXWindowMiniaturizedNotification, kAXWindowDeminiaturizedNotification, kAXFocusedWindowChangedNotification,
+        kAXWindowMovedNotification, kAXWindowResizedNotification,
     ]
+    /// Geometry-only events: they don't change the buttons, so they skip the refresh.
+    static let geometryNotifications: Set<String> = [kAXWindowMovedNotification, kAXWindowResizedNotification]
+    static let geometryCheckNotifications: Set<String> = geometryNotifications.union([kAXWindowCreatedNotification])
 
     private let onChange: @MainActor () -> Void
+    /// Called with the window when it is created, moved or resized.
+    var onWindowGeometry: (@MainActor (AXUIElement) -> Void)?
     private var observers: [pid_t: AXObserver] = [:]
     private var workspaceTokens: [NSObjectProtocol] = []
     private var pending: DispatchWorkItem?
@@ -175,10 +201,12 @@ final class WindowChangeMonitor {
     private func observe(_ pid: pid_t) {
         guard observers[pid] == nil else { return }
         var observer: AXObserver?
-        let callback: AXObserverCallback = { _, _, _, refcon in
+        let callback: AXObserverCallback = { _, element, notification, refcon in
             guard let refcon else { return }
             let monitor = Unmanaged<WindowChangeMonitor>.fromOpaque(refcon).takeUnretainedValue()
-            MainActor.assumeIsolated { monitor.schedule() }
+            nonisolated(unsafe) let window = element
+            let name = notification as String
+            MainActor.assumeIsolated { monitor.received(name, window: window) }
         }
         guard AXObserverCreate(pid, callback, &observer) == .success, let observer else { return }
         let application = AX.application(pid)
@@ -188,6 +216,11 @@ final class WindowChangeMonitor {
         }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
         observers[pid] = observer
+    }
+
+    private func received(_ notification: String, window: AXUIElement) {
+        if Self.geometryCheckNotifications.contains(notification) { onWindowGeometry?(window) }
+        if !Self.geometryNotifications.contains(notification) { schedule() }
     }
 
     private func unobserve(_ pid: pid_t) {
