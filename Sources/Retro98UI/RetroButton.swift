@@ -4,7 +4,7 @@ import AppKit
 /// dotted focus rectangle when it has keyboard focus.
 @MainActor
 public final class RetroButton: PixelView {
-    nonisolated static let height: CGFloat = 23
+    nonisolated public static let height: CGFloat = 23
     nonisolated static let minimumWidth: CGFloat = 75
     nonisolated static let horizontalPadding: CGFloat = 16
     nonisolated static let iconGap: CGFloat = 4

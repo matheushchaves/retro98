@@ -62,7 +62,8 @@ public final class RetroRadioButton: PixelView {
 
     override public func drawPixels(in context: CGContext, size: CGSize) {
         Bevel.fillFace(CGRect(origin: .zero, size: size), context: context)
-        (isSelected ? Self.on : Self.off).draw(at: .zero, context: context)
+        let circleY = ((size.height - Self.circleSize) / 2).rounded(.down)
+        (isSelected ? Self.on : Self.off).draw(at: CGPoint(x: 0, y: circleY), context: context)
         PixelText.draw(title, font: .regular, color: .black,
                        at: CGPoint(x: Self.circleSize + Self.labelGap, y: 0), context: context)
     }

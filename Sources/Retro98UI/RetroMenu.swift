@@ -41,7 +41,7 @@ public struct RetroMenuStyle: Sendable {
     }
 
     public static let startMenu = RetroMenuStyle(itemHeight: 34, iconSize: 32, banner: "Retro98")
-    public static let standard = RetroMenuStyle(itemHeight: 20, iconSize: 16, banner: nil)
+    public static let standard = RetroMenuStyle(itemHeight: 22, iconSize: 16, banner: nil)
 }
 
 public struct MenuColumnLayout: Equatable, Sendable {

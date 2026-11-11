@@ -38,10 +38,12 @@ import Testing
 }
 
 @MainActor @Test func radioSelectedShowsCenterDot() {
+    // The 12×12 circle is centered vertically in the 16-pt line.
     let radio = RetroRadioButton(title: "Desligar", isSelected: true) {}
-    #expect(renderView(radio).color(x: 6, y: 6) == .black)
+    #expect(radio.frame.height == CGFloat(PixelText.lineHeight))
+    #expect(renderView(radio).color(x: 6, y: 8) == .black)
     radio.isSelected = false
-    #expect(renderView(radio).color(x: 6, y: 6) == .white)
+    #expect(renderView(radio).color(x: 6, y: 8) == .white)
 }
 
 @MainActor @Test func radioClickSelects() {

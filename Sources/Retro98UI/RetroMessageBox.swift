@@ -27,7 +27,7 @@ public enum RetroMessageBox {
 
     /// Wraps the text to `maxTextWidth` and sizes the content area.
     public static func layout(message: String, buttons: [String]) -> MessageBoxLayout {
-        let lines = message.components(separatedBy: "\n").flatMap(wrap)
+        let lines = RetroText.wrap(message, maxWidth: maxTextWidth)
         let textWidth = CGFloat(lines.map { PixelText.width(of: $0, font: .regular) }.max() ?? 0)
         let textHeight = CGFloat(lines.count * PixelText.lineHeight)
         let buttonsWidth = buttons.map { RetroButton.preferredSize(title: $0, icon: nil, bold: false).width }
@@ -69,21 +69,6 @@ public enum RetroMessageBox {
         let response = NSApp.runModal(for: window)
         window.orderOut(nil)
         return response.rawValue
-    }
-
-    private static func wrap(_ paragraph: String) -> [String] {
-        var lines: [String] = []
-        var current = ""
-        for word in paragraph.split(separator: " ", omittingEmptySubsequences: true).map(String.init) {
-            let candidate = current.isEmpty ? word : current + " " + word
-            if PixelText.width(of: candidate, font: .regular) <= maxTextWidth || current.isEmpty {
-                current = candidate
-            } else {
-                lines.append(current)
-                current = word
-            }
-        }
-        return lines + [current]
     }
 }
 

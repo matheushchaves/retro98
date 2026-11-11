@@ -1,19 +1,25 @@
 import CoreText
 import Foundation
 
-/// Tahoma 11 pt, the face that reads as the classic UI font when drawn without smoothing.
+/// Tahoma drawn without smoothing reads as the classic UI font: 13 pt for text, 12 pt bold for titles
+/// (bold 13 spaces some letter pairs unevenly).
 public enum PixelFont: Sendable {
     case regular, bold
 
-    static let size: CGFloat = 11
+    public var size: CGFloat {
+        switch self {
+        case .regular: 13
+        case .bold: 12
+        }
+    }
 
     var ctFont: CTFont {
-        CTFontCreateWithName((self == .bold ? "Tahoma-Bold" : "Tahoma") as CFString, Self.size, nil)
+        CTFontCreateWithName((self == .bold ? "Tahoma-Bold" : "Tahoma") as CFString, size, nil)
     }
 }
 
 public enum PixelText {
-    public static let lineHeight = 13
+    public static let lineHeight = 16
 
     public static func width(of text: String, font: PixelFont) -> Int {
         guard !text.isEmpty else { return 0 }

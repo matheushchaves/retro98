@@ -6,7 +6,7 @@ import Retro98UI
 /// The Run… dialog: opens an app, folder, document or Internet address.
 @MainActor
 enum RunDialog {
-    static let contentSize = CGSize(width: 347, height: 132)
+    static let contentWidth: CGFloat = 347
     static let margin: CGFloat = 12
     private static var window: RetroWindow?
     private static var lastEntry = ""
@@ -16,6 +16,13 @@ enum RunDialog {
             window.showCentered()
             return
         }
+        let textX = margin * 2 + 32
+        let textWidth = contentWidth - textX - margin
+        let prompt = RetroText.wrap(RunDialogText.prompt(languages: languages), maxWidth: Int(textWidth))
+        let promptHeight = CGFloat(prompt.count * PixelText.lineHeight)
+        let fieldY = max(margin + 32, margin + promptHeight) + 10
+        let fieldHeight: CGFloat = 23
+        let contentSize = CGSize(width: contentWidth, height: fieldY + fieldHeight + 14 + RetroButton.height + margin)
         let window = RetroWindow(title: titleText(languages), contentSize: contentSize)
         let content = window.contentContainer
 
@@ -23,17 +30,16 @@ enum RunDialog {
         icon.frame.origin = CGPoint(x: margin, y: margin)
         content.addSubview(icon)
 
-        let prompt = RetroMessageBox.layout(message: RunDialogText.prompt(languages: languages), buttons: []).lines
         let promptView = RetroLabel(lines: prompt)
-        promptView.frame = CGRect(x: margin * 2 + 32, y: margin, width: contentSize.width - margin * 3 - 32,
-                                  height: CGFloat(prompt.count * PixelText.lineHeight))
+        promptView.frame = CGRect(x: textX, y: margin, width: textWidth, height: promptHeight)
         content.addSubview(promptView)
 
         let label = RetroLabel(lines: [RunDialogText.openLabel(languages: languages)])
-        label.frame = CGRect(x: margin, y: 66, width: 44, height: CGFloat(PixelText.lineHeight))
+        label.frame = CGRect(x: margin, y: fieldY + ((fieldHeight - CGFloat(PixelText.lineHeight)) / 2).rounded(.down),
+                             width: textX - margin, height: CGFloat(PixelText.lineHeight))
         content.addSubview(label)
 
-        let field = RetroTextField(frame: CGRect(x: margin * 2 + 32, y: 62, width: contentSize.width - margin * 3 - 32, height: 21))
+        let field = RetroTextField(frame: CGRect(x: textX, y: fieldY, width: textWidth, height: fieldHeight))
         field.text = lastEntry
         content.addSubview(field)
 
@@ -93,7 +99,7 @@ final class RetroTextField: PixelView, NSTextFieldDelegate {
         field.drawsBackground = true
         field.backgroundColor = .white
         field.focusRingType = .none
-        field.font = NSFont(name: "Tahoma", size: 11)
+        field.font = NSFont(name: "Tahoma", size: PixelFont.regular.size)
         field.frame = bounds.insetBy(dx: 3, dy: 3)
         field.target = self
         field.action = #selector(submit)

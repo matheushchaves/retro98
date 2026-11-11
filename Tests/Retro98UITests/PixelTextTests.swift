@@ -27,3 +27,30 @@ import Testing
     #expect(PixelText.width(of: "Iniciar", font: .bold) > PixelText.width(of: "Iniciar", font: .regular))
     #expect(PixelText.width(of: "", font: .regular) == 0)
 }
+
+@Test func fontSizesMatchTheChosenLook() {
+    #expect(PixelFont.regular.size == 13)
+    #expect(PixelFont.bold.size == 12)
+    #expect(PixelText.lineHeight == 16)
+}
+
+@Test func textStaysInsideItsLineBox() {
+    for font in [PixelFont.regular, .bold] {
+        let image = PixelCanvas.render(width: 60, height: PixelText.lineHeight + 4) { context in
+            Bevel.fill(CGRect(x: 0, y: 0, width: 60, height: PixelText.lineHeight + 4), color: .white, context: context)
+            PixelText.draw("Ágjp", font: font, color: .black, at: .zero, context: context)
+        }
+        let inkBelowBox = (PixelText.lineHeight..<(PixelText.lineHeight + 4)).contains { y in
+            (0..<60).contains { image.color(x: $0, y: y) == .black }
+        }
+        #expect(!inkBelowBox)
+    }
+}
+
+@Test func wrapRespectsTheGivenWidth() {
+    let lines = RetroText.wrap("Digite o nome de um programa, pasta, documento ou endereço da Internet", maxWidth: 150)
+    #expect(lines.count > 1)
+    #expect(lines.allSatisfy { PixelText.width(of: $0, font: .regular) <= 150 })
+    #expect(lines.joined(separator: " ") == "Digite o nome de um programa, pasta, documento ou endereço da Internet")
+    #expect(RetroText.wrap("Linha 1\nLinha 2", maxWidth: 300) == ["Linha 1", "Linha 2"])
+}
