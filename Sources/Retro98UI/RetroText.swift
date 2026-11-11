@@ -28,4 +28,15 @@ public enum RetroText {
         }
         return ""
     }
+
+    /// Up to `maxLines` lines; the last one ends in "…" when text is left over, and a word too wide
+    /// for a line is cut with "…".
+    public static func label(_ text: String, maxWidth: Int, maxLines: Int, font: PixelFont = .regular) -> [String] {
+        var lines = wrap(text, maxWidth: maxWidth, font: font)
+        if lines.count > maxLines {
+            let rest = lines.dropFirst(maxLines - 1).joined(separator: " ")
+            lines = Array(lines.prefix(maxLines - 1)) + [rest]
+        }
+        return lines.map { fit($0, maxWidth: maxWidth, font: font) }
+    }
 }

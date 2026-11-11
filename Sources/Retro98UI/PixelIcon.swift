@@ -60,6 +60,18 @@ public struct PixelIcon: @unchecked Sendable {
         }
     }
 
+    /// Selected look: the icon with a 1-pixel navy checkerboard over its opaque pixels.
+    public func drawSelected(at origin: CGPoint, context: CGContext) {
+        draw(at: origin, context: context)
+        let pixels = PixelCanvas.render(width: width, height: height) { draw(at: .zero, context: $0) }
+        for y in 0..<height {
+            for x in stride(from: y % 2, to: width, by: 2) where pixels.alpha(x: x, y: y) > 0 {
+                Bevel.fill(CGRect(x: origin.x + CGFloat(x), y: origin.y + CGFloat(y), width: 1, height: 1),
+                           color: Palette.selection, context: context)
+            }
+        }
+    }
+
     /// CGContext.draw assumes a bottom-left origin; flip locally so images stay upright in top-left canvases.
     public static func drawUpright(_ image: CGImage, in rect: CGRect, context: CGContext) {
         context.saveGState()
