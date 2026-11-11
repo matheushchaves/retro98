@@ -104,7 +104,7 @@ A base visual da seção 5, mais o Shell, que tem três partes:
 
 **Recuperação**
 - O Shell roda como LaunchAgent e reinicia sozinho se cair.
-- **Se cair repetidamente** (por exemplo, 3 vezes em 1 minuto), ele desiste, devolve a área de trabalho do Finder e o Dock no tamanho normal, e avisa a pessoa.
+- **Se cair repetidamente** (por exemplo, 3 vezes em 1 minuto), ele desiste, devolve o Dock ao normal e avisa a pessoa.
 - Desligar o Shell, pelo Painel de Controle ou pelo desinstalador, também devolve os dois.
 
 ### Fase 3 — Explorer (gerenciador de arquivos)
