@@ -22,12 +22,12 @@ final class StartMenuController {
     var isOpen: Bool { menu?.isOpen ?? false }
 
     /// `point` is the menu's bottom-left corner (top of the taskbar).
-    func open(at point: CGPoint, ignoring windows: [NSWindow], onClose: @escaping () -> Void) {
+    func open(at point: CGPoint, ignoresClick: @escaping (NSEvent) -> Bool, onClose: @escaping () -> Void) {
         let nodes = StartMenuItems.build(
             programs: programs, documents: documents.recent(limit: StartMenuModel.recentDocumentsLimit), languages: languages
         )
         let menu = RetroMenu(items: nodes.map { item($0, large: true) }, style: .startMenu)
-        menu.ignoresClicksIn = windows
+        menu.ignoresClick = ignoresClick
         menu.show(at: point, opensUpward: true) { [weak self] in
             self?.menu = nil
             onClose()

@@ -30,3 +30,9 @@ import Testing
     #expect(RetroMenuNavigation.next(from: nil, direction: .up, selectable: selectable) == 4)
     #expect(RetroMenuNavigation.next(from: nil, direction: .down, selectable: [false, false]) == nil)
 }
+
+@Test func ignoreClickPredicateIsConsulted() {
+    #expect(RetroMenu.shouldClose(clickInMenu: false, ignored: false))
+    #expect(!RetroMenu.shouldClose(clickInMenu: true, ignored: false))
+    #expect(!RetroMenu.shouldClose(clickInMenu: false, ignored: true))
+}

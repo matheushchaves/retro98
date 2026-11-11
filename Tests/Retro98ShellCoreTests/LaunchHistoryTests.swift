@@ -6,11 +6,13 @@ import Retro98Settings
 private let historyURL = URL(filePath: "/support/shell-launches.plist")
 private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
-@Test func givesUpAfterThreeLaunchesWithinSixtySeconds() throws {
+@Test func givesUpOnTheThirdCrash() throws {
+    // One normal launch, then three crash relaunches within a minute.
     let history = LaunchHistory(url: historyURL, files: InMemoryFileStore())
     #expect(try history.recordLaunch(now: t0) == false)
     #expect(try history.recordLaunch(now: t0 + 10) == false)
-    #expect(try history.recordLaunch(now: t0 + 20) == true)
+    #expect(try history.recordLaunch(now: t0 + 20) == false)
+    #expect(try history.recordLaunch(now: t0 + 30) == true)
 }
 
 @Test func oldLaunchesFallOutOfTheWindow() throws {

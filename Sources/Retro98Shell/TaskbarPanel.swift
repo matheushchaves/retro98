@@ -66,7 +66,11 @@ final class TaskbarController {
         }
         startButton.isPressed = true
         let frame = panel.frame
-        startMenu.open(at: CGPoint(x: frame.minX + Self.startMargin, y: frame.maxY), ignoring: [panel]) { [weak self] in
+        // Only a click on Start itself is left to Start's toggle; tray and empty taskbar clicks close the menu.
+        startMenu.open(at: CGPoint(x: frame.minX + Self.startMargin, y: frame.maxY), ignoresClick: { [weak self] event in
+            guard let self, event.window === self.panel else { return false }
+            return self.startButton.frame.contains(self.view.convert(event.locationInWindow, from: nil))
+        }) { [weak self] in
             self?.startButton.isPressed = false
         }
     }

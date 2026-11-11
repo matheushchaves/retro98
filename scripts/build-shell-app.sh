@@ -3,6 +3,11 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="${1:?usage: build-shell-app.sh <output.app>}"
+# The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
+if [[ "$OUT" != *.app ]]; then
+    echo "build-shell-app.sh: refusing '$OUT' (must end in .app)" >&2
+    exit 1
+fi
 
 (cd "$ROOT" && swift build -c release --product Retro98Shell)
 

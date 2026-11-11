@@ -120,10 +120,11 @@ public final class RetroMenu {
     private var child: RetroMenu?
     private var childIndex: Int?
     private var monitors: [Any] = []
+    private var workspaceObserver: NSObjectProtocol?
     private var onClose: (() -> Void)?
     private var hoverWork: DispatchWorkItem?
-    /// Clicks in these windows don't close the menu (e.g. the taskbar, which toggles it itself).
-    public var ignoresClicksIn: [NSWindow] = []
+    /// Clicks for which this returns true don't close the menu (e.g. on the Start button, which toggles it itself).
+    public var ignoresClick: ((NSEvent) -> Bool)?
 
     public init(items: [RetroMenuItem], style: RetroMenuStyle) {
         self.items = items
@@ -159,6 +160,8 @@ public final class RetroMenu {
         child = nil
         monitors.forEach(NSEvent.removeMonitor)
         monitors = []
+        if let workspaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(workspaceObserver) }
+        workspaceObserver = nil
         panel?.orderOut(nil)
         panel = nil
         view = nil
@@ -179,14 +182,23 @@ public final class RetroMenu {
         }
         let local = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             MainActor.assumeIsolated {
-                guard let self, let window = event.window else { return }
-                let inMenu = self.chainWindows().contains { $0 === window }
-                let ignored = self.ignoresClicksIn.contains { $0 === window }
-                if !inMenu && !ignored { self.close() }
+                guard let self else { return }
+                let inMenu = self.chainWindows().contains { $0 === event.window }
+                if Self.shouldClose(clickInMenu: inMenu, ignored: self.ignoresClick?(event) ?? false) { self.close() }
             }
             return event
         }
         monitors = [global, local].compactMap { $0 }
+        // Switching apps (e.g. ⌘Tab) closes the menu, like clicking elsewhere.
+        workspaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.close() }
+        }
+    }
+
+    nonisolated public static func shouldClose(clickInMenu: Bool, ignored: Bool) -> Bool {
+        !clickInMenu && !ignored
     }
 
     // MARK: Called by MenuView

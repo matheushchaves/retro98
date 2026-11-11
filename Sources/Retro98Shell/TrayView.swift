@@ -16,7 +16,8 @@ final class TrayView: PixelView {
     private var battery: BatteryState?
     private var volume: VolumeState?
     private var clock = ""
-    private var timers: [Timer] = []
+    private var statusTimer: Timer?
+    private var minuteTimer: Timer?
     private var tracking: NSTrackingArea?
 
     init(languages: [String]) {
@@ -30,9 +31,12 @@ final class TrayView: PixelView {
     func start() {
         refreshStatus()
         refreshClock()
-        timers.append(Timer.scheduledTimer(timeInterval: Self.statusInterval, target: self,
-                                           selector: #selector(statusTick), userInfo: nil, repeats: true))
+        statusTimer = addCommonTimer(interval: Self.statusInterval, selector: #selector(statusTick), repeats: true)
         scheduleNextMinute()
+        // Run-loop timers don't count sleep time: refresh as soon as the Mac wakes or the clock changes.
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(timeJumped),
+                                                          name: NSWorkspace.didWakeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(timeJumped), name: .NSSystemClockDidChange, object: nil)
     }
 
     /// Recomputes the width from what is shown and keeps the given height.
@@ -60,12 +64,25 @@ final class TrayView: PixelView {
     private func scheduleNextMinute() {
         let now = Date().timeIntervalSince1970
         let delay = Self.secondsPerMinute - now.truncatingRemainder(dividingBy: Self.secondsPerMinute) + 0.1
-        timers.append(Timer.scheduledTimer(timeInterval: delay, target: self,
-                                           selector: #selector(minuteTick), userInfo: nil, repeats: false))
+        minuteTimer?.invalidate()
+        minuteTimer = addCommonTimer(interval: delay, selector: #selector(minuteTick), repeats: false)
+    }
+
+    /// Timers in .common mode keep firing while a modal dialog or menu tracking runs.
+    private func addCommonTimer(interval: TimeInterval, selector: Selector, repeats: Bool) -> Timer {
+        let timer = Timer(timeInterval: interval, target: self, selector: selector, userInfo: nil, repeats: repeats)
+        RunLoop.main.add(timer, forMode: .common)
+        return timer
     }
 
     @objc private func statusTick() {
         refreshStatus()
+    }
+
+    @objc private func timeJumped() {
+        refreshClock()
+        refreshStatus()
+        scheduleNextMinute()
     }
 
     @objc private func minuteTick() {

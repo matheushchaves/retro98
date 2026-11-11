@@ -46,6 +46,12 @@ bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out2.log" 2>&1
 check "shell-removed-when-not-chosen" '[[ ! -e "$WORK/agents/$LABEL.plist" && ! -e "$WORK/apps/Retro98 Shell.app" ]]'
 check "dock-restored" 'grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG"'
 
+# The bundle script must refuse anything that isn't an .app path (it deletes its target first).
+mkdir -p "$WORK/nao-e-app" && touch "$WORK/nao-e-app/keep"
+bash "$ROOT/scripts/build-shell-app.sh" "$WORK/nao-e-app" > /dev/null 2>&1
+refused=$?
+check "build-script-refuses-non-app" '[[ $refused -ne 0 && -f "$WORK/nao-e-app/keep" ]]'
+
 # A failing Shell build must not leave the Dock shrunk.
 printf '#!/usr/bin/env bash\nexit 1\n' > "$WORK/failing-build"
 chmod +x "$WORK/failing-build"

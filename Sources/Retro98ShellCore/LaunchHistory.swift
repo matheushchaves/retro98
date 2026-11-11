@@ -26,12 +26,12 @@ public struct LaunchHistory {
         self.files = files
     }
 
-    /// Records this launch; true when the Shell should give up
-    /// (`maxLaunches` launches without a clean exit within `window` seconds).
+    /// Records this launch; true when the Shell should give up: more than `maxLaunches` launches
+    /// without a clean exit within `window` seconds, i.e. the normal launch plus `maxLaunches` crashes.
     public func recordLaunch(now: Date) throws -> Bool {
         let recent = load().filter { now.timeIntervalSince($0) < Self.window } + [now]
         try files.write(try PropertyListEncoder().encode(recent), to: url)
-        return recent.count >= Self.maxLaunches
+        return recent.count > Self.maxLaunches
     }
 
     public func recordCleanExit() throws {
