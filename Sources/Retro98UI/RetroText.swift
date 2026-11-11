@@ -18,4 +18,14 @@ public enum RetroText {
             return lines + [current]
         }
     }
+
+    /// The whole text if it fits, else the longest prefix plus "…" that fits ("" if not even "…" fits).
+    public static func fit(_ text: String, maxWidth: Int, font: PixelFont = .regular) -> String {
+        guard PixelText.width(of: text, font: font) > maxWidth else { return text }
+        for length in stride(from: text.count - 1, through: 0, by: -1) {
+            let candidate = String(text.prefix(length)).trimmingCharacters(in: .whitespaces) + "…"
+            if PixelText.width(of: candidate, font: font) <= maxWidth { return candidate }
+        }
+        return ""
+    }
 }
