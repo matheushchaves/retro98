@@ -3,7 +3,6 @@ import Testing
 @testable import Retro98Settings
 
 private let backupURL = URL(filePath: "/support/backup.plist")
-private let styleKey = PreferenceKey(domain: .global, name: "AppleInterfaceStyle")
 
 private func sampleBackup() -> Backup {
     Backup.empty
