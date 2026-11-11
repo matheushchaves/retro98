@@ -30,8 +30,16 @@ public enum PixelCanvas {
     /// Renders at 1x into a context whose origin is the top-left corner, with
     /// anti-aliasing and font smoothing off, so every pixel is a pure color.
     public static func render(width: Int, height: Int, _ draw: (CGContext) -> Void) -> PixelImage {
-        let width = max(width, 1)
-        let height = max(height, 1)
+        render(region: CGRect(x: 0, y: 0, width: width, height: height), draw)
+    }
+
+    /// Renders only `region` (view coordinates, y down): drawing keeps using view coordinates,
+    /// pixel (0,0) of the image is `region.origin`, and the context is clipped to the region,
+    /// so large views can skip whatever lies outside `boundingBoxOfClipPath`.
+    public static func render(region: CGRect, _ draw: (CGContext) -> Void) -> PixelImage {
+        let region = region.integral
+        let width = max(Int(region.width), 1)
+        let height = max(Int(region.height), 1)
         let bytesPerRow = width * 4
         var bytes = [UInt8](repeating: 0, count: bytesPerRow * height)
         let space = CGColorSpace(name: CGColorSpace.sRGB)!
@@ -42,6 +50,8 @@ public enum PixelCanvas {
             )!
             context.translateBy(x: 0, y: CGFloat(height))
             context.scaleBy(x: 1, y: -1)
+            context.translateBy(x: -region.minX, y: -region.minY)
+            context.clip(to: CGRect(x: region.minX, y: region.minY, width: CGFloat(width), height: CGFloat(height)))
             context.setShouldAntialias(false)
             context.setAllowsAntialiasing(false)
             context.setShouldSmoothFonts(false)
@@ -67,16 +77,12 @@ open class PixelView: NSView {
 
     override open func draw(_ dirtyRect: NSRect) {
         guard let target = NSGraphicsContext.current?.cgContext else { return }
+        let region = dirtyRect.integral.intersection(bounds.integral)
+        guard !region.isEmpty else { return }
         let size = bounds.size
-        let image = PixelCanvas.render(width: Int(size.width.rounded(.up)), height: Int(size.height.rounded(.up))) {
-            drawPixels(in: $0, size: size)
-        }
-        target.saveGState()
-        target.interpolationQuality = .none
-        // The view is flipped; CGContext.draw expects a bottom-left origin.
-        target.translateBy(x: 0, y: CGFloat(image.height))
-        target.scaleBy(x: 1, y: -1)
-        target.draw(image.cgImage, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        target.restoreGState()
+        let image = PixelCanvas.render(region: region) { drawPixels(in: $0, size: size) }
+        PixelIcon.drawUpright(image.cgImage, in: CGRect(x: region.minX, y: region.minY,
+                                                         width: CGFloat(image.width), height: CGFloat(image.height)),
+                              context: target)
     }
 }
