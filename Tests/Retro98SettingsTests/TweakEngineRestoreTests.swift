@@ -97,3 +97,15 @@ import Testing
 
     #expect(fixture.log.events.first == "switchAppearance(true)")
 }
+
+@Test func restoreSkipsWritesAlreadyAtOriginal() throws {
+    let fixture = EngineFixture()
+    _ = try fixture.engine.apply()
+    try fixture.store.write(nil, for: increaseContrastKey)
+    fixture.store.deniedKeys = [increaseContrastKey]
+
+    let report = try fixture.engine.restore([.contrast])
+
+    #expect(report.succeeded == [.contrast])
+    #expect(!(try fixture.backupFile.load().tweakIDs.contains(.contrast)))
+}

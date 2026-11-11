@@ -13,12 +13,13 @@ chmod +x "$STUB"
 failures=0
 
 run_case() {
-    local name="$1" stub_exit="$2" expected_exit="$3" expected_backup="$4"
+    local name="$1" stub_exit="$2" expected_exit="$3" expected_backup="$4" extra_path="${5:-}"
     local support="$WORK/support-$name"
     mkdir -p "$support/bin"
     echo "<plist/>" > "$support/backup.plist"
 
-    STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
+    PATH="${extra_path:+$extra_path:}$PATH" \
+        STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
         bash "$ROOT/uninstall.sh" > /dev/null 2>&1
     local actual_exit=$?
 
@@ -39,5 +40,12 @@ run_case() {
 run_case restored 0 0 absent
 run_case partial 2 2 present
 run_case corrupted 3 3 present
+
+# A failing `defaults read` (language lookup) must not abort the script before restore runs.
+BROKEN_DEFAULTS="$WORK/broken-defaults"
+mkdir -p "$BROKEN_DEFAULTS"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$BROKEN_DEFAULTS/defaults"
+chmod +x "$BROKEN_DEFAULTS/defaults"
+run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
 
 exit $((failures > 0 ? 1 : 0))

@@ -1,7 +1,7 @@
 import Foundation
 import Retro98Settings
 
-let accessibilitySettingsURL = "x-apple.systempreferences:com.apple.Accessibility-Settings.extension"
+let fullDiskAccessSettingsURL = "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
 let universalAccessDomain = PreferenceDomain.app("com.apple.universalaccess")
 
 let messages = Messages(languages: Locale.preferredLanguages)
@@ -54,8 +54,8 @@ func printReport(_ report: EngineReport, restoring: Bool) {
         return keys.contains { $0.domain == universalAccessDomain }
     }
     if deniedAccessibility {
-        printError(messages.accessibilityDenied(restoring: restoring))
-        _ = ProcessCommandRunner().run("/usr/bin/open", [accessibilitySettingsURL])
+        printError(messages.accessibilityDenied)
+        _ = ProcessCommandRunner().run("/usr/bin/open", [fullDiskAccessSettingsURL])
     }
     if report.warnings.contains(.appearanceNeedsLogout) {
         print(messages.appearanceNeedsLogout)

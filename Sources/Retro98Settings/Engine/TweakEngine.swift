@@ -61,53 +61,76 @@ public struct TweakEngine {
     /// Applies the selected tweaks (all when nil). Throws only when the backup cannot be read or saved.
     public func apply(_ ids: Set<TweakID>? = nil) throws -> EngineReport {
         let selected = catalog.filter { ids?.contains($0.id) ?? true }
-        let warnings = switchAppearanceIfNeeded(
-            for: selected,
-            toDark: { tweak in tweak.changes.first { $0.key == Self.appearanceKey }?.target == .string("Dark") }
-        )
-
         var backup = try backupFile.load()
         var succeeded: [TweakID] = []
         var failed: [TweakFailure] = []
+        var warnings: [EngineWarning] = []
         for tweak in selected {
-            let (updatedBackup, failure) = try apply(tweak, backup: backup)
-            backup = updatedBackup
-            if let failure { failed.append(failure) } else { succeeded.append(tweak.id) }
+            let outcome = try apply(tweak, backup: backup)
+            backup = outcome.backup
+            warnings += outcome.warnings
+            if let failure = outcome.failure { failed.append(failure) } else { succeeded.append(tweak.id) }
         }
 
         performEffects(of: selected.filter { succeeded.contains($0.id) })
         return EngineReport(succeeded: succeeded, failed: failed, warnings: warnings)
     }
 
-    private func apply(_ tweak: Tweak, backup: Backup) throws -> (Backup, TweakFailure?) {
+    private typealias PreviousValues = [(key: PreferenceKey, value: PreferenceValue?)]
+
+    private struct TweakOutcome {
+        let backup: Backup
+        let failure: TweakFailure?
+        let warnings: [EngineWarning]
+    }
+
+    private func apply(_ tweak: Tweak, backup: Backup) throws -> TweakOutcome {
         let previous = tweak.changes.map { (key: $0.key, value: store.value(for: $0.key)) }
+        let capturesIndex = tweak.special != nil
+        let indexBefore = capturesIndex ? try files.read(wallpaperIndex) : nil
+        let recorded = record(tweak, previous: previous, includeIndex: capturesIndex, indexBefore: indexBefore, into: backup)
+        try backupFile.save(recorded)
+
+        // The originals are on disk; only now may anything change, including the live appearance switch.
+        let warnings = switchAppearanceIfNeeded(
+            for: [tweak],
+            toDark: { tweak in tweak.changes.first { $0.key == Self.appearanceKey }?.target == .string("Dark") }
+        )
+        guard let reason = performChanges(of: tweak, previous: previous) else {
+            return TweakOutcome(backup: recorded, failure: nil, warnings: warnings)
+        }
+
+        // Keep the originals of whatever is still changed after the rollback; drop the rest.
+        let stillChanged = previous.filter { store.value(for: $0.key) != $0.value }
+        let indexChanged = capturesIndex && (try? files.read(wallpaperIndex)) != indexBefore
+        let kept = record(tweak, previous: stillChanged, includeIndex: indexChanged, indexBefore: indexBefore, into: backup)
+        try backupFile.save(kept)
+        return TweakOutcome(backup: kept, failure: TweakFailure(id: tweak.id, reason: reason), warnings: warnings)
+    }
+
+    private func record(
+        _ tweak: Tweak, previous: PreviousValues, includeIndex: Bool, indexBefore: Data?, into backup: Backup
+    ) -> Backup {
         let withPreferences = previous.reduce(backup) {
             $0.recording(PreferenceBackupEntry(tweak: tweak.id, key: $1.key, original: $1.value))
         }
-        let recorded = tweak.special == nil
-            ? withPreferences
-            : withPreferences.recording(
-                FileBackupEntry(tweak: tweak.id, path: wallpaperIndex.path, original: try files.read(wallpaperIndex))
-            )
-        try backupFile.save(recorded)
-
-        guard let reason = performChanges(of: tweak, previous: previous) else { return (recorded, nil) }
-        // Nothing of this tweak stayed changed, so its new backup entries are dropped again.
-        try backupFile.save(backup)
-        return (backup, TweakFailure(id: tweak.id, reason: reason))
+        guard includeIndex else { return withPreferences }
+        return withPreferences.recording(FileBackupEntry(tweak: tweak.id, path: wallpaperIndex.path, original: indexBefore))
     }
 
-    /// Writes the tweak's targets and runs its special action. On failure, puts back
-    /// what this run already changed and returns why.
-    private func performChanges(of tweak: Tweak, previous: [(key: PreferenceKey, value: PreferenceValue?)]) -> FailureReason? {
-        let rollBack = { (count: Int) in
-            previous.prefix(count).reversed().forEach { try? store.write($0.value, for: $0.key) }
+    /// Writes the targets that differ and runs the special action. On failure, puts back
+    /// every key that no longer holds its previous value and returns why.
+    private func performChanges(of tweak: Tweak, previous: PreviousValues) -> FailureReason? {
+        let rollBack = {
+            previous.reversed()
+                .filter { store.value(for: $0.key) != $0.value }
+                .forEach { try? store.write($0.value, for: $0.key) }
         }
-        for (index, change) in tweak.changes.enumerated() {
+        for change in tweak.changes where store.value(for: change.key) != change.target {
             do {
                 try store.write(change.target, for: change.key)
             } catch {
-                rollBack(index)
+                rollBack()
                 return .writeDenied([change.key])
             }
         }
@@ -115,7 +138,7 @@ public struct TweakEngine {
             do {
                 try wallpaper.setSolidColor(hex: hex)
             } catch {
-                rollBack(tweak.changes.count)
+                rollBack()
                 return .wallpaperFailed(String(describing: error))
             }
         }
@@ -156,6 +179,8 @@ public struct TweakEngine {
 
     private func restore(_ tweak: Tweak, from backup: Backup) -> FailureReason? {
         let denied = backup.preferences.filter { $0.tweak == tweak.id }.compactMap { entry -> PreferenceKey? in
+            // Already back at the original (e.g. fixed by hand): nothing to write, so nothing to deny.
+            guard store.value(for: entry.key) != entry.original else { return nil }
             do {
                 try store.write(entry.original, for: entry.key)
                 return nil
@@ -165,7 +190,8 @@ public struct TweakEngine {
         }
         guard denied.isEmpty else { return .writeDenied(denied) }
 
-        for entry in backup.files where entry.tweak == tweak.id {
+        for entry in backup.files
+        where entry.tweak == tweak.id && (try? files.read(URL(filePath: entry.path))) != entry.original {
             do {
                 try files.write(entry.original, to: URL(filePath: entry.path))
             } catch {

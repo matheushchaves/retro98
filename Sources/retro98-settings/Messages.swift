@@ -24,16 +24,14 @@ struct Messages {
     var failed: String { text(en: "FAILED", ptBR: "FALHOU") }
     var nothingToRestore: String { text(en: "Nothing to restore.", ptBR: "Nada para restaurar.") }
 
-    func accessibilityDenied(restoring: Bool) -> String {
-        restoring
-            ? text(
-                en: "macOS did not allow this change. I opened System Settings › Accessibility › Display: turn it off there manually.",
-                ptBR: "O macOS não deixou mudar este ajuste. Abri Ajustes do Sistema › Acessibilidade › Tela: desative lá manualmente."
-            )
-            : text(
-                en: "macOS did not allow this change. I opened System Settings › Accessibility › Display: turn it on there manually.",
-                ptBR: "O macOS não deixou mudar este ajuste. Abri Ajustes do Sistema › Acessibilidade › Tela: ative lá manualmente."
-            )
+    /// Writes to com.apple.universalaccess need Full Disk Access for the terminal app running the tool.
+    var accessibilityDenied: String {
+        text(
+            en: "macOS did not allow this change. I opened System Settings › Privacy & Security › Full Disk Access: "
+                + "turn on your terminal app there and run the same command again.",
+            ptBR: "O macOS não deixou mudar este ajuste. Abri Ajustes do Sistema › Privacidade e Segurança › "
+                + "Acesso Total ao Disco: ative lá o seu app de terminal e rode o mesmo comando de novo."
+        )
     }
 
     var appearanceNeedsLogout: String {

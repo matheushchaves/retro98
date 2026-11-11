@@ -70,7 +70,7 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 ## Permissões e problemas conhecidos
 
 - Para trocar para o modo claro na hora, o macOS pode perguntar se o **Terminal pode controlar o System Events**. Se você recusar, o modo claro vale depois de sair e entrar de novo na conta.
-- Se o macOS recusar um ajuste de Acessibilidade (`contrast`, `pointer`), a ferramenta abre **Ajustes do Sistema › Acessibilidade › Tela** para você mudar à mão. Os outros ajustes são aplicados normalmente.
+- Os ajustes de Acessibilidade (`contrast`, `pointer`) precisam de **Acesso Total ao Disco** para o app de terminal em que você roda o instalador. Se o macOS recusar, a ferramenta abre **Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco**: ative o seu app de terminal e rode o mesmo comando de novo. Os outros ajustes são aplicados normalmente. Use o mesmo app de terminal para desinstalar.
 - Alguns apps só mostram as novas cores, barras de rolagem ou animações depois de fechados e abertos de novo.
 
 ## Licença

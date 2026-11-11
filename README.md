@@ -70,7 +70,7 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 ## Permissions and known issues
 
 - To switch to light mode right away, macOS may ask whether **Terminal can control System Events**. If you decline, light mode still takes effect after you log out and back in.
-- If macOS refuses an Accessibility setting (`contrast`, `pointer`), the tool opens **System Settings › Accessibility › Display** so you can change it by hand. Every other tweak still gets applied.
+- The Accessibility tweaks (`contrast`, `pointer`) need **Full Disk Access** for the terminal app you run the installer from. If macOS refuses them, the tool opens **System Settings › Privacy & Security › Full Disk Access**: turn on your terminal app and run the same command again. Every other tweak still gets applied. Use the same terminal app to uninstall.
 - Some apps only show the new colors, scroll bars or animation setting after you quit and reopen them.
 
 ## License

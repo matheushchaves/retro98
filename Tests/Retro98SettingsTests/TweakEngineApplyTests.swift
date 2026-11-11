@@ -102,3 +102,68 @@ import Testing
     #expect(states[.scrollBars] == .notApplied)
     #expect(states[.wallpaper] == .notApplied)
 }
+
+// MARK: - Final review fixes
+
+@Test func appearanceSwitchDoesNotCorruptRecordedOriginal() throws {
+    let fixture = EngineFixture()
+    fixture.refresher.onSwitch = { dark in
+        try? fixture.store.write(dark ? .string("Dark") : nil, for: styleKey)
+    }
+
+    _ = try fixture.engine.apply()
+    #expect(try fixture.backupFile.load().preferences.first { $0.key == styleKey }?.original == .string("Dark"))
+
+    _ = try fixture.engine.restore()
+    #expect(fixture.store.value(for: styleKey) == .string("Dark"))
+}
+
+@Test func applyWithCorruptedBackupChangesNothing() throws {
+    let fixture = EngineFixture()
+    try fixture.files.write(Data("garbage".utf8), to: fixtureBackupURL)
+
+    #expect(throws: BackupError.self) { try fixture.engine.apply() }
+    #expect(fixture.log.events.isEmpty)
+    #expect(fixture.store.snapshot == machineLikePreferences)
+}
+
+@Test func failedRollbackKeepsOriginalInBackup() throws {
+    let fixture = EngineFixture()
+    fixture.observer.beforeWrite = { key in
+        if key == increaseContrastKey {
+            fixture.store.deniedKeys = [reduceTransparencyKey, increaseContrastKey]
+        }
+    }
+
+    let report = try fixture.engine.apply([.contrast])
+
+    #expect(report.failed.map(\.id) == [.contrast])
+    #expect(fixture.store.value(for: reduceTransparencyKey) == .bool(true))
+    let entry = try fixture.backupFile.load().preferences.first { $0.key == reduceTransparencyKey }
+    #expect(entry != nil)
+    #expect(entry?.original == nil)
+}
+
+@Test func partialWallpaperFailureKeepsIndexBackup() throws {
+    let fixture = EngineFixture()
+    fixture.wallpaper.beforeSet = { try? fixture.files.write(Data("teal".utf8), to: indexURL) }
+    fixture.wallpaper.error = FakeError()
+
+    let report = try fixture.engine.apply([.wallpaper])
+
+    #expect(report.failed.map(\.id) == [.wallpaper])
+    #expect(try fixture.backupFile.load().files
+            == [FileBackupEntry(tweak: .wallpaper, path: indexURL.path, original: originalIndex)])
+}
+
+@Test func applySkipsWritesAlreadyAtTarget() throws {
+    let fixture = EngineFixture(
+        preferences: [reduceTransparencyKey: .bool(true), increaseContrastKey: .bool(true)],
+        deniedKeys: [reduceTransparencyKey, increaseContrastKey]
+    )
+
+    let report = try fixture.engine.apply([.contrast])
+
+    #expect(report.succeeded == [.contrast])
+    #expect(report.failed.isEmpty)
+}

@@ -23,6 +23,8 @@ final class FakeWallpaperSetter: WallpaperSetter {
 final class RecordingRefresher: SystemRefresher {
     private let log: EventLog
     var switchAppearanceResult = true
+    /// Lets a test mimic System Events, which writes AppleInterfaceStyle itself.
+    var onSwitch: ((Bool) -> Void)?
 
     init(log: EventLog) {
         self.log = log
@@ -32,6 +34,7 @@ final class RecordingRefresher: SystemRefresher {
 
     func switchAppearance(toDark dark: Bool) -> Bool {
         log.events.append("switchAppearance(\(dark))")
+        onSwitch?(dark)
         return switchAppearanceResult
     }
 
