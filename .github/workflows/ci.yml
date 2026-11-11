@@ -16,7 +16,10 @@ jobs:
         run: swift test
       - name: Build the Shell app bundle
         run: bash scripts/build-shell-app.sh "$RUNNER_TEMP/Retro98 Shell.app"
-      - name: Install and uninstall script tests
+        env:
+          RETRO98_SIGNING: adhoc
+      - name: Install, uninstall and signing script tests
         run: |
           bash Tests/scripts/test_uninstall.sh
           bash Tests/scripts/test_install.sh
+          bash Tests/scripts/test_signing.sh

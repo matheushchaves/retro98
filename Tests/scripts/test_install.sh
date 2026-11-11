@@ -18,6 +18,9 @@ export RETRO98_SETTINGS_BIN="$WORK/stub-settings"
 export RETRO98_SUPPORT_DIR="$WORK/support"
 export RETRO98_APPS_DIR="$WORK/apps"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents"
+# Never create the real signing keychain from tests.
+export RETRO98_SIGNING=adhoc
+export RETRO98_SIGNING_KEYCHAIN="$WORK/never-created.keychain-db"
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0
@@ -61,5 +64,7 @@ RETRO98_BUILD_SHELL_APP="$WORK/failing-build" bash "$ROOT/install.sh" --yes < /d
 build_status=$?
 check "failed-build-exits-nonzero" '[[ $build_status -ne 0 ]]'
 check "failed-build-keeps-dock" '! grep -q "apply --only dockUnderTaskbar" "$WORK_LOG"'
+
+check "no-signing-keychain-created" '[[ ! -e "$WORK/never-created.keychain-db" ]]'
 
 exit $((failures > 0 ? 1 : 0))

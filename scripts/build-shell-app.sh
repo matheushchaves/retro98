@@ -2,6 +2,8 @@
 # Builds Retro98 Shell and assembles it as an app bundle: scripts/build-shell-app.sh "<output>.app"
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+source "$ROOT/scripts/common.sh"
+source "$ROOT/scripts/signing.sh"
 OUT="${1:?usage: build-shell-app.sh <output.app>}"
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
@@ -33,4 +35,4 @@ cat > "$OUT/Contents/Info.plist" <<'PLIST'
 </dict>
 </plist>
 PLIST
-codesign --force --sign - "$OUT"
+sign_app "$OUT" "$SHELL_LABEL"
