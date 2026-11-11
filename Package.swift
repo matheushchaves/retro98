@@ -19,7 +19,7 @@ let package = Package(
         .testTarget(name: "Retro98SettingsTests", dependencies: ["Retro98Settings"]),
         .target(name: "Retro98UI"),
         .testTarget(name: "Retro98UITests", dependencies: ["Retro98UI"]),
-        .target(name: "Retro98ShellCore", dependencies: ["Retro98Settings"]),
+        .target(name: "Retro98ShellCore", dependencies: ["Retro98Settings", "Retro98FilesCore"]),
         .testTarget(name: "Retro98ShellCoreTests", dependencies: ["Retro98ShellCore", "Retro98Settings"]),
         .target(name: "Retro98FilesCore", dependencies: ["Retro98Settings"]),
         .testTarget(name: "Retro98FilesCoreTests", dependencies: ["Retro98FilesCore", "Retro98Settings"]),

@@ -23,6 +23,7 @@ final class TaskbarController {
     private let panel = AboveDockPanel()
     private let view = TaskbarView()
     private let startButton: RetroButton
+    private let quickLaunch: QuickLaunchView
     private let tray: TrayView
     private let startMenu: StartMenuController
     private let windowButtons: TaskButtonsView
@@ -34,6 +35,7 @@ final class TaskbarController {
     init(languages: [String]) {
         self.languages = languages
         tray = TrayView(languages: languages)
+        quickLaunch = QuickLaunchView(languages: languages)
         var toggle: (() -> Void)?
         startButton = RetroButton(
             title: LocalizedTitle.start.resolve(for: languages), icon: Icons.startLogo, bold: true
@@ -49,6 +51,7 @@ final class TaskbarController {
         toggle = { [weak self] in self?.toggleStartMenu() }
         panel.contentView = view
         view.addSubview(startButton)
+        view.addSubview(quickLaunch)
         view.addSubview(windowButtons)
         view.addSubview(tray)
         tray.postsFrameChangedNotifications = true
@@ -113,6 +116,9 @@ final class TaskbarController {
         view.frame = CGRect(origin: .zero, size: frame.size)
         let buttonY = ((frame.height - startButton.frame.height) / 2).rounded(.down) + 1
         startButton.setFrameOrigin(CGPoint(x: Self.startMargin, y: buttonY))
+        // Hidden until the Explorer is installed (install.sh restarts the Shell after installing it).
+        quickLaunch.isHidden = !QuickLaunch.isAvailable { NSWorkspace.shared.urlForApplication(toOpen: $0) != nil }
+        quickLaunch.frame = CGRect(x: startButton.frame.maxX + Self.buttonsGap - 2, y: 0, width: QuickLaunchView.width, height: frame.height)
         tray.relayout(height: TrayView.height)
         tray.setFrameOrigin(CGPoint(x: frame.width - tray.frame.width - Self.startMargin,
                                     y: ((frame.height - tray.frame.height) / 2).rounded(.down) + 1))
@@ -121,7 +127,7 @@ final class TaskbarController {
     }
 
     private func layoutWindowButtons() {
-        let minX = startButton.frame.maxX + Self.buttonsGap
+        let minX = (quickLaunch.isHidden ? startButton.frame.maxX : quickLaunch.frame.maxX) + Self.buttonsGap
         let maxX = tray.frame.minX - Self.buttonsGap
         windowButtons.frame = CGRect(x: minX, y: 0, width: max(maxX - minX, 0), height: view.bounds.height)
         windowButtons.needsDisplay = true

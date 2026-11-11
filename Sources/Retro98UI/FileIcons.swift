@@ -70,8 +70,10 @@ public enum FileIcons {
     }
 
     /// The Explorer's own icon (app icon and quick launch): a folder with a magnifying glass.
-    public static let explorerApp = PixelIcon(width: 32, height: 32) { context in
-        let s = Sketch(context: context, scale: 2)
+    public static let explorerApp = PixelIcon(width: 32, height: 32) { drawExplorer(Sketch(context: $0, scale: 2)) }
+    public static let explorerAppSmall = PixelIcon(width: 16, height: 16) { drawExplorer(Sketch(context: $0, scale: 1)) }
+
+    private static func drawExplorer(_ s: Sketch) {
         drawFolder(s, top: 3)
         s.box(8, 6, 7, 7, fill: cyan)
         s.fill(9, 7, 2, 2, .white)
