@@ -14,8 +14,11 @@ jobs:
         run: swift build
       - name: Unit and integration tests
         run: swift test
-      - name: Build the Shell app bundle
-        run: bash scripts/build-shell-app.sh "$RUNNER_TEMP/Retro98 Shell.app"
+      - name: Build the Shell and Explorer app bundles
+        run: |
+          bash scripts/build-shell-app.sh "$RUNNER_TEMP/Retro98 Shell.app"
+          bash scripts/build-app.sh Retro98Explorer io.github.matheushchaves.retro98.explorer "Retro98 Explorer" \
+            "$RUNNER_TEMP/Retro98 Explorer.app" regular retro98-explorer explorer
         env:
           RETRO98_SIGNING: adhoc
       - name: Install, uninstall and signing script tests

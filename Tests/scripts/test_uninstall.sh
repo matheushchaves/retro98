@@ -14,7 +14,9 @@ chmod +x "$STUB"
 FAKE_BIN="$WORK/fake-bin"
 mkdir -p "$FAKE_BIN"
 printf '#!/usr/bin/env bash\necho "$*" >> "${LAUNCHCTL_LOG:-/dev/null}"\nexit 0\n' > "$FAKE_BIN/launchctl"
-chmod +x "$FAKE_BIN/launchctl"
+printf '#!/usr/bin/env bash\necho "lsregister $*" >> "${LAUNCHCTL_LOG:-/dev/null}"\nexit 0\n' > "$WORK/stub-lsregister"
+chmod +x "$FAKE_BIN/launchctl" "$WORK/stub-lsregister"
+export RETRO98_LSREGISTER="$WORK/stub-lsregister"
 export PATH="$FAKE_BIN:$PATH"
 export RETRO98_APPS_DIR="$WORK/apps-default"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-default"
@@ -65,7 +67,7 @@ run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
 run_shell_case() {
     local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
-    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$agents"
+    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$agents"
     echo "<plist/>" > "$support/backup.plist"
     echo "<plist/>" > "$agents/$LABEL.plist"
 
@@ -80,6 +82,12 @@ run_shell_case() {
     grep -q "bootout gui/$(id -u)/$LABEL" "$calls" 2>/dev/null || problems+=" no-bootout"
     [[ ! -f "$agents/$LABEL.plist" ]] || problems+=" agent-plist-left"
     [[ "$app_state" == "$expected_app" ]] || problems+=" app=$app_state"
+    local explorer_state="absent"
+    [[ -d "$apps/Retro98 Explorer.app" ]] && explorer_state="present"
+    [[ "$explorer_state" == "$expected_app" ]] || problems+=" explorer=$explorer_state"
+    if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Explorer.app" "$calls"; then
+        problems+=" explorer-not-unregistered"
+    fi
     if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
 
     if [[ -z "$problems" ]]; then
@@ -90,7 +98,7 @@ run_shell_case() {
     fi
 }
 
-run_shell_case shell-removed 0 0 absent
+run_shell_case explorer-removed 0 0 absent
 run_shell_case shell-kept-on-failure 2 2 present
 
 # The local signing keychain goes away with a successful uninstall; the search list is untouched.

@@ -9,8 +9,10 @@ trap 'rm -rf "$WORK"' EXIT
 
 mkdir -p "$WORK/fake-bin"
 printf '#!/usr/bin/env bash\necho "$*" >> "$WORK_LOG"\nexit 0\n' > "$WORK/fake-bin/launchctl"
+printf '#!/usr/bin/env bash\necho "open $*" >> "$WORK_LOG"\nexit 0\n' > "$WORK/fake-bin/open"
 printf '#!/usr/bin/env bash\necho "settings $*" >> "$WORK_LOG"\nexit 0\n' > "$WORK/stub-settings"
-chmod +x "$WORK/fake-bin/launchctl" "$WORK/stub-settings"
+printf '#!/usr/bin/env bash\necho "lsregister $*" >> "$WORK_LOG"\nexit 0\n' > "$WORK/stub-lsregister"
+chmod +x "$WORK/fake-bin/launchctl" "$WORK/fake-bin/open" "$WORK/stub-settings" "$WORK/stub-lsregister"
 
 export WORK_LOG="$WORK/calls.log"
 export PATH="$WORK/fake-bin:$PATH"
@@ -18,6 +20,8 @@ export RETRO98_SETTINGS_BIN="$WORK/stub-settings"
 export RETRO98_SUPPORT_DIR="$WORK/support"
 export RETRO98_APPS_DIR="$WORK/apps"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents"
+# Never register anything with the real LaunchServices database.
+export RETRO98_LSREGISTER="$WORK/stub-lsregister"
 # Never create the real signing keychain from tests.
 export RETRO98_SIGNING=adhoc
 export RETRO98_SIGNING_KEYCHAIN="$WORK/never-created.keychain-db"
@@ -42,12 +46,22 @@ bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
 check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell" ]]'
 check "accessibility-hint" 'grep -qE "Acessibilidade|Accessibility" "$WORK/out.log"'
+EXPLORER="$WORK/apps/Retro98 Explorer.app"
+check "explorer-built" 'codesign --verify "$EXPLORER" 2> /dev/null'
+check "explorer-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$EXPLORER/Contents/Info.plist" > /dev/null 2>&1'
+check "explorer-url-scheme" '[[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes:0:CFBundleURLSchemes:0" "$EXPLORER/Contents/Info.plist")" == "retro98-explorer" ]]'
+check "explorer-has-icon" '[[ -s "$EXPLORER/Contents/Resources/AppIcon.icns" ]]'
+check "explorer-registered" 'grep -qx "lsregister -f $EXPLORER" "$WORK_LOG"'
+register_line="$(grep -n "^lsregister -f" "$WORK_LOG" | head -1 | cut -d: -f1)"
+check "explorer-registered-before-shell-starts" '[[ -n "$register_line" && -n "$bootstrap_line" && "$register_line" -lt "$bootstrap_line" ]]'
+check "explorer-fda-hint" 'grep -qE "Acesso Total ao Disco|Full Disk Access" "$WORK/out.log" && grep -q "open x-apple.systempreferences:.*Privacy_AllFiles" "$WORK_LOG" && grep -qx "open -R $EXPLORER" "$WORK_LOG"'
 
 # Re-install with only the base tweaks: the taskbar must be turned off and the Dock restored.
 echo "base" > "$WORK/support/pieces"
 : > "$WORK_LOG"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out2.log" 2>&1
 check "shell-removed-when-not-chosen" '[[ ! -e "$WORK/agents/$LABEL.plist" && ! -e "$WORK/apps/Retro98 Shell.app" ]]'
+check "explorer-removed-when-not-chosen" '[[ ! -e "$EXPLORER" ]] && grep -qx "lsregister -u $EXPLORER" "$WORK_LOG"'
 check "dock-restored" 'grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG"'
 
 # The bundle script must refuse anything that isn't an .app path (it deletes its target first).

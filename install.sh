@@ -73,6 +73,11 @@ if [[ " $pieces " == *" shell "* ]]; then
     # Build first: if it fails, nothing (the Dock included) has been changed yet.
     say "Montando o Retro98 Shell..." "Building Retro98 Shell..."
     "${RETRO98_BUILD_SHELL_APP:-$RETRO98_ROOT/scripts/build-shell-app.sh}" "$SHELL_APP"
+    say "Montando o Retro98 Explorer..." "Building Retro98 Explorer..."
+    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Explorer "$EXPLORER_ID" "Retro98 Explorer" "$EXPLORER_APP" regular \
+        "$EXPLORER_SCHEME" explorer
+    # Registered before the Shell starts, so its quick launch button finds the Explorer.
+    "$LSREGISTER" -f "$EXPLORER_APP" || status=$?
     "$BIN" apply --only dockUnderTaskbar || status=$?
     mkdir -p "$LAUNCH_AGENTS_DIR"
     cat > "$LAUNCH_AGENT_PLIST" <<PLIST
@@ -95,10 +100,15 @@ PLIST
     launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" || status=$?
     say "Na primeira vez, o Retro98 Shell vai pedir a permissão de Acessibilidade para mostrar as janelas na barra. Ative-o em Ajustes do Sistema › Privacidade e Segurança › Acessibilidade." \
         "The first time, Retro98 Shell asks for Accessibility permission to show your windows on the taskbar. Turn it on in System Settings › Privacy & Security › Accessibility."
-elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" ]]; then
+    say "Para o Explorer mostrar a Lixeira, dê Acesso Total ao Disco ao Retro98 Explorer em Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco (opcional; o resto funciona sem isso)." \
+        "For the Explorer to show the Recycle Bin, give Retro98 Explorer Full Disk Access in System Settings › Privacy & Security › Full Disk Access (optional; everything else works without it)."
+    open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" || true
+    open -R "$EXPLORER_APP" || true
+elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" || -d "$EXPLORER_APP" ]]; then
     # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.
     stop_shell
     rm -rf "$SHELL_APP"
+    remove_explorer
     "$BIN" restore --only dockUnderTaskbar || status=$?
 fi
 

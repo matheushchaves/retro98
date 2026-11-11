@@ -12,11 +12,13 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 
 | Phase | What | State |
 |---|---|---|
-| 1 | Base tweaks (this release) | ✅ available |
+| 1 | Base tweaks | ✅ available |
 | 2A | Visual kit + taskbar and Start menu | ✅ available |
 | 2B | Window buttons on the taskbar, hidden Dock | ✅ available |
-| 2C | Desktop icons | planned |
-| 3 | Explorer (file manager) | planned |
+| 2C | Desktop icons | replaced by the Explorer's Desktop (the macOS desktop and widgets stay as they are) |
+| 3A | Explorer: browse files | ✅ available |
+| 3B | Explorer: copy, move, rename, delete | planned |
+| 3C | Explorer: views, search, Open With, Properties | planned |
 | 4 | Prompt (terminal) | planned |
 | 5 | Control Panel | planned |
 | 6 | Notepad | planned |
@@ -36,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time).
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time).
 
 ## Uninstall
 
@@ -67,6 +69,19 @@ The first time you use Shut Down…, macOS asks whether Retro98 Shell may contro
 - Maximized, "Fill" and tiled windows stop at the top of the taskbar instead of going under it.
 
 These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain; you can also remove Retro98 Shell from the Accessibility list.
+
+## Explorer (Phase 3A)
+
+Retro98 Explorer is a 98-style file manager installed with the taskbar (`~/Applications/Retro98/Retro98 Explorer.app`). It's a separate app: Finder keeps working as always.
+
+- Open it from the quick launch button next to Start, from Start › Programs › Retro98 › Retro98 Explorer, or with a link: `open retro98-explorer://desktop` (also `retro98-explorer://my-computer` and `retro98-explorer://folder?path=/Applications`).
+- It opens on the **Desktop**: My Computer, My Documents, Recycle Bin and the files in your Desktop folder, as large icons. Your macOS desktop and widgets are not touched.
+- On screen: folder tree on the left, toolbar, address bar and status bar (objects, selection size, free space). In the address bar, type a path (`~/Downloads`) or a place name ("My Computer"); its arrow lists the folders above the current one.
+- My Computer lists your disks, USB drives and network volumes, and updates when you plug one in or eject it. Open folders refresh by themselves when their files change.
+- Double-click or Enter opens: folders open in place, files and apps open in their usual macOS app. The space bar previews the selection with Quick Look.
+- Shortcuts: ⌘[ Back · ⌘] Forward · ⌘↑ or Backspace Up · ⌘↓ Open · ⇧⌘D Desktop · ⇧⌘C My Computer · ⇧⌘O My Documents · ⌥⌘L Downloads · ⌘R Refresh · ⌘N New window · ⌘W Close · ⌘A Select all.
+- **Full Disk Access (optional, only for the Recycle Bin):** macOS protects the Trash folder. The installer opens System Settings › Privacy & Security › Full Disk Access and shows the app in Finder: turn on Retro98 Explorer (or drag it into the list). Without it, the Recycle Bin window offers "Open in Finder".
+- Coming next: copy, move, rename, new folder, delete to the Recycle Bin and undo (3B); list and details views, sorting, search, eject, Open With and Properties (3C).
 
 ## What Phase 1 changes
 

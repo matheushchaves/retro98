@@ -12,11 +12,13 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 
 | Fase | O quê | Estado |
 |---|---|---|
-| 1 | Ajustes base (esta versão) | ✅ disponível |
+| 1 | Ajustes base | ✅ disponível |
 | 2A | Base visual + barra de tarefas e menu Iniciar | ✅ disponível |
 | 2B | Botões das janelas na barra, Dock escondido | ✅ disponível |
-| 2C | Ícones na área de trabalho | planejada |
-| 3 | Explorer (gerenciador de arquivos) | planejada |
+| 2C | Ícones na área de trabalho | substituída pela Área de Trabalho do Explorer (a mesa e os widgets do macOS ficam como estão) |
+| 3A | Explorer: navegar pelos arquivos | ✅ disponível |
+| 3B | Explorer: copiar, mover, renomear, excluir | planejada |
+| 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | planejada |
 | 4 | Prompt (terminal) | planejada |
 | 5 | Painel de Controle | planejada |
 | 6 | Bloco de Notas | planejada |
@@ -36,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez).
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez).
 
 ## Desinstalar
 
@@ -67,6 +69,19 @@ Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell 
 - Janelas maximizadas, em "Preencher" ou lado a lado param no topo da barra em vez de passar por baixo dela.
 
 Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro; você também pode tirar o Retro98 Shell da lista de Acessibilidade.
+
+## Explorer (Fase 3A)
+
+O Retro98 Explorer é um gerenciador de arquivos no estilo 98, instalado junto com a barra de tarefas (`~/Applications/Retro98/Retro98 Explorer.app`). É um app separado: o Finder continua funcionando como sempre.
+
+- Abra pelo botão de Início rápido ao lado do Iniciar, por Iniciar › Programas › Retro98 › Retro98 Explorer, ou por um link: `open retro98-explorer://desktop` (também `retro98-explorer://my-computer` e `retro98-explorer://folder?path=/Applications`).
+- Ele abre na **Área de Trabalho**: Meu Computador, Meus Documentos, Lixeira e os arquivos da sua pasta Mesa, em ícones grandes. A mesa e os widgets do macOS não são tocados.
+- Na tela: árvore de pastas à esquerda, barra de ferramentas, barra de endereço e barra de status (objetos, tamanho da seleção, espaço livre). No endereço, digite um caminho (`~/Downloads`) ou o nome de um local ("Meu Computador"); a seta lista as pastas acima da atual.
+- Meu Computador mostra os discos, pen drives e volumes de rede, e se atualiza quando você pluga ou ejeta um. Pastas abertas se atualizam sozinhas quando os arquivos mudam.
+- Clique duplo ou Enter abre: pastas abrem na própria janela, arquivos e apps abrem no app de sempre do macOS. A barra de espaço espia a seleção com o Visualização Rápida.
+- Atalhos: ⌘[ Voltar · ⌘] Avançar · ⌘↑ ou Backspace Acima · ⌘↓ Abrir · ⇧⌘D Área de Trabalho · ⇧⌘C Meu Computador · ⇧⌘O Meus Documentos · ⌥⌘L Downloads · ⌘R Atualizar · ⌘N Nova janela · ⌘W Fechar · ⌘A Selecionar tudo.
+- **Acesso Total ao Disco (opcional, só para a Lixeira):** o macOS protege a pasta da Lixeira. O instalador abre Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco e mostra o app no Finder: ative o Retro98 Explorer (ou arraste-o para a lista). Sem isso, a janela da Lixeira oferece "Abrir no Finder".
+- Nas próximas entregas: copiar, mover, renomear, nova pasta, excluir para a Lixeira e desfazer (3B); modos lista e detalhes, ordenação, busca, ejetar, Abrir com e Propriedades (3C).
 
 ## O que a Fase 1 muda
 

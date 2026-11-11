@@ -25,6 +25,20 @@ SHELL_APP="$APPS_DIR/Retro98 Shell.app"
 LAUNCH_AGENT_PLIST="$LAUNCH_AGENTS_DIR/$SHELL_LABEL.plist"
 PIECES_FILE="$SUPPORT_DIR/pieces"
 
+# Retro98 Explorer travels with the taskbar (its quick launch button opens it).
+EXPLORER_ID="io.github.matheushchaves.retro98.explorer"
+EXPLORER_APP="$APPS_DIR/Retro98 Explorer.app"
+EXPLORER_SCHEME="retro98-explorer"
+LSREGISTER="${RETRO98_LSREGISTER:-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister}"
+
+# Unregisters and deletes the Explorer bundle (no-op when it isn't installed).
+remove_explorer() {
+    if [[ -d "$EXPLORER_APP" ]]; then
+        "$LSREGISTER" -u "$EXPLORER_APP" > /dev/null 2>&1 || true
+        rm -rf "$EXPLORER_APP"
+    fi
+}
+
 # Stops the Shell (if running) and removes its LaunchAgent so launchd won't start it again.
 stop_shell() {
     launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true

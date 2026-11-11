@@ -9,6 +9,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     static let shellBundleID = "io.github.matheushchaves.retro98.shell"
     static let menuHeight: CGFloat = 22, toolbarHeight: CGFloat = 42, addressHeight: CGFloat = 27, statusHeight: CGFloat = 24
     static let treeWidth: CGFloat = 210
+    static let spaceKey: UInt16 = 49, backspaceKey: UInt16 = 51, downArrowKey: UInt16 = 125
 
     let model: ExplorerModel
     let window: RetroAppWindow
@@ -205,12 +206,23 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         model.go(to: location)
     }
 
+    /// Space: Quick Look. Backspace: up one level (98). ⌘↓: open the selection (Finder).
     private func handleKey(_ event: NSEvent) -> Bool {
-        guard event.charactersIgnoringModifiers == " " else { return false }
-        if let panel = QLPreviewPanel.shared(), panel.isVisible {
-            panel.orderOut(nil)
-        } else {
-            QLPreviewPanel.shared()?.makeKeyAndOrderFront(nil)
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function])
+        switch (event.keyCode, modifiers) {
+        case (Self.spaceKey, []):
+            if let panel = QLPreviewPanel.shared(), panel.isVisible {
+                panel.orderOut(nil)
+            } else {
+                QLPreviewPanel.shared()?.makeKeyAndOrderFront(nil)
+            }
+        case (Self.backspaceKey, []):
+            model.up()
+        case (Self.downArrowKey, [.command]):
+            guard let index = grid.selection.first else { return true }
+            openEntry(at: index)
+        default:
+            return false
         }
         return true
     }
