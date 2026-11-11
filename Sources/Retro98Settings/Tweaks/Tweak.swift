@@ -1,10 +1,16 @@
 public enum TweakID: String, Codable, CaseIterable, Sendable {
     case wallpaper, lightAppearance, colors, contrast, pointer, scrollBars, windowAnimations, titleBarDoubleClick, finderExplorer
+    case dockUnderTaskbar
+}
+
+/// Which installable piece a tweak belongs to: the base tweaks or the Shell (taskbar).
+public enum TweakGroup: String, Codable, Sendable {
+    case base, shell
 }
 
 /// Side effects needed after preferences change so running apps pick them up.
 public enum RefreshEffect: Hashable, Sendable {
-    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartWallpaperAgent
+    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartWallpaperAgent, restartDock
 }
 
 /// Work that is not a plain preference write.
@@ -33,15 +39,17 @@ public struct Tweak: Equatable, Sendable {
     public let changes: [PreferenceChange]
     public let special: SpecialAction?
     public let effects: Set<RefreshEffect>
+    public let group: TweakGroup
 
     public init(
         id: TweakID, title: LocalizedText, changes: [PreferenceChange],
-        special: SpecialAction? = nil, effects: Set<RefreshEffect> = []
+        special: SpecialAction? = nil, effects: Set<RefreshEffect> = [], group: TweakGroup = .base
     ) {
         self.id = id
         self.title = title
         self.changes = changes
         self.special = special
         self.effects = effects
+        self.group = group
     }
 }

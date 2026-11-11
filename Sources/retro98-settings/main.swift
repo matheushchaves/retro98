@@ -7,7 +7,7 @@ let universalAccessDomain = PreferenceDomain.app("com.apple.universalaccess")
 let messages = Messages(languages: Locale.preferredLanguages)
 let home = FileManager.default.homeDirectoryForCurrentUser
 let paths = Retro98Paths.standard(home: home, environment: ProcessInfo.processInfo.environment)
-let catalog = TweakCatalog.phase1(
+let catalog = TweakCatalog.all(
     osMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion, homeDirectory: home
 )
 let files = LocalFileStore()
@@ -80,7 +80,9 @@ do {
         printStatus(try engine.status())
         exit(0)
     case .apply(let only):
-        let report = try engine.apply(only)
+        // Without --only, apply the base tweaks; Shell tweaks are applied by the installer.
+        let baseTweaks = Set(catalog.filter { $0.group == .base }.map(\.id))
+        let report = try engine.apply(only ?? baseTweaks)
         printReport(report, restoring: false)
         exit(exitStatus(for: report))
     case .restore(let only):

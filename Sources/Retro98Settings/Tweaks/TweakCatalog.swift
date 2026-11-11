@@ -7,6 +7,7 @@ public enum TweakCatalog {
     static let graphiteAccent = -1
     static let graphiteAquaVariant = 6
     static let fillDoubleClickMinimumMacOS = 15
+    static let smallestDockTileSize = 16
 
     public static func phase1(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
         let universalAccess = PreferenceDomain.app("com.apple.universalaccess")
@@ -98,6 +99,29 @@ public enum TweakCatalog {
                 effects: [.restartFinder]
             ),
         ]
+    }
+
+    /// Tweaks that only make sense while the Retro98 Shell taskbar runs.
+    public static func shell() -> [Tweak] {
+        let dock = PreferenceDomain.app("com.apple.dock")
+        return [
+            Tweak(
+                id: .dockUnderTaskbar,
+                title: LocalizedText(en: "Small Dock under the taskbar", ptBR: "Dock pequeno sob a barra de tarefas"),
+                changes: [
+                    change(dock, "tilesize", .int(smallestDockTileSize)),
+                    change(dock, "magnification", .bool(false)),
+                    change(dock, "autohide", .bool(false)),
+                    change(dock, "orientation", .string("bottom")),
+                ],
+                effects: [.restartDock],
+                group: .shell
+            ),
+        ]
+    }
+
+    public static func all(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
+        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory) + shell()
     }
 
     private static func change(_ domain: PreferenceDomain, _ name: String, _ target: PreferenceValue?) -> PreferenceChange {

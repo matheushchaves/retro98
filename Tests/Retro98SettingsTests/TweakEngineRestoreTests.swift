@@ -8,7 +8,7 @@ import Testing
     let report = try fixture.engine.restore()
 
     #expect(report.failed.isEmpty)
-    #expect(Set(report.succeeded) == Set(TweakID.allCases))
+    #expect(Set(report.succeeded) == Set(phase1Catalog.map(\.id)))
     #expect(fixture.store.snapshot == machineLikePreferences)
     #expect(fixture.files.snapshot[indexURL] == originalIndex)
     #expect(fixture.files.snapshot[fixtureBackupURL] == nil)

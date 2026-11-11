@@ -11,7 +11,28 @@ private func target(_ id: TweakID, _ domain: PreferenceDomain, _ name: String) -
 }
 
 @Test func listsEveryTweakOnceInOrder() {
-    #expect(catalog.map(\.id) == TweakID.allCases)
+    #expect(catalog.map(\.id) == TweakID.allCases.filter { $0 != .dockUnderTaskbar })
+    #expect(catalog.allSatisfy { $0.group == .base })
+}
+
+@Test func shellCatalogPinsDockValues() {
+    let dock = TweakCatalog.shell().first { $0.id == .dockUnderTaskbar }
+    let dockDomain = PreferenceDomain.app("com.apple.dock")
+    #expect(dock?.group == .shell)
+    #expect(dock?.effects == [.restartDock])
+    #expect(dock?.changes == [
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "tilesize"), target: .int(16)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "magnification"), target: .bool(false)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "autohide"), target: .bool(false)),
+        PreferenceChange(key: PreferenceKey(domain: dockDomain, name: "orientation"), target: .string("bottom")),
+    ])
+    #expect(dock?.title == LocalizedText(en: "Small Dock under the taskbar", ptBR: "Dock pequeno sob a barra de tarefas"))
+}
+
+@Test func allCatalogIsPhase1PlusShell() {
+    let all = TweakCatalog.all(osMajorVersion: 27, homeDirectory: URL(filePath: "/Users/test"))
+    #expect(all.map(\.id) == TweakID.allCases)
+    #expect(all.filter { $0.group == .base }.count == 9)
 }
 
 @Test func pinsColorsAndAppearance() {

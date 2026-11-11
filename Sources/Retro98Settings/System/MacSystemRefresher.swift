@@ -53,6 +53,8 @@ public struct MacSystemRefresher: SystemRefresher {
                 _ = runner.run("/usr/bin/killall", ["Finder"])
             case .restartWallpaperAgent:
                 _ = runner.run("/usr/bin/killall", ["WallpaperAgent"])
+            case .restartDock:
+                _ = runner.run("/usr/bin/killall", ["Dock"])
             case .notifyColorChange:
                 post("AppleColorPreferencesChangedNotification")
                 post("AppleAquaColorVariantChanged")

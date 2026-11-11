@@ -6,7 +6,7 @@ import Testing
     let fixture = EngineFixture()
     let report = try fixture.engine.apply()
 
-    #expect(report.succeeded == TweakID.allCases)
+    #expect(report.succeeded == phase1Catalog.map(\.id))
     #expect(report.failed.isEmpty)
     #expect(try fixture.engine.status().allSatisfy { $0.state == .applied })
     let preferences = try fixture.backupFile.load().preferences

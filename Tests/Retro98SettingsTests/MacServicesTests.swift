@@ -71,3 +71,9 @@ private final class RecordingRunner: CommandRunner {
         "tell application \"System Events\" to tell appearance preferences to set dark mode to false",
     ]])
 }
+
+@Test func refresherRestartsDock() {
+    let runner = RecordingRunner()
+    MacSystemRefresher(runner: runner, post: { _ in }).perform([.restartDock])
+    #expect(runner.runs == [["/usr/bin/killall", "Dock"]])
+}
