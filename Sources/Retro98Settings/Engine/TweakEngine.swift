@@ -122,6 +122,59 @@ public struct TweakEngine {
         return nil
     }
 
+    // MARK: Restore
+
+    /// Puts back the originals of the selected tweaks (everything in the backup when nil).
+    /// A corrupted or newer backup throws before anything is touched. Entries of tweaks
+    /// that could not be restored stay in the backup so the restore can be retried.
+    public func restore(_ ids: Set<TweakID>? = nil) throws -> EngineReport {
+        let backup = try backupFile.load()
+        let selected = catalog.filter { backup.tweakIDs.contains($0.id) && (ids?.contains($0.id) ?? true) }
+        guard !selected.isEmpty else { return EngineReport(succeeded: [], failed: [], warnings: []) }
+
+        let warnings = switchAppearanceIfNeeded(
+            for: selected,
+            toDark: { tweak in
+                backup.preferences.first { $0.tweak == tweak.id && $0.key == Self.appearanceKey }?.original
+                    == .string("Dark")
+            }
+        )
+        let outcomes = selected.map { (tweak: $0, reason: restore($0, from: backup)) }
+        let succeeded = outcomes.filter { $0.reason == nil }.map(\.tweak.id)
+        let failed = outcomes.compactMap { outcome in
+            outcome.reason.map { TweakFailure(id: outcome.tweak.id, reason: $0) }
+        }
+
+        try backupFile.save(backup.removing(tweaks: Set(succeeded)))
+        let restoredFiles = backup.files.contains { succeeded.contains($0.tweak) }
+        performEffects(
+            of: selected.filter { succeeded.contains($0.id) },
+            extra: restoredFiles ? [.restartWallpaperAgent] : []
+        )
+        return EngineReport(succeeded: succeeded, failed: failed, warnings: warnings)
+    }
+
+    private func restore(_ tweak: Tweak, from backup: Backup) -> FailureReason? {
+        let denied = backup.preferences.filter { $0.tweak == tweak.id }.compactMap { entry -> PreferenceKey? in
+            do {
+                try store.write(entry.original, for: entry.key)
+                return nil
+            } catch {
+                return entry.key
+            }
+        }
+        guard denied.isEmpty else { return .writeDenied(denied) }
+
+        for entry in backup.files where entry.tweak == tweak.id {
+            do {
+                try files.write(entry.original, to: URL(filePath: entry.path))
+            } catch {
+                return .fileWriteFailed(String(describing: error))
+            }
+        }
+        return nil
+    }
+
     // MARK: Status
 
     public func status() throws -> [TweakStatus] {
