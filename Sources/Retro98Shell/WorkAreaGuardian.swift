@@ -1,10 +1,12 @@
 import AppKit
 import ApplicationServices
+import os
 import Retro98ShellCore
 
 /// Shrinks standard windows that reach the bottom of the main screen so they stop at the taskbar.
 @MainActor
 final class WorkAreaGuardian {
+    private static let log = Logger(subsystem: "io.github.matheushchaves.retro98.shell", category: "work-area")
     var isEnabled = false
     private let taskbarHeight: () -> CGFloat
 
@@ -36,6 +38,7 @@ final class WorkAreaGuardian {
         let isFullScreen = AX.bool(window, "AXFullScreen") == true
         guard let size = WorkAreaGuard.adjustedSize(window: frame, screen: screen, taskbarHeight: taskbarHeight(),
                                                     isFullScreen: isFullScreen) else { return }
-        AX.setSize(window, size)
+        let applied = AX.setSize(window, size)
+        Self.log.info("work area: \(Int(frame.height)) → \(Int(size.height)) pt, applied=\(applied)")
     }
 }
