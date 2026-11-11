@@ -11,6 +11,28 @@ public enum ShellIdentity {
         let service = "gui/\(uid)/\(label)"
         return [["/bin/launchctl", "disable", service], ["/bin/launchctl", "bootout", service]]
     }
+
+    /// Starts the LaunchAgent's copy if it isn't running (a no-op when it is).
+    public static func handOverCommand(uid: uid_t) -> [String] {
+        ["/bin/launchctl", "kickstart", "gui/\(uid)/\(label)"]
+    }
+}
+
+/// Who draws the taskbar. Only the copy launchd starts from the LaunchAgent does: uninstall can stop it,
+/// crash recovery watches it, and there is never a second taskbar. A copy opened any other way
+/// (System Settings' "Quit & Reopen" after a permission change, Finder, the Start menu) hands over and quits.
+public enum ShellLaunch {
+    public enum Role: Equatable, Sendable {
+        case runTaskbar, handOverToLaunchAgent, quitAsDuplicate
+    }
+
+    /// `serviceName` is the XPC_SERVICE_NAME launchd sets: the agent's label for the LaunchAgent's copy.
+    public static func role(serviceName: String?, agentInstalled: Bool, otherCopyRunning: Bool) -> Role {
+        if serviceName == ShellIdentity.label { return .runTaskbar }
+        if agentInstalled { return .handOverToLaunchAgent }
+        // Not installed (run from a build folder): fine, as long as it's the only taskbar.
+        return otherCopyRunning ? .quitAsDuplicate : .runTaskbar
+    }
 }
 
 /// Counts Shell launches that were not followed by a clean exit, to detect crash loops.

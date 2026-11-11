@@ -101,6 +101,37 @@ run_shell_case() {
 run_shell_case explorer-removed 0 0 absent
 run_shell_case shell-kept-on-failure 2 2 present
 
+# Copies opened outside launchd (System Settings' "Quit & Reopen", Finder, the Start menu) survive
+# `launchctl bootout`: uninstall must stop them by their executable path, and only those.
+start_fake_app() {   # <bundle> <executable name> → prints the pid of a process running from that bundle
+    mkdir -p "$1/Contents/MacOS"
+    cp /bin/sleep "$1/Contents/MacOS/$2"
+    # A copied Apple binary is killed on launch outside the system folders; sign the copy ad hoc.
+    codesign --force --sign - "$1/Contents/MacOS/$2" 2> /dev/null
+    "$1/Contents/MacOS/$2" 300 > /dev/null 2>&1 &
+    echo $!
+}
+STRAY_APPS="$WORK/apps-stray"
+STRAY_SUPPORT="$WORK/support-stray"
+mkdir -p "$STRAY_SUPPORT" "$WORK/agents-stray"
+echo "<plist/>" > "$STRAY_SUPPORT/backup.plist"
+shell_pid="$(start_fake_app "$STRAY_APPS/Retro98 Shell.app" Retro98Shell)"
+explorer_pid="$(start_fake_app "$STRAY_APPS/Retro98 Explorer.app" Retro98Explorer)"
+bystander_pid="$(start_fake_app "$WORK/other/Retro98 Shell.app" Retro98Shell)"   # same name, other path
+sleep 0.3
+STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$STRAY_SUPPORT" RETRO98_APPS_DIR="$STRAY_APPS" \
+    RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-stray" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+sleep 0.3
+if ! kill -0 "$shell_pid" 2>/dev/null && ! kill -0 "$explorer_pid" 2>/dev/null && kill -0 "$bystander_pid" 2>/dev/null; then
+    echo "PASS stray-copies-stopped"
+else
+    echo "FAIL stray-copies-stopped (shell $(kill -0 "$shell_pid" 2>/dev/null && echo alive || echo gone)," \
+        "explorer $(kill -0 "$explorer_pid" 2>/dev/null && echo alive || echo gone)," \
+        "bystander $(kill -0 "$bystander_pid" 2>/dev/null && echo alive || echo gone))"
+    failures=$((failures + 1))
+fi
+kill "$shell_pid" "$explorer_pid" "$bystander_pid" 2>/dev/null
+
 # The local signing keychain goes away with a successful uninstall; the search list is untouched.
 BEFORE_LIST="$(security list-keychains -d user)"
 SIGN_SUPPORT="$WORK/support-signing"

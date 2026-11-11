@@ -94,14 +94,14 @@ if [[ " $pieces " == *" shell "* ]]; then
 </dict>
 </plist>
 PLIST
-    launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true
+    stop_shell_processes
     # A previous crash-loop give-up disables the agent; installing turns it back on.
     launchctl enable "gui/$(id -u)/$SHELL_LABEL" || true
     launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" || status=$?
     say "Na primeira vez, o Retro98 Shell vai pedir a permissão de Acessibilidade para mostrar as janelas na barra. Ative-o em Ajustes do Sistema › Privacidade e Segurança › Acessibilidade." \
         "The first time, Retro98 Shell asks for Accessibility permission to show your windows on the taskbar. Turn it on in System Settings › Privacy & Security › Accessibility."
-    say "Para o Explorer mostrar a Lixeira, dê Acesso Total ao Disco ao Retro98 Explorer em Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco (opcional; o resto funciona sem isso)." \
-        "For the Explorer to show the Recycle Bin, give Retro98 Explorer Full Disk Access in System Settings › Privacy & Security › Full Disk Access (optional; everything else works without it)."
+    say "Para o Explorer mostrar a Lixeira, dê Acesso Total ao Disco só ao Retro98 Explorer em Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco (opcional; o resto funciona sem isso, e o Retro98 Shell não precisa)." \
+        "For the Explorer to show the Recycle Bin, give only Retro98 Explorer Full Disk Access in System Settings › Privacy & Security › Full Disk Access (optional; everything else works without it, and Retro98 Shell doesn't need it)."
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" || true
     open -R "$EXPLORER_APP" || true
 elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" || -d "$EXPLORER_APP" ]]; then

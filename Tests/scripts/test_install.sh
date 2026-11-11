@@ -56,6 +56,21 @@ register_line="$(grep -n "^lsregister -f" "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "explorer-registered-before-shell-starts" '[[ -n "$register_line" && -n "$bootstrap_line" && "$register_line" -lt "$bootstrap_line" ]]'
 check "explorer-fda-hint" 'grep -qE "Acesso Total ao Disco|Full Disk Access" "$WORK/out.log" && grep -q "open x-apple.systempreferences:.*Privacy_AllFiles" "$WORK_LOG" && grep -qx "open -R $EXPLORER" "$WORK_LOG"'
 
+# A Shell copy opened outside launchd must not survive a reinstall next to the LaunchAgent's copy.
+mkdir -p "$WORK/apps/Retro98 Shell.app/Contents/MacOS"
+cp /bin/sleep "$WORK/apps/Retro98 Shell.app/Contents/MacOS/Retro98Shell"
+# A copied Apple binary is killed on launch outside the system folders; sign the copy ad hoc.
+codesign --force --sign - "$WORK/apps/Retro98 Shell.app/Contents/MacOS/Retro98Shell" 2> /dev/null
+"$WORK/apps/Retro98 Shell.app/Contents/MacOS/Retro98Shell" 300 > /dev/null 2>&1 &
+stray_pid=$!
+sleep 0.3
+stray_alive_before="$(kill -0 $stray_pid 2> /dev/null && echo yes)"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-stray.log" 2>&1
+sleep 0.3
+check "stray-shell-was-running" '[[ -n "$stray_alive_before" ]]'
+check "install-stops-stray-shell" '! kill -0 $stray_pid 2> /dev/null'
+kill "$stray_pid" 2> /dev/null
+
 # Re-install with only the base tweaks: the taskbar must be turned off and the Dock restored.
 echo "base" > "$WORK/support/pieces"
 : > "$WORK_LOG"

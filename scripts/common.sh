@@ -31,16 +31,43 @@ EXPLORER_APP="$APPS_DIR/Retro98 Explorer.app"
 EXPLORER_SCHEME="retro98-explorer"
 LSREGISTER="${RETRO98_LSREGISTER:-/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister}"
 
-# Unregisters and deletes the Explorer bundle (no-op when it isn't installed).
+# Quits, unregisters and deletes the Explorer bundle (no-op when it isn't installed).
 remove_explorer() {
     if [[ -d "$EXPLORER_APP" ]]; then
+        stop_executable "$EXPLORER_APP/Contents/MacOS/Retro98Explorer"
         "$LSREGISTER" -u "$EXPLORER_APP" > /dev/null 2>&1 || true
         rm -rf "$EXPLORER_APP"
     fi
 }
 
-# Stops the Shell (if running) and removes its LaunchAgent so launchd won't start it again.
-stop_shell() {
+# Stops every process running the executable at $1, however it was started: politely first,
+# then for good after 5 seconds. Matches the full path, so other apps are never touched.
+stop_executable() {
+    local executable="$1" pids="" pid args alive attempt
+    while read -r pid args; do
+        [[ "$args" == "$executable" || "$args" == "$executable "* ]] && pids+=" $pid"
+    done < <(ps -axo pid=,args=)
+    [[ -n "$pids" ]] || return 0
+    kill -TERM $pids 2> /dev/null || true
+    for attempt in 1 2 3 4 5 6 7 8 9 10; do
+        alive=""
+        for pid in $pids; do kill -0 "$pid" 2> /dev/null && alive+=" $pid"; done
+        [[ -n "$alive" ]] || return 0
+        pids="$alive"
+        sleep 0.5
+    done
+    kill -KILL $pids 2> /dev/null || true
+}
+
+# Stops the Shell: the LaunchAgent's copy and any copy opened outside launchd (System Settings'
+# "Quit & Reopen" after a permission change, Finder, the Start menu), which bootout can't reach.
+stop_shell_processes() {
     launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true
+    stop_executable "$SHELL_APP/Contents/MacOS/Retro98Shell"
+}
+
+# Stops the Shell and removes its LaunchAgent so launchd won't start it again.
+stop_shell() {
+    stop_shell_processes
     rm -f "$LAUNCH_AGENT_PLIST"
 }
