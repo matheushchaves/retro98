@@ -4,10 +4,10 @@ import AppKit
 /// dotted focus rectangle when it has keyboard focus.
 @MainActor
 public final class RetroButton: PixelView {
-    static let height: CGFloat = 23
-    static let minimumWidth: CGFloat = 75
-    static let horizontalPadding: CGFloat = 16
-    static let iconGap: CGFloat = 4
+    nonisolated static let height: CGFloat = 23
+    nonisolated static let minimumWidth: CGFloat = 75
+    nonisolated static let horizontalPadding: CGFloat = 16
+    nonisolated static let iconGap: CGFloat = 4
 
     public let title: String
     public let icon: PixelIcon?
@@ -29,7 +29,7 @@ public final class RetroButton: PixelView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    public static func preferredSize(title: String, icon: PixelIcon?, bold: Bool) -> CGSize {
+    nonisolated public static func preferredSize(title: String, icon: PixelIcon?, bold: Bool) -> CGSize {
         let textWidth = CGFloat(PixelText.width(of: title, font: bold ? .bold : .regular))
         let iconWidth = icon.map { CGFloat($0.width) + iconGap } ?? 0
         return CGSize(width: max(minimumWidth, textWidth + iconWidth + horizontalPadding), height: height)
