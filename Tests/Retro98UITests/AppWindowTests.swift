@@ -50,3 +50,18 @@ import Testing
     #expect(window.contentContainer.frame.minY == WindowGeometry.border + WindowGeometry.titleHeight + 1)
     #expect(window.contentContainer.frame.width == 400)
 }
+
+/// The Shell's taskbar closes a window by pressing its accessibility close button; borderless windows have none.
+@MainActor @Test func closeButtonIsReachableThroughAccessibility() throws {
+    let window = RetroAppWindow(title: "Teste", icon: Icons.folder, contentSize: CGSize(width: 400, height: 300))
+    let button = try #require(window.accessibilityCloseButton() as? NSAccessibilityElement)
+    #expect(button.accessibilityRole() == .button)
+    #expect(button.accessibilitySubrole() == .closeButton)
+    var closed = false
+    let observer = NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification, object: window, queue: nil) { _ in
+        closed = true
+    }
+    defer { NotificationCenter.default.removeObserver(observer) }
+    #expect(button.accessibilityPerformPress())
+    #expect(closed)
+}

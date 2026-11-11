@@ -30,3 +30,9 @@ private func opaqueRatio(_ icon: PixelIcon) -> Double {
     #expect(icons.allSatisfy { $0.width == 16 && $0.height == 16 && opaqueRatio($0) > 0.05 })
     #expect(FileIcons.explorerApp.width == 32 && opaqueRatio(FileIcons.explorerApp) > 1.0 / 8.0)
 }
+
+/// The grid asks for an icon per visible cell on every draw; drawing it again each time makes scrolling stutter.
+@Test func fileIconsAreDrawnOncePerKindAndSize() {
+    #expect(FileIcons.icon(.folder, size: 32).image() === FileIcons.icon(.folder, size: 32).image())
+    #expect(FileIcons.icon(.folder, size: 16).image() !== FileIcons.icon(.folder, size: 32).image())
+}

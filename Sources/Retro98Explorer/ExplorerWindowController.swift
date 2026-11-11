@@ -18,22 +18,25 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     private let environment: ExplorerEnvironment
     private let toolbar = RetroToolbar()
     private let statusBar = RetroStatusBar()
-    private let grid = RetroIconGrid()
+    let grid = RetroIconGrid()
     private let tree = RetroTreeView()
     private let treeSource: ExplorerTree
-    private let address: AddressBar
+    let address: AddressBar
     private let messageView = MessageView()
     private var watcher: DirectoryWatcher?
     private var iconCache: [URL: PixelIcon] = [:]
     private var observers: [NSObjectProtocol] = []
     private var reloadPending = false
+    /// What the grid shows right now; a reload with the same place keeps selection and scroll.
+    private var shownLocation: Location?
+    private var shownURLs: [URL] = []
 
-    init(start: Location, languages: [String]) {
+    init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil) {
         self.languages = languages
-        environment = .live(languages: languages)
-        model = ExplorerModel(start: start, environment: environment)
+        self.environment = environment ?? .live(languages: languages)
+        model = ExplorerModel(start: start, environment: self.environment)
         window = RetroAppWindow(title: model.title, icon: FileIcons.icon(.desktop, size: 16), contentSize: CGSize(width: 680, height: 480))
-        treeSource = ExplorerTree(environment: environment, languages: languages)
+        treeSource = ExplorerTree(environment: self.environment, languages: languages)
         address = AddressBar(label: ExplorerText.address(languages))
         super.init()
         window.delegate = self
@@ -95,7 +98,10 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
 
         grid.dataSource = self
         grid.onOpen = { [weak self] index in self?.openEntry(at: index) }
-        grid.onSelectionChange = { [weak self] _ in self?.updateStatus() }
+        grid.onSelectionChange = { [weak self] _ in
+            self?.updateStatus()
+            self?.reloadPreviewPanel()
+        }
         grid.onKey = { [weak self] event in self?.handleKey(event) ?? false }
         messageView.onOpenFinder = { NSWorkspace.shared.open(FileManager.default.homeDirectoryForCurrentUser.appending(path: ".Trash")) }
         messageView.autoresizingMask = [.width, .height]
@@ -107,18 +113,28 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
 
     // MARK: State → views
 
+    /// Navigating resets the view; a reload of the same place (files changed, a disk mounted)
+    /// keeps the selection by file, the scroll position and any address being typed.
     private func refresh() {
         let location = model.history.current
-        window.setTitle(model.title, icon: smallIcon(for: location))
-        address.set(text: AddressParser.text(for: location, languages: languages), icon: smallIcon(for: location))
-        toolbar.items = toolbarItems()
-        grid.setSelection([])
+        let navigated = location != shownLocation
+        let kept = navigated ? [] : Set(grid.selection.compactMap { shownURLs.indices.contains($0) ? shownURLs[$0] : nil })
+        shownLocation = location
+        shownURLs = model.entries.map(\.url)
+        address.set(text: AddressParser.text(for: location, languages: languages), icon: smallIcon(for: location), keepsEdits: !navigated)
+        treeSource.refreshTrash()
+        tree.needsDisplay = true
         grid.reloadData()
-        grid.scroll(.zero)
+        grid.setSelection(IndexSet(model.entries.indices.filter { kept.contains(model.entries[$0].url) }))
         showMessage(model.error)
-        tree.reveal(path: treeSource.path(to: location))
-        watch(location)
-        updateStatus()
+        if navigated {
+            window.setTitle(model.title, icon: smallIcon(for: location))
+            toolbar.items = toolbarItems()
+            grid.scroll(.zero)
+            tree.reveal(path: treeSource.path(to: location))
+            watch(location)
+        }
+        reloadPreviewPanel()
     }
 
     private func showMessage(_ message: String?) {
@@ -153,25 +169,19 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         ]
     }
 
+    private var selectedEntries: [FileEntry] {
+        grid.selection.filter { model.entries.indices.contains($0) }.map { model.entries[$0] }
+    }
+
     private func updateStatus() {
-        let selected = grid.selection.map { model.entries[$0] }
+        let selected = selectedEntries
         let size = selected.compactMap(\.size).reduce(0, +)
-        let freeSpace = currentVolume()?.freeBytes
+        let freeSpace = model.freeSpace
         statusBar.fields = [
             (StatusText.objects(count: model.entries.count, selected: selected.count, languages: languages), 300),
             (size > 0 ? StatusText.bytes(size, locale: .current) : "", 140),
             (freeSpace.map { StatusText.free($0, locale: .current, languages: languages) } ?? "", nil),
         ]
-    }
-
-    private func currentVolume() -> VolumeInfo? {
-        let path: String
-        switch model.history.current {
-        case .folder(let url): path = url.path
-        default: path = environment.home.path
-        }
-        return environment.volumes().filter { path == $0.url.path || path.hasPrefix($0.url.path == "/" ? "/" : $0.url.path + "/") }
-            .max { $0.url.path.count < $1.url.path.count }
     }
 
     // MARK: Actions
@@ -195,7 +205,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     }
 
     private func ancestorItems() -> [RetroMenuItem] {
-        NavigationHistory.ancestors(of: model.history.current, volumes: environment.volumes().map(\.url)).map { location in
+        NavigationHistory.ancestors(of: model.history.current, volumes: model.volumes.map(\.url)).map { location in
             RetroMenuItem(title: ExplorerText.locationTitle(location, languages), icon: smallIcon(for: location),
                           kind: .action({ [weak self] in self?.model.go(to: location) }))
         }
@@ -228,7 +238,14 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     }
 
     fileprivate var previewURLs: [URL] {
-        grid.selection.map { model.entries[$0] }.filter { $0.location == nil || $0.kind == .folder }.map(\.url)
+        selectedEntries.filter { $0.location == nil || $0.kind == .folder }.map(\.url)
+    }
+
+    /// The panel caches the item count; it must follow every selection or contents change.
+    private func reloadPreviewPanel() {
+        guard QLPreviewPanel.sharedPreviewPanelExists(), let panel = QLPreviewPanel.shared(), panel.isVisible,
+              (panel.dataSource as AnyObject?) === grid.enclosingScrollView else { return }
+        panel.reloadData()
     }
 
     // MARK: Watching
@@ -340,6 +357,10 @@ final class QuickLookScrollView: NSScrollView, QLPreviewPanelDataSource {
     }
 
     nonisolated func previewPanel(_ panel: QLPreviewPanel!, previewItemAt index: Int) -> (any QLPreviewItem)! {
-        MainActor.assumeIsolated { controller?.previewURLs[index] as NSURL? }
+        let url: NSURL? = MainActor.assumeIsolated {
+            let urls = controller?.previewURLs ?? []
+            return urls.indices.contains(index) ? urls[index] as NSURL : nil
+        }
+        return url
     }
 }

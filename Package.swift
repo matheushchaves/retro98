@@ -26,6 +26,7 @@ let package = Package(
         .testTarget(name: "Retro98FilesCoreTests", dependencies: ["Retro98FilesCore", "Retro98Settings"]),
         .executableTarget(name: "retro98-tools", dependencies: ["Retro98UI"]),
         .executableTarget(name: "Retro98Explorer", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings"]),
+        .testTarget(name: "Retro98ExplorerTests", dependencies: ["Retro98Explorer", "Retro98FilesCore", "Retro98UI"]),
         .executableTarget(name: "Retro98Shell", dependencies: ["Retro98UI", "Retro98ShellCore", "Retro98Settings"]),
     ]
 )

@@ -26,6 +26,8 @@ enum ExplorerMenus {
                 command(ExplorerText.close(l), "w", .command, #selector(AppDelegate.closeWindow(_:))),
             ]),
             (ExplorerText.menuEdit(l), [
+                command(ExplorerText.undo(l), "z", .command, Selector(("undo:"))),
+                command(ExplorerText.redo(l), "z", [.command, .shift], Selector(("redo:"))), nil,
                 command(ExplorerText.cut(l), "x", .command, #selector(NSText.cut(_:))),
                 command(ExplorerText.copy(l), "c", .command, #selector(NSText.copy(_:))),
                 command(ExplorerText.paste(l), "v", .command, #selector(NSText.paste(_:))), nil,
@@ -51,24 +53,45 @@ enum ExplorerMenus {
         ]
     }
 
-    static func mainMenu(languages: [String]) -> NSMenu {
+    /// The macOS menu bar: the app menu, the shared groups, and the standard Window menu before Help
+    /// (the Mac shortcuts keep working in retro apps).
+    static func mainMenu(languages l: [String]) -> NSMenu {
         let main = NSMenu()
-        let appMenu = NSMenu(title: "Retro98 Explorer")
-        appMenu.addItem(withTitle: ExplorerText.about(languages), action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
-                        keyEquivalent: "")
-        appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: ExplorerText.quit(languages), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        main.addItem(submenu(appMenu))
-        for group in groups(languages) {
-            let menu = NSMenu(title: group.title)
-            for command in group.commands {
-                guard let command else { menu.addItem(.separator()); continue }
-                let item = menu.addItem(withTitle: command.title, action: command.selector, keyEquivalent: command.key)
-                item.keyEquivalentModifierMask = command.modifiers
-            }
-            main.addItem(submenu(menu))
-        }
+        main.addItem(submenu(menu(title: "Retro98 Explorer", [
+            Command(title: ExplorerText.about(l), key: "", modifiers: [], selector: #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+            nil,
+            Command(title: ExplorerText.hide(l), key: "h", modifiers: .command, selector: #selector(NSApplication.hide(_:))),
+            Command(title: ExplorerText.hideOthers(l), key: "h", modifiers: [.command, .option],
+                    selector: #selector(NSApplication.hideOtherApplications(_:))),
+            Command(title: ExplorerText.showAll(l), key: "", modifiers: [], selector: #selector(NSApplication.unhideAllApplications(_:))),
+            nil,
+            Command(title: ExplorerText.quit(l), key: "q", modifiers: .command, selector: #selector(NSApplication.terminate(_:))),
+        ])))
+        let shared = groups(l)
+        for group in shared.dropLast() { main.addItem(submenu(menu(title: group.title, group.commands))) }
+        main.addItem(submenu(menu(title: ExplorerText.menuWindow(l), [
+            Command(title: ExplorerText.minimize(l), key: "m", modifiers: .command, selector: #selector(NSWindow.miniaturize(_:))),
+            Command(title: ExplorerText.zoom(l), key: "", modifiers: [], selector: #selector(NSWindow.zoom(_:))),
+            nil,
+            Command(title: ExplorerText.bringAllToFront(l), key: "", modifiers: [], selector: #selector(NSApplication.arrangeInFront(_:))),
+        ])))
+        if let help = shared.last { main.addItem(submenu(menu(title: help.title, help.commands))) }
         return main
+    }
+
+    /// AppKit lists open windows in the menu it is given as the Window menu.
+    static func windowMenu(in main: NSMenu, languages: [String]) -> NSMenu? {
+        main.items.first { $0.submenu?.title == ExplorerText.menuWindow(languages) }?.submenu
+    }
+
+    private static func menu(title: String, _ commands: [Command?]) -> NSMenu {
+        let menu = NSMenu(title: title)
+        for command in commands {
+            guard let command else { menu.addItem(.separator()); continue }
+            let item = menu.addItem(withTitle: command.title, action: command.selector, keyEquivalent: command.key)
+            item.keyEquivalentModifierMask = command.modifiers
+        }
+        return menu
     }
 
     /// The window's retro menu bar: same commands, sent to the app delegate.

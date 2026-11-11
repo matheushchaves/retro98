@@ -39,6 +39,40 @@ public final class RetroAppWindow: NSWindow {
         close()
     }
 
+    /// Window › Zoom and assistive apps get the same maximize/restore as the title bar button.
+    override public func zoom(_ sender: Any?) {
+        toggleMaximize()
+    }
+
+    /// The drawn close button, exposed to assistive apps (the Retro98 taskbar closes windows by pressing it).
+    private lazy var closeButtonElement: CloseButtonElement = {
+        let element = CloseButtonElement()
+        element.window = self
+        element.setAccessibilityRole(.button)
+        element.setAccessibilitySubrole(.closeButton)
+        element.setAccessibilityLabel("Close")
+        element.setAccessibilityParent(frameView)
+        return element
+    }()
+
+    override public func accessibilityCloseButton() -> Any? {
+        closeButtonElement.setAccessibilityFrameInParentSpace(frameView.closeButtonFrame)
+        return closeButtonElement
+    }
+
+    private final class CloseButtonElement: NSAccessibilityElement {
+        weak var window: RetroAppWindow?
+
+        // Accessibility calls arrive on the main thread.
+        override func accessibilityPerformPress() -> Bool {
+            guard let window else { return false }
+            return MainActor.assumeIsolated {
+                window.performClose(nil)
+                return true
+            }
+        }
+    }
+
     public func setTitle(_ title: String, icon: PixelIcon) {
         self.title = title
         frameView.title = title
@@ -126,6 +160,8 @@ private final class AppWindowFrameView: PixelView {
         }
         return CGRect(x: x, y: titleRect.minY + 2, width: size.width, height: size.height)
     }
+
+    var closeButtonFrame: CGRect { captionRect(.close) }
 
     private func caption(at point: CGPoint) -> Caption? {
         [Caption.minimize, .maximize, .close].first { captionRect($0).contains(point) }

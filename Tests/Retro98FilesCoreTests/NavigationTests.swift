@@ -88,3 +88,13 @@ private let c = Location.folder(URL(filePath: "/C")), d = Location.folder(URL(fi
     #expect(NavigationHistory.ancestors(of: .desktop, volumes: volumes) == [.desktop])
     #expect(NavigationHistory.ancestors(of: .trash, volumes: volumes) == [.trash, .desktop])
 }
+
+/// An ejected drive leaves /Volumes behind; landing there (a hidden system folder) is never right.
+@Test func ejectedDriveRecoversToMyComputer() {
+    let volumes = [URL(filePath: "/")]   // the drive is already gone from the list
+    let exists: (URL) -> Bool = { ["/", "/Volumes", "/Users"].contains($0.path) }
+    #expect(NavigationHistory.recover(.folder(URL(filePath: "/Volumes/PEN/fotos/2024")), exists: exists, volumes: volumes) == .myComputer)
+    #expect(NavigationHistory.recover(.folder(URL(filePath: "/Volumes/PEN")), exists: exists, volumes: volumes) == .myComputer)
+    #expect(NavigationHistory.recover(.folder(URL(filePath: "/Users/t/sumiu")), exists: exists, volumes: volumes)
+            == .folder(URL(filePath: "/Users")))
+}

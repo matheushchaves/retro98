@@ -11,14 +11,19 @@ final class ExplorerTree: RetroTreeDataSource {
     private let environment: ExplorerEnvironment
     private let languages: [String]
     private var volumes: [VolumeInfo]
+    /// Read when the window loads a place, not on every draw of the tree.
+    private var trashIsFull: Bool?
 
     init(environment: ExplorerEnvironment, languages: [String]) {
         self.environment = environment
         self.languages = languages
         volumes = environment.volumes()
+        trashIsFull = TrashState.isFull(trash: environment.trash)
     }
 
     func reset() { volumes = environment.volumes() }
+
+    func refreshTrash() { trashIsFull = TrashState.isFull(trash: environment.trash) }
 
     private var documents: URL { environment.home.appending(path: "Documents", directoryHint: .notDirectory) }
     private var downloads: URL { environment.home.appending(path: "Downloads", directoryHint: .notDirectory) }
@@ -46,9 +51,7 @@ final class ExplorerTree: RetroTreeDataSource {
             for shortcut in [documents, downloads] where url.path == shortcut.path || url.path.hasPrefix(shortcut.path + "/") {
                 return [Self.desktopID] + chain(from: shortcut, to: url)
             }
-            let volume = volumes.filter { url.path == $0.url.path || url.path.hasPrefix($0.url.path == "/" ? "/" : $0.url.path + "/") }
-                .max { $0.url.path.count < $1.url.path.count }
-            guard let volume else { return [Self.desktopID, Self.folderID(url)] }
+            guard let volume = Volumes.containing(path: url.path, in: volumes) else { return [Self.desktopID, Self.folderID(url)] }
             return [Self.desktopID, Self.myComputerID] + chain(from: volume.url, to: url)
         }
     }
@@ -95,7 +98,7 @@ final class ExplorerTree: RetroTreeDataSource {
         case Self.desktopID: return FileIcons.icon(.desktop, size: 16)
         case Self.myComputerID: return FileIcons.icon(.myComputer, size: 16)
         case Self.trashID:
-            return FileIcons.icon(TrashState.isFull(trash: environment.trash) == true ? .recycleBinFull : .recycleBinEmpty, size: 16)
+            return FileIcons.icon(trashIsFull == true ? .recycleBinFull : .recycleBinEmpty, size: 16)
         default:
             guard case .folder(let url) = location(for: id) else { return FileIcons.icon(.folder, size: 16) }
             if url.path == documents.path { return FileIcons.icon(.myDocuments, size: 16) }

@@ -26,6 +26,14 @@ public enum ExplorerText {
     public static func selectAll(_ l: [String]) -> String { text("Select All", "Selecionar tudo", l) }
     public static func refresh(_ l: [String]) -> String { text("Refresh", "Atualizar", l) }
     public static func about(_ l: [String]) -> String { text("About Retro98 Explorer", "Sobre o Retro98 Explorer", l) }
+    public static func hide(_ l: [String]) -> String { text("Hide Retro98 Explorer", "Ocultar Retro98 Explorer", l) }
+    public static func hideOthers(_ l: [String]) -> String { text("Hide Others", "Ocultar Outros", l) }
+    public static func showAll(_ l: [String]) -> String { text("Show All", "Mostrar Tudo", l) }
+    public static func menuWindow(_ l: [String]) -> String { text("Window", "Janela", l) }
+    public static func minimize(_ l: [String]) -> String { text("Minimize", "Minimizar", l) }
+    public static func zoom(_ l: [String]) -> String { "Zoom" }
+    public static func bringAllToFront(_ l: [String]) -> String { text("Bring All to Front", "Trazer Tudo para a Frente", l) }
+    public static func redo(_ l: [String]) -> String { text("Redo", "Refazer", l) }
     public static func quit(_ l: [String]) -> String { text("Quit Retro98 Explorer", "Encerrar Retro98 Explorer", l) }
     public static func readme(_ l: [String]) -> String { text("Retro98 Help (README)", "Ajuda do Retro98 (README)", l) }
 

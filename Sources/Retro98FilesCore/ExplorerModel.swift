@@ -30,6 +30,10 @@ public final class ExplorerModel {
     public private(set) var entries: [FileEntry] = []
     public private(set) var error: String?
     public var onChange: (() -> Void)?
+    /// Mounted volumes and the free space where the window is, read once per load: a stale network
+    /// mount can block that call for seconds, so it must never run per click.
+    public private(set) var volumes: [VolumeInfo] = []
+    public private(set) var freeSpace: Int64?
     private let environment: ExplorerEnvironment
 
     public init(start: Location, environment: ExplorerEnvironment) {
@@ -56,7 +60,7 @@ public final class ExplorerModel {
     }
 
     public func up() {
-        guard let parent = NavigationHistory.parent(of: history.current, volumes: environment.volumes().map(\.url)) else { return }
+        guard let parent = NavigationHistory.parent(of: history.current, volumes: volumes.map(\.url)) else { return }
         go(to: parent)
     }
 
@@ -69,24 +73,32 @@ public final class ExplorerModel {
 
     /// Re-reads the current place; if it no longer exists, moves up to the nearest place that does.
     public func reload() {
+        volumes = environment.volumes()
         if case .folder(let url) = history.current, !FileManager.default.fileExists(atPath: url.path) {
             let recovered = NavigationHistory.recover(history.current, exists: { FileManager.default.fileExists(atPath: $0.path) },
-                                                      volumes: environment.volumes().map(\.url))
+                                                      volumes: volumes.map(\.url))
             history.go(to: recovered)
         }
-        load()
+        load(readingVolumes: false)
     }
 
-    private func load() {
+    private func load(readingVolumes: Bool = true) {
         error = nil
+        if readingVolumes { volumes = environment.volumes() }
         let languages = environment.languages
+        let path: String
+        switch history.current {
+        case .folder(let url): path = url.path
+        default: path = environment.home.path
+        }
+        freeSpace = Volumes.containing(path: path, in: volumes)?.freeBytes
         switch history.current {
         case .desktop:
             entries = DesktopLocation.entries(desktop: environment.home.appending(path: "Desktop"),
                                               documents: environment.home.appending(path: "Documents"),
                                               trash: environment.trash, languages: languages)
         case .myComputer:
-            entries = environment.volumes().map { volume in
+            entries = volumes.map { volume in
                 FileEntry(url: volume.url, name: volume.name, kind: .volume(volume.kind), size: volume.totalBytes,
                           modified: nil, location: .folder(volume.url))
             }

@@ -55,7 +55,11 @@ public struct NavigationHistory: Equatable, Sendable {
     /// For a place that no longer exists: the nearest existing ancestor folder, or My Computer.
     public static func recover(_ location: Location, exists: (URL) -> Bool, volumes: [URL]) -> Location {
         guard case .folder(var url) = location else { return location }
+        var isStart = true
         while true {
+            // Walking up out of an ejected drive reaches /Volumes, a hidden system folder: show My Computer.
+            if !isStart && url.path == "/Volumes" { return .myComputer }
+            isStart = false
             if exists(url) { return .folder(url) }
             guard let parent = parent(of: .folder(url), volumes: volumes) else { return .desktop }
             guard case .folder(let next) = parent else { return parent }

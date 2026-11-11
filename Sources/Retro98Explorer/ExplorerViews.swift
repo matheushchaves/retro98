@@ -35,7 +35,7 @@ final class AddressBar: PixelView {
     var dropDownItems: (() -> [RetroMenuItem])?
     private var dropDown: RetroMenu?
     private let label: String
-    private let field = NSTextField()
+    let field = NSTextField()
     private var icon: PixelIcon?
 
     init(label: String) {
@@ -89,8 +89,9 @@ final class AddressBar: PixelView {
         resizeSubviews(withOldSize: newSize)
     }
 
-    func set(text: String, icon: PixelIcon) {
-        field.stringValue = text
+    /// `keepsEdits`: a background refresh must not replace what the person is typing.
+    func set(text: String, icon: PixelIcon, keepsEdits: Bool = false) {
+        if !(keepsEdits && field.currentEditor() != nil) { field.stringValue = text }
         self.icon = icon
         needsDisplay = true
     }

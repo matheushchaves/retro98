@@ -70,3 +70,25 @@ import Testing
     let model = ExplorerModel(start: .trash, environment: environment(home))   // .Trash doesn't exist → unreadable
     #expect(model.error == ExplorerText.trashNeedsAccess(["pt-BR"]))
 }
+
+private final class CallCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+    var value: Int { lock.withLock { count } }
+    func increment() { lock.withLock { count += 1 } }
+}
+
+/// Listing volumes can block on a stale network mount: read them once per load, not per click.
+@MainActor @Test func volumesAreReadOncePerLoad() throws {
+    let home = try TempTree(["Desktop/a.txt", ".Trash"])
+    let calls = CallCounter()
+    let environment = ExplorerEnvironment(home: home.root, languages: ["pt-BR"], showHidden: false, volumes: {
+        calls.increment()
+        return [VolumeInfo(url: URL(filePath: "/"), name: "Macintosh HD", kind: .internal, totalBytes: 1000, freeBytes: 500, isEjectable: false)]
+    }, trash: home.root.appending(path: ".Trash"))
+    let model = ExplorerModel(start: .desktop, environment: environment)
+    #expect(model.freeSpace == 500)
+    #expect(calls.value == 1)
+    model.reload()
+    #expect(calls.value == 2)
+}

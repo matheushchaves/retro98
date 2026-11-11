@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 public enum FileIconKind: CaseIterable, Sendable {
     case folder, document, image, audio, video, archive, text, hardDisk, removableDisk, networkDisk,
@@ -13,11 +14,30 @@ public enum FileIcons {
     private static let navy = PixelIcon.color("N"), blue = PixelIcon.color("B"), red = PixelIcon.color("R")
     private static let gray = Palette.face, dark = Palette.shadow
 
+    /// Drawn once per kind and size: grids ask for an icon per visible cell on every draw.
     public static func icon(_ kind: FileIconKind, size: Int) -> PixelIcon {
-        PixelIcon(width: size, height: size) { context in
-            sketch(kind, Sketch(context: context, scale: CGFloat(size) / 16))
+        cache.icon(for: Key(kind: kind, size: size)) {
+            PixelIcon(width: size, height: size) { context in
+                sketch(kind, Sketch(context: context, scale: CGFloat(size) / 16))
+            }
         }
     }
+
+    private struct Key: Hashable { let kind: FileIconKind; let size: Int }
+
+    private final class Cache: @unchecked Sendable {
+        private let lock = NSLock()
+        private var icons: [Key: PixelIcon] = [:]
+
+        func icon(for key: Key, draw: () -> PixelIcon) -> PixelIcon {
+            if let icon = lock.withLock({ icons[key] }) { return icon }
+            let icon = draw()
+            lock.withLock { icons[key] = icon }
+            return icon
+        }
+    }
+
+    private static let cache = Cache()
 
     // MARK: Toolbar (16×16)
 
