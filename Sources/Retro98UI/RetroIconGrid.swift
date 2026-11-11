@@ -20,6 +20,8 @@ public final class RetroIconGrid: PixelView {
     public private(set) var selection = IndexSet()
     public var onOpen: ((Int) -> Void)?
     public var onSelectionChange: ((IndexSet) -> Void)?
+    /// Consulted first on every key press; return true when handled (e.g. space for Quick Look).
+    public var onKey: ((NSEvent) -> Bool)?
     private var focus: Int?
     private var rubberBand: CGRect?
 
@@ -137,6 +139,7 @@ public final class RetroIconGrid: PixelView {
     // MARK: Keyboard
 
     override public func keyDown(with event: NSEvent) {
+        if onKey?(event) == true { return }
         let current = focus ?? -1
         let target: Int?
         switch event.keyCode {

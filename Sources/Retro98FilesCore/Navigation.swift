@@ -45,6 +45,13 @@ public struct NavigationHistory: Equatable, Sendable {
         }
     }
 
+    /// `location`, its parent, and so on up to the Desktop (the address bar's drop-down list).
+    public static func ancestors(of location: Location, volumes: [URL]) -> [Location] {
+        var chain = [location]
+        while let parent = parent(of: chain[chain.count - 1], volumes: volumes) { chain.append(parent) }
+        return chain
+    }
+
     /// For a place that no longer exists: the nearest existing ancestor folder, or My Computer.
     public static func recover(_ location: Location, exists: (URL) -> Bool, volumes: [URL]) -> Location {
         guard case .folder(var url) = location else { return location }

@@ -80,3 +80,11 @@ private let c = Location.folder(URL(filePath: "/C")), d = Location.folder(URL(fi
     #expect(ExplorerURL.url(for: .desktop).absoluteString == "retro98-explorer://desktop")
     #expect(ExplorerURL.location(from: URL(string: "https://example.com")!) == nil)
 }
+
+@Test func ancestorsRunFromHereToTheDesktop() {
+    let volumes = [URL(filePath: "/"), URL(filePath: "/Volumes/PEN")]
+    #expect(NavigationHistory.ancestors(of: .folder(URL(filePath: "/Volumes/PEN/fotos")), volumes: volumes)
+            == [.folder(URL(filePath: "/Volumes/PEN/fotos")), .folder(URL(filePath: "/Volumes/PEN")), .myComputer, .desktop])
+    #expect(NavigationHistory.ancestors(of: .desktop, volumes: volumes) == [.desktop])
+    #expect(NavigationHistory.ancestors(of: .trash, volumes: volumes) == [.trash, .desktop])
+}

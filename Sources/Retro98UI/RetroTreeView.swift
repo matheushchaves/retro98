@@ -35,6 +35,11 @@ public final class RetroTreeView: PixelView {
     }
 
     /// Expands every id but the last and selects the last (without calling onSelect).
+    public func expand(_ id: String) {
+        expanded.insert(id)
+        rebuild()
+    }
+
     public func reveal(path ids: [String]) {
         expanded.formUnion(ids.dropLast())
         selected = ids.last

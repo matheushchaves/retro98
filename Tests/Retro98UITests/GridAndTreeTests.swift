@@ -39,3 +39,20 @@ import Testing
     #expect(rows == [TreeRow(id: "d", depth: 0), TreeRow(id: "c", depth: 1), TreeRow(id: "hd", depth: 2), TreeRow(id: "m", depth: 1)])
     #expect(TreeRows.flatten(roots: ["d"], children: { children[$0] ?? [] }, expanded: []) == [TreeRow(id: "d", depth: 0)])
 }
+
+@MainActor private final class StaticTree: RetroTreeDataSource {
+    func tree(_ tree: RetroTreeView, childrenOf id: String) -> [String] { id == "raiz" ? ["a", "b"] : [] }
+    func tree(_ tree: RetroTreeView, titleOf id: String) -> String { id }
+    func tree(_ tree: RetroTreeView, iconOf id: String) -> PixelIcon { Icons.folder }
+    func tree(_ tree: RetroTreeView, isExpandable id: String) -> Bool { id == "raiz" }
+}
+
+@MainActor @Test func expandOpensANodeWithoutSelectingIt() {
+    let source = StaticTree()
+    let tree = RetroTreeView()
+    tree.dataSource = source
+    tree.roots = ["raiz"]
+    tree.expand("raiz")
+    #expect(tree.expanded == ["raiz"])
+    #expect(tree.selected == nil)
+}

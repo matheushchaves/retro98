@@ -1,3 +1,4 @@
+import Foundation
 import Retro98Settings
 
 /// Explorer copy in Brazilian Portuguese and English.
@@ -24,6 +25,8 @@ public enum ExplorerText {
     public static func close(_ l: [String]) -> String { text("Close", "Fechar", l) }
     public static func selectAll(_ l: [String]) -> String { text("Select All", "Selecionar tudo", l) }
     public static func refresh(_ l: [String]) -> String { text("Refresh", "Atualizar", l) }
+    public static func about(_ l: [String]) -> String { text("About Retro98 Explorer", "Sobre o Retro98 Explorer", l) }
+    public static func quit(_ l: [String]) -> String { text("Quit Retro98 Explorer", "Encerrar Retro98 Explorer", l) }
     public static func readme(_ l: [String]) -> String { text("Retro98 Help (README)", "Ajuda do Retro98 (README)", l) }
 
     public static func back(_ l: [String]) -> String { text("Back", "Voltar", l) }
@@ -49,4 +52,8 @@ public enum ExplorerText {
              "Para ver a Lixeira aqui, dê Acesso Total ao Disco ao Retro98 Explorer.", l)
     }
     public static func openInFinder(_ l: [String]) -> String { text("Open in Finder", "Abrir no Finder", l) }
+    public static func locationTitle(_ location: Location, _ l: [String]) -> String {
+        guard case .folder(let url) = location else { return AddressParser.text(for: location, languages: l) }
+        return FileManager.default.displayName(atPath: url.path)
+    }
 }

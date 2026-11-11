@@ -11,6 +11,7 @@ let package = Package(
         .library(name: "Retro98FilesCore", targets: ["Retro98FilesCore"]),
         .executable(name: "retro98-settings", targets: ["retro98-settings"]),
         .executable(name: "Retro98Shell", targets: ["Retro98Shell"]),
+        .executable(name: "Retro98Explorer", targets: ["Retro98Explorer"]),
     ],
     targets: [
         .target(name: "Retro98Settings"),
@@ -22,6 +23,7 @@ let package = Package(
         .testTarget(name: "Retro98ShellCoreTests", dependencies: ["Retro98ShellCore", "Retro98Settings"]),
         .target(name: "Retro98FilesCore", dependencies: ["Retro98Settings"]),
         .testTarget(name: "Retro98FilesCoreTests", dependencies: ["Retro98FilesCore", "Retro98Settings"]),
+        .executableTarget(name: "Retro98Explorer", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings"]),
         .executableTarget(name: "Retro98Shell", dependencies: ["Retro98UI", "Retro98ShellCore", "Retro98Settings"]),
     ]
 )

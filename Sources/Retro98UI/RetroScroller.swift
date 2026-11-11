@@ -28,11 +28,15 @@ public final class RetroScroller: NSScroller {
     // MARK: Factory
 
     @MainActor public static func makeScrollView(document: NSView) -> NSScrollView {
-        let scroll = NSScrollView()
+        makeScrollView(document: document, as: NSScrollView.self)
+    }
+
+    @MainActor public static func makeScrollView<View: NSScrollView>(document: NSView, as type: View.Type) -> View {
+        let scroll = View()
         scroll.scrollerStyle = .legacy
         scroll.hasVerticalScroller = true
         scroll.hasHorizontalScroller = true
-        scroll.autohidesScrollers = false
+        scroll.autohidesScrollers = true
         scroll.borderType = .noBorder
         scroll.drawsBackground = false
         let vertical = RetroScroller()

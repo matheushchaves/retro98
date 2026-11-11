@@ -45,5 +45,5 @@ private func draw(_ size: CGSize, _ body: (CGContext) -> Void) -> PixelImage {
     #expect(scroll.verticalScroller is RetroScroller)
     #expect(scroll.horizontalScroller is RetroScroller)
     #expect(scroll.scrollerStyle == .legacy)
-    #expect(!scroll.autohidesScrollers)
+    #expect(scroll.autohidesScrollers)   // like 98 list views: bars only when there is something to scroll
 }

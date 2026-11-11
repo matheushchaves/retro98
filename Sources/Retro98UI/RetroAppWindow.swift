@@ -33,6 +33,12 @@ public final class RetroAppWindow: NSWindow {
     override public var canBecomeKey: Bool { true }
     override public var canBecomeMain: Bool { true }
 
+    /// Borderless windows have no close button, so AppKit's performClose would only beep.
+    override public func performClose(_ sender: Any?) {
+        if let delegate, delegate.windowShouldClose?(self) == false { return }
+        close()
+    }
+
     public func setTitle(_ title: String, icon: PixelIcon) {
         self.title = title
         frameView.title = title
