@@ -70,9 +70,10 @@ if [[ " $pieces " == *" base "* ]]; then
 fi
 
 if [[ " $pieces " == *" shell "* ]]; then
-    "$BIN" apply --only dockUnderTaskbar || status=$?
+    # Build first: if it fails, nothing (the Dock included) has been changed yet.
     say "Montando o Retro98 Shell..." "Building Retro98 Shell..."
-    bash "$RETRO98_ROOT/scripts/build-shell-app.sh" "$SHELL_APP"
+    "${RETRO98_BUILD_SHELL_APP:-$RETRO98_ROOT/scripts/build-shell-app.sh}" "$SHELL_APP"
+    "$BIN" apply --only dockUnderTaskbar || status=$?
     mkdir -p "$LAUNCH_AGENTS_DIR"
     cat > "$LAUNCH_AGENT_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -89,6 +90,8 @@ if [[ " $pieces " == *" shell "* ]]; then
 </plist>
 PLIST
     launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true
+    # A previous crash-loop give-up disables the agent; installing turns it back on.
+    launchctl enable "gui/$(id -u)/$SHELL_LABEL" || true
     launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" || status=$?
 elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" ]]; then
     # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.

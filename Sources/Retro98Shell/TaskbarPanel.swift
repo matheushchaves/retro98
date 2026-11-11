@@ -3,23 +3,6 @@ import Retro98Settings
 import Retro98ShellCore
 import Retro98UI
 
-/// The taskbar window: bottom of the main screen, above the Dock, on every Space,
-/// hidden in full-screen apps, never taking focus.
-final class TaskbarPanel: NSPanel {
-    init() {
-        super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) + 1)
-        collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-        hidesOnDeactivate = false
-        isFloatingPanel = true
-        hasShadow = false
-        isReleasedWhenClosed = false
-    }
-
-    override var canBecomeKey: Bool { false }
-    override var canBecomeMain: Bool { false }
-}
-
 /// Face color with the raised top edge of the classic taskbar.
 final class TaskbarView: PixelView {
     override func drawPixels(in context: CGContext, size: CGSize) {
@@ -36,7 +19,7 @@ final class TaskbarController {
     nonisolated static let dockBundleID = "com.apple.dock"
 
     private let languages: [String]
-    private let panel = TaskbarPanel()
+    private let panel = AboveDockPanel()
     private let view = TaskbarView()
     private let startButton: RetroButton
     private let tray: TrayView

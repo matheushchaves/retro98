@@ -34,6 +34,9 @@ check "agent-points-to-app" 'grep -q "$WORK/apps/Retro98 Shell.app/Contents/MacO
 check "app-signed" 'codesign --verify "$WORK/apps/Retro98 Shell.app" 2> /dev/null'
 check "app-is-agent" '[[ "$(/usr/libexec/PlistBuddy -c "Print :LSUIElement" "$WORK/apps/Retro98 Shell.app/Contents/Info.plist")" == "true" ]]'
 check "bootstrapped" 'grep -q "bootstrap gui/$(id -u) $WORK/agents/$LABEL.plist" "$WORK_LOG"'
+enable_line="$(grep -n "^enable gui/$(id -u)/$LABEL" "$WORK_LOG" | head -1 | cut -d: -f1)"
+bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
+check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
 check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell" ]]'
 
 # Re-install with only the base tweaks: the taskbar must be turned off and the Dock restored.
@@ -42,5 +45,15 @@ echo "base" > "$WORK/support/pieces"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out2.log" 2>&1
 check "shell-removed-when-not-chosen" '[[ ! -e "$WORK/agents/$LABEL.plist" && ! -e "$WORK/apps/Retro98 Shell.app" ]]'
 check "dock-restored" 'grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG"'
+
+# A failing Shell build must not leave the Dock shrunk.
+printf '#!/usr/bin/env bash\nexit 1\n' > "$WORK/failing-build"
+chmod +x "$WORK/failing-build"
+echo "shell" > "$WORK/support/pieces"
+: > "$WORK_LOG"
+RETRO98_BUILD_SHELL_APP="$WORK/failing-build" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out3.log" 2>&1
+build_status=$?
+check "failed-build-exits-nonzero" '[[ $build_status -ne 0 ]]'
+check "failed-build-keeps-dock" '! grep -q "apply --only dockUnderTaskbar" "$WORK_LOG"'
 
 exit $((failures > 0 ? 1 : 0))

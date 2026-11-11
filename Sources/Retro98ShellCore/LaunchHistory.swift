@@ -4,6 +4,13 @@ import Retro98Settings
 public enum ShellIdentity {
     public static let label = "io.github.matheushchaves.retro98.shell"
     public static let launchHistoryFileName = "shell-launches.plist"
+
+    /// Disable first so launchd won't start the Shell again at the next login, then stop it now.
+    /// The installer re-enables it.
+    public static func giveUpCommands(uid: uid_t) -> [[String]] {
+        let service = "gui/\(uid)/\(label)"
+        return [["/bin/launchctl", "disable", service], ["/bin/launchctl", "bootout", service]]
+    }
 }
 
 /// Counts Shell launches that were not followed by a clean exit, to detect crash loops.

@@ -26,6 +26,7 @@ public final class RetroWindow: NSPanel {
         super.init(contentRect: CGRect(origin: .zero, size: size), styleMask: [.borderless], backing: .buffered, defer: true)
         level = .modalPanel
         isReleasedWhenClosed = false
+        hidesOnDeactivate = false
         hasShadow = true
         contentView = frameView
         frameView.addSubview(contentContainer)

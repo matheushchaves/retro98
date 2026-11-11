@@ -51,7 +51,10 @@ enum Recovery {
             ).resolve(for: languages),
             icon: .warning, buttons: ["OK"]
         )
-        _ = ProcessCommandRunner().run("/bin/launchctl", ["bootout", "gui/\(getuid())/\(ShellIdentity.label)"])
+        let runner = ProcessCommandRunner()
+        for command in ShellIdentity.giveUpCommands(uid: getuid()) {
+            _ = runner.run(command[0], Array(command.dropFirst()))
+        }
         exit(0)
     }
 }

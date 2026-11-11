@@ -70,6 +70,24 @@ public enum RetroMenuLayout {
     }
 }
 
+public enum RetroMenuPlacement {
+    /// x of a submenu: right of the item when it fits, else left of the parent when that fits,
+    /// else the side with more room, always clamped inside the screen.
+    public static func submenuX(parentFrame: CGRect, itemMaxX: CGFloat, width: CGFloat, visibleFrame: CGRect) -> CGFloat {
+        let right = itemMaxX + 1
+        let left = parentFrame.minX - width
+        let x: CGFloat
+        if right + width <= visibleFrame.maxX {
+            x = right
+        } else if left >= visibleFrame.minX {
+            x = left
+        } else {
+            x = visibleFrame.maxX - right >= parentFrame.minX - visibleFrame.minX ? right : left
+        }
+        return min(max(x, visibleFrame.minX), visibleFrame.maxX - width)
+    }
+}
+
 public enum RetroMenuNavigation {
     public enum Direction: Sendable { case up, down }
 
@@ -224,10 +242,10 @@ public final class RetroMenu {
         let itemRect = view.convert(view.rect(forItem: index), to: nil)
         let screenRect = panel.convertToScreen(itemRect)
         submenu.show(at: CGPoint(x: screenRect.maxX + 1, y: screenRect.maxY + Self.inset), opensUpward: false) {}
-        // Not enough room on the right: flip to the left side of this menu.
-        if let childPanel = submenu.panel, let screen = panel.screen,
-           childPanel.frame.maxX > screen.visibleFrame.maxX - 1 || childPanel.frame.minX < screenRect.maxX {
-            childPanel.setFrameOrigin(CGPoint(x: panel.frame.minX - childPanel.frame.width, y: childPanel.frame.minY))
+        if let childPanel = submenu.panel, let screen = panel.screen {
+            let x = RetroMenuPlacement.submenuX(parentFrame: panel.frame, itemMaxX: screenRect.maxX,
+                                                width: childPanel.frame.width, visibleFrame: screen.visibleFrame)
+            childPanel.setFrameOrigin(CGPoint(x: x, y: childPanel.frame.minY))
         }
         child = submenu
         childIndex = index
