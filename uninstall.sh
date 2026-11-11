@@ -2,6 +2,7 @@
 # Puts back every setting Retro98 changed. Its files are removed only after a full restore.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
+source "$RETRO98_ROOT/scripts/signing.sh"
 
 stop_shell
 
@@ -27,6 +28,7 @@ if [[ $status -ne 0 ]]; then
 fi
 
 # Remove only Retro98's own files, never whole folders blindly.
+remove_signing_identity
 rm -rf "$SHELL_APP"
 rmdir "$APPS_DIR" 2>/dev/null || true
 rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store" \
@@ -34,3 +36,5 @@ rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.pn
 rmdir "$SUPPORT_DIR/bin" 2>/dev/null || true
 rmdir "$SUPPORT_DIR" 2>/dev/null || true
 say "Pronto: seu Mac voltou ao normal e o Retro98 foi removido." "Done: your Mac is back to normal and Retro98 was removed."
+say "Se quiser, remova o Retro98 Shell da lista em Ajustes do Sistema › Privacidade e Segurança › Acessibilidade." \
+    "If you like, remove Retro98 Shell from System Settings › Privacy & Security › Accessibility."

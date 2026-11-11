@@ -18,6 +18,8 @@ chmod +x "$FAKE_BIN/launchctl"
 export PATH="$FAKE_BIN:$PATH"
 export RETRO98_APPS_DIR="$WORK/apps-default"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-default"
+# Never touch the real signing keychain either.
+export RETRO98_SIGNING_KEYCHAIN="$WORK/default-signing.keychain-db"
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0
@@ -90,5 +92,25 @@ run_shell_case() {
 
 run_shell_case shell-removed 0 0 absent
 run_shell_case shell-kept-on-failure 2 2 present
+
+# The local signing keychain goes away with a successful uninstall; the search list is untouched.
+BEFORE_LIST="$(security list-keychains -d user)"
+SIGN_SUPPORT="$WORK/support-signing"
+SIGN_KEYCHAIN="$WORK/signing-case.keychain-db"
+mkdir -p "$SIGN_SUPPORT"
+echo "<plist/>" > "$SIGN_SUPPORT/backup.plist"
+echo "secret" > "$SIGN_SUPPORT/signing-password"
+security create-keychain -p secret "$SIGN_KEYCHAIN" > /dev/null 2>&1
+security list-keychains -d user -s $(echo "$BEFORE_LIST" | tr -d '"')
+STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$SIGN_SUPPORT" RETRO98_SIGNING_KEYCHAIN="$SIGN_KEYCHAIN" \
+    bash "$ROOT/uninstall.sh" > "$WORK/signing-out.log" 2>&1
+if [[ ! -e "$SIGN_KEYCHAIN" && "$(security list-keychains -d user)" == "$BEFORE_LIST" ]] \
+    && grep -qE "Acessibilidade|Accessibility" "$WORK/signing-out.log"; then
+    echo "PASS signing-removed"
+else
+    echo "FAIL signing-removed"
+    failures=$((failures + 1))
+    [[ -e "$SIGN_KEYCHAIN" ]] && security delete-keychain "$SIGN_KEYCHAIN" > /dev/null 2>&1
+fi
 
 exit $((failures > 0 ? 1 : 0))

@@ -41,6 +41,7 @@ enable_line="$(grep -n "^enable gui/$(id -u)/$LABEL" "$WORK_LOG" | head -1 | cut
 bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
 check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell" ]]'
+check "accessibility-hint" 'grep -qE "Acessibilidade|Accessibility" "$WORK/out.log"'
 
 # Re-install with only the base tweaks: the taskbar must be turned off and the Dock restored.
 echo "base" > "$WORK/support/pieces"

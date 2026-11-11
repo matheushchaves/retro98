@@ -14,7 +14,8 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 |---|---|---|
 | 1 | Base tweaks (this release) | ✅ available |
 | 2A | Visual kit + taskbar and Start menu | ✅ available |
-| 2B | Window buttons on the taskbar + desktop icons | planned |
+| 2B | Window buttons on the taskbar, hidden Dock | ✅ available |
+| 2C | Desktop icons | planned |
 | 3 | Explorer (file manager) | planned |
 | 4 | Prompt (terminal) | planned |
 | 5 | Control Panel | planned |
@@ -52,11 +53,20 @@ A 98-style taskbar at the bottom of your main screen:
 - **Start** opens the Start menu: Programs (every app on your Mac, in its folders), Documents (recently opened files), Settings (System Settings), Help, Run… (open an app, folder, document or web address by name) and Shut Down… (shut down, restart, log out or sleep).
 - **Control-Escape** (⌃⎋) opens and closes the Start menu.
 - The right corner shows volume, battery and the clock (hover for the date); clicking opens the matching System Settings pane.
-- The Dock shrinks and sits under the taskbar, so maximized windows stop above it. It goes back to its old size when you uninstall.
+- The Dock is hidden while the taskbar runs (it never pops up or shows labels); ⌘Tab still works. It comes back exactly as it was when you uninstall.
 - If the taskbar crashes, it comes back by itself. If it crashes 3 times within a minute, it turns itself off and gives the Dock back.
 - To keep the base tweaks but remove the taskbar, run `./install.sh` again and answer "n" to the taskbar question.
 
 The first time you use Shut Down…, macOS asks whether Retro98 Shell may control System Events.
+
+## Window buttons (Phase 2B)
+
+- One button per open window on the current Space, with the app's icon and the window title.
+- Click a button to bring its window forward; click the active window's button to minimize it; click a minimized window's button to restore it.
+- Right-click a button for Restore, Minimize and Close.
+- Maximized, "Fill" and tiled windows stop at the top of the taskbar instead of going under it.
+
+These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain; you can also remove Retro98 Shell from the Accessibility list.
 
 ## What Phase 1 changes
 

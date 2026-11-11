@@ -14,7 +14,8 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 |---|---|---|
 | 1 | Ajustes base (esta versão) | ✅ disponível |
 | 2A | Base visual + barra de tarefas e menu Iniciar | ✅ disponível |
-| 2B | Botões das janelas na barra + ícones na área de trabalho | planejada |
+| 2B | Botões das janelas na barra, Dock escondido | ✅ disponível |
+| 2C | Ícones na área de trabalho | planejada |
 | 3 | Explorer (gerenciador de arquivos) | planejada |
 | 4 | Prompt (terminal) | planejada |
 | 5 | Painel de Controle | planejada |
@@ -52,11 +53,20 @@ Uma barra de tarefas estilo 98 na base da tela principal:
 - **Iniciar** abre o menu: Programas (todos os apps do Mac, nas pastas deles), Documentos (arquivos abertos recentemente), Configurações (Ajustes do Sistema), Ajuda, Executar… (abre app, pasta, documento ou endereço pelo nome) e Desligar… (desligar, reiniciar, encerrar sessão ou repouso).
 - **Control-Esc** (⌃⎋) abre e fecha o menu Iniciar.
 - O canto direito mostra volume, bateria e relógio (passe o mouse para ver a data); clicar abre o painel correspondente dos Ajustes do Sistema.
-- O Dock encolhe e fica embaixo da barra, então janelas maximizadas param acima dela. Ele volta ao tamanho antigo quando você desinstala.
+- O Dock fica escondido enquanto a barra estiver ligada (não aparece nem mostra nomes); o ⌘Tab continua funcionando. Ele volta exatamente como era quando você desinstala.
 - Se a barra cair, ela volta sozinha. Se cair 3 vezes em 1 minuto, ela se desliga e devolve o Dock.
 - Para manter os ajustes base e tirar só a barra, rode `./install.sh` de novo e responda "n" na pergunta da barra.
 
 Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell pode controlar o System Events.
+
+## Botões de janela (Fase 2B)
+
+- Um botão por janela aberta no Space atual, com o ícone do app e o título da janela.
+- Clique num botão para trazer a janela para a frente; clique no botão da janela ativa para minimizá-la; clique no botão de uma janela minimizada para restaurá-la.
+- Clique com o botão direito para Restaurar, Minimizar e Fechar.
+- Janelas maximizadas, em "Preencher" ou lado a lado param no topo da barra em vez de passar por baixo dela.
+
+Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro; você também pode tirar o Retro98 Shell da lista de Acessibilidade.
 
 ## O que a Fase 1 muda
 

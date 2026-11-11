@@ -93,6 +93,8 @@ PLIST
     # A previous crash-loop give-up disables the agent; installing turns it back on.
     launchctl enable "gui/$(id -u)/$SHELL_LABEL" || true
     launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" || status=$?
+    say "Na primeira vez, o Retro98 Shell vai pedir a permissão de Acessibilidade para mostrar as janelas na barra. Ative-o em Ajustes do Sistema › Privacidade e Segurança › Acessibilidade." \
+        "The first time, Retro98 Shell asks for Accessibility permission to show your windows on the taskbar. Turn it on in System Settings › Privacy & Security › Accessibility."
 elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" ]]; then
     # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.
     stop_shell
