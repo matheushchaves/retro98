@@ -5,19 +5,10 @@ let fullDiskAccessSettingsURL = "x-apple.systempreferences:com.apple.preference.
 let universalAccessDomain = PreferenceDomain.app("com.apple.universalaccess")
 
 let messages = Messages(languages: Locale.preferredLanguages)
-let home = FileManager.default.homeDirectoryForCurrentUser
-let paths = Retro98Paths.standard(home: home, environment: ProcessInfo.processInfo.environment)
-let catalog = TweakCatalog.all(
-    osMajorVersion: ProcessInfo.processInfo.operatingSystemVersion.majorVersion, homeDirectory: home
-)
-let files = LocalFileStore()
-let engine = TweakEngine(
-    catalog: catalog, store: CFPreferenceStore(), files: files,
-    backupFile: BackupFile(url: paths.backupFile, files: files),
-    wallpaperIndex: paths.wallpaperIndex,
-    wallpaper: MacWallpaperSetter(paths: paths, files: files),
-    refresher: MacSystemRefresher()
-)
+let system = SystemEngine.make()
+let paths = system.paths
+let catalog = system.catalog
+let engine = system.engine
 
 func printError(_ message: String) {
     FileHandle.standardError.write(Data((message + "\n").utf8))
