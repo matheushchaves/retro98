@@ -1,0 +1,122 @@
+import AppKit
+import Retro98Settings
+import Retro98ShellCore
+import Retro98UI
+
+/// The Run… dialog: opens an app, folder, document or Internet address.
+@MainActor
+enum RunDialog {
+    static let contentSize = CGSize(width: 347, height: 132)
+    static let margin: CGFloat = 12
+    private static var window: RetroWindow?
+    private static var lastEntry = ""
+
+    static func show(languages: [String]) {
+        if let window {
+            window.showCentered()
+            return
+        }
+        let window = RetroWindow(title: titleText(languages), contentSize: contentSize)
+        let content = window.contentContainer
+
+        let icon = RetroIconView(icon: Icons.run)
+        icon.frame.origin = CGPoint(x: margin, y: margin)
+        content.addSubview(icon)
+
+        let prompt = RetroMessageBox.layout(message: RunDialogText.prompt(languages: languages), buttons: []).lines
+        let promptView = RetroLabel(lines: prompt)
+        promptView.frame = CGRect(x: margin * 2 + 32, y: margin, width: contentSize.width - margin * 3 - 32,
+                                  height: CGFloat(prompt.count * PixelText.lineHeight))
+        content.addSubview(promptView)
+
+        let label = RetroLabel(lines: [RunDialogText.openLabel(languages: languages)])
+        label.frame = CGRect(x: margin, y: 66, width: 44, height: CGFloat(PixelText.lineHeight))
+        content.addSubview(label)
+
+        let field = RetroTextField(frame: CGRect(x: margin * 2 + 32, y: 62, width: contentSize.width - margin * 3 - 32, height: 21))
+        field.text = lastEntry
+        content.addSubview(field)
+
+        let cancel = RetroButton(title: cancelText(languages)) { close() }
+        let ok = RetroButton(title: "OK", isDefault: true) { submit(field.text, languages: languages) }
+        cancel.frame.origin = CGPoint(x: contentSize.width - margin - cancel.frame.width, y: contentSize.height - margin - 23)
+        ok.frame.origin = CGPoint(x: cancel.frame.minX - 6 - ok.frame.width, y: cancel.frame.minY)
+        content.addSubview(ok)
+        content.addSubview(cancel)
+
+        window.defaultButton = ok
+        window.onCancel = { close() }
+        field.onSubmit = { submit(field.text, languages: languages) }
+        self.window = window
+        window.showCentered()
+        field.focus(in: window)
+    }
+
+    private static func submit(_ input: String, languages: [String]) {
+        guard let target = RunTarget.resolve(input, appRoots: StartMenuController.appRoots,
+                                             home: FileManager.default.homeDirectoryForCurrentUser) else { return }
+        lastEntry = input
+        switch target {
+        case .url(let url), .path(let url), .app(let url):
+            close()
+            NSWorkspace.shared.open(url)
+        case .notFound(let text):
+            _ = RetroMessageBox.run(title: titleText(languages), message: RunDialogText.notFound(text, languages: languages),
+                                    icon: .error, buttons: ["OK"])
+        }
+    }
+
+    private static func close() {
+        window?.orderOut(nil)
+        window = nil
+    }
+
+    private static func titleText(_ languages: [String]) -> String {
+        LocalizedText(en: "Run", ptBR: "Executar").resolve(for: languages)
+    }
+
+    static func cancelText(_ languages: [String]) -> String {
+        LocalizedText(en: "Cancel", ptBR: "Cancelar").resolve(for: languages)
+    }
+}
+
+/// A white sunken field around a plain NSTextField (Tahoma 11), the one non-pixel exception.
+@MainActor
+final class RetroTextField: PixelView, NSTextFieldDelegate {
+    private let field = NSTextField()
+    var onSubmit: (() -> Void)?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        field.isBordered = false
+        field.isBezeled = false
+        field.drawsBackground = true
+        field.backgroundColor = .white
+        field.focusRingType = .none
+        field.font = NSFont(name: "Tahoma", size: 11)
+        field.frame = bounds.insetBy(dx: 3, dy: 3)
+        field.target = self
+        field.action = #selector(submit)
+        addSubview(field)
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    var text: String {
+        get { field.stringValue }
+        set { field.stringValue = newValue }
+    }
+
+    func focus(in window: NSWindow) {
+        window.makeFirstResponder(field)
+        field.currentEditor()?.selectAll(nil)
+    }
+
+    @objc private func submit() { onSubmit?() }
+
+    override func drawPixels(in context: CGContext, size: CGSize) {
+        Bevel.draw(.field, in: CGRect(origin: .zero, size: size), context: context)
+    }
+}
+

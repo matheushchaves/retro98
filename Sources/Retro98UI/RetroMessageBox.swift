@@ -44,10 +44,10 @@ public enum RetroMessageBox {
         let layout = layout(message: message, buttons: buttons)
         let window = RetroWindow(title: title, contentSize: layout.contentSize)
         let content = window.contentContainer
-        let iconView = IconView(icon: icon.icon)
+        let iconView = RetroIconView(icon: icon.icon)
         iconView.frame.origin = CGPoint(x: margin, y: margin)
         content.addSubview(iconView)
-        let textView = TextBlockView(lines: layout.lines)
+        let textView = RetroLabel(lines: layout.lines)
         textView.frame = CGRect(x: margin + iconSize + margin, y: margin,
                                 width: layout.contentSize.width - (margin * 3 + iconSize),
                                 height: CGFloat(layout.lines.count * PixelText.lineHeight))
@@ -87,12 +87,12 @@ public enum RetroMessageBox {
     }
 }
 
-/// Draws a PixelIcon at its natural size.
+/// Draws a PixelIcon at its natural size on the face color.
 @MainActor
-final class IconView: PixelView {
-    let icon: PixelIcon
+public final class RetroIconView: PixelView {
+    public let icon: PixelIcon
 
-    init(icon: PixelIcon) {
+    public init(icon: PixelIcon) {
         self.icon = icon
         super.init(frame: CGRect(x: 0, y: 0, width: icon.width, height: icon.height))
     }
@@ -100,18 +100,18 @@ final class IconView: PixelView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    override func drawPixels(in context: CGContext, size: CGSize) {
+    override public func drawPixels(in context: CGContext, size: CGSize) {
         Bevel.fillFace(CGRect(origin: .zero, size: size), context: context)
         icon.draw(at: .zero, context: context)
     }
 }
 
-/// Draws lines of regular black text on the face color.
+/// Lines of regular black text on the face color.
 @MainActor
-final class TextBlockView: PixelView {
-    let lines: [String]
+public final class RetroLabel: PixelView {
+    public let lines: [String]
 
-    init(lines: [String]) {
+    public init(lines: [String]) {
         self.lines = lines
         super.init(frame: .zero)
     }
@@ -119,7 +119,7 @@ final class TextBlockView: PixelView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-    override func drawPixels(in context: CGContext, size: CGSize) {
+    override public func drawPixels(in context: CGContext, size: CGSize) {
         Bevel.fillFace(CGRect(origin: .zero, size: size), context: context)
         for (index, line) in lines.enumerated() {
             PixelText.draw(line, font: .regular, color: .black,

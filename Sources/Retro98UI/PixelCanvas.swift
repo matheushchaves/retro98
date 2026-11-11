@@ -59,6 +59,10 @@ public enum PixelCanvas {
 open class PixelView: NSView {
     override open var isFlipped: Bool { true }
 
+    /// Retro controls react to the first click even when their app is in the background
+    /// (the taskbar never activates the Shell).
+    override open func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     open func drawPixels(in context: CGContext, size: CGSize) {}
 
     override open func draw(_ dirtyRect: NSRect) {
