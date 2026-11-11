@@ -65,7 +65,7 @@ func printReport(_ report: EngineReport, restoring: Bool) {
 let command: SettingsCommand
 do {
     command = try SettingsCommand.parse(Array(CommandLine.arguments.dropFirst()))
-} catch .unknownTweak(let name) {
+} catch SettingsCommandError.unknownTweak(let name) {
     printError(messages.unknownTweak(name))
     printError(messages.usage)
     exit(1)

@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    # macos-15 ships Xcode 16 (Swift 6), required by swift-tools-version 6.0.
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: swift build
+      - name: Unit and integration tests
+        run: swift test
+      - name: Uninstall script tests
+        run: bash Tests/scripts/test_uninstall.sh
