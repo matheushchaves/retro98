@@ -1,0 +1,32 @@
+import Testing
+@testable import Retro98UI
+
+private func opaqueRatio(_ icon: PixelIcon) -> Double {
+    let image = render(icon)
+    let opaque = (0..<image.height).flatMap { y in (0..<image.width).map { x in image.alpha(x: x, y: y) } }.filter { $0 > 0 }.count
+    return Double(opaque) / Double(icon.width * icon.height)
+}
+
+@Test func everyKindHasBothSizes() {
+    for kind in FileIconKind.allCases {
+        for size in [16, 32] {
+            let icon = FileIcons.icon(kind, size: size)
+            #expect(icon.width == size && icon.height == size, "\(kind) \(size)")
+            #expect(opaqueRatio(icon) > 1.0 / 8.0, "\(kind) \(size) looks empty")
+        }
+    }
+}
+
+@Test func kindsAreDistinct() {
+    let renders = FileIconKind.allCases.map { kind -> [PixelColor] in allPixels(render(FileIcons.icon(kind, size: 32))) }
+    for (i, a) in renders.enumerated() {
+        for b in renders.dropFirst(i + 1) { #expect(a != b) }
+    }
+}
+
+@Test func toolbarIconsAre16() {
+    let icons = [FileIcons.back, FileIcons.forward, FileIcons.up, FileIcons.cut, FileIcons.copy, FileIcons.paste,
+                 FileIcons.undo, FileIcons.delete, FileIcons.properties, FileIcons.views]
+    #expect(icons.allSatisfy { $0.width == 16 && $0.height == 16 && opaqueRatio($0) > 0.05 })
+    #expect(FileIcons.explorerApp.width == 32 && opaqueRatio(FileIcons.explorerApp) > 1.0 / 8.0)
+}
