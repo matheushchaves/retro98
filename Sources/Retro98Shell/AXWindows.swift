@@ -21,6 +21,12 @@ enum AX {
         let status: AXError
     }
 
+    /// Setting the timeout on the system-wide element makes it the default for every element,
+    /// including the windows read from an app (per-app timeouts don't carry over to them).
+    static func configureGlobalTimeout() {
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), messagingTimeout)
+    }
+
     static func application(_ pid: pid_t) -> AXUIElement {
         let element = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(element, messagingTimeout)
@@ -137,7 +143,6 @@ final class WindowChangeMonitor {
     ]
     /// Geometry-only events: they don't change the buttons, so they skip the refresh.
     static let geometryNotifications: Set<String> = [kAXWindowMovedNotification, kAXWindowResizedNotification]
-    static let geometryCheckNotifications: Set<String> = geometryNotifications.union([kAXWindowCreatedNotification])
 
     private let onChange: @MainActor () -> Void
     /// Called with the window when it is created, moved or resized.
@@ -152,6 +157,7 @@ final class WindowChangeMonitor {
     }
 
     func start() {
+        AX.configureGlobalTimeout()
         AX.regularApps().forEach { observe($0.processIdentifier) }
         let center = NSWorkspace.shared.notificationCenter
         let names: [Notification.Name] = [
@@ -219,7 +225,7 @@ final class WindowChangeMonitor {
     }
 
     private func received(_ notification: String, window: AXUIElement) {
-        if Self.geometryCheckNotifications.contains(notification) { onWindowGeometry?(window) }
+        if WorkAreaGuard.shouldCheck(notification: notification) { onWindowGeometry?(window) }
         if !Self.geometryNotifications.contains(notification) { schedule() }
     }
 

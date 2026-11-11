@@ -33,7 +33,9 @@ final class WorkAreaGuardian {
               let mainScreen = NSScreen.screens.first
         else { return }
         let screen = CGRect(origin: .zero, size: mainScreen.frame.size)
-        guard let size = WorkAreaGuard.adjustedSize(window: frame, screen: screen, taskbarHeight: taskbarHeight()) else { return }
+        let isFullScreen = AX.bool(window, "AXFullScreen") == true
+        guard let size = WorkAreaGuard.adjustedSize(window: frame, screen: screen, taskbarHeight: taskbarHeight(),
+                                                    isFullScreen: isFullScreen) else { return }
         AX.setSize(window, size)
     }
 }

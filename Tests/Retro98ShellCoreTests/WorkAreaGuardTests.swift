@@ -29,3 +29,15 @@ private let screen = CGRect(x: 0, y: 0, width: 1470, height: 956)
 @Test func windowEntirelyBehindTheTaskbarIsLeftAlone() {
     #expect(WorkAreaGuard.adjustedSize(window: CGRect(x: 0, y: 940, width: 300, height: 16), screen: screen, taskbarHeight: 28) == nil)
 }
+
+@Test func fullScreenWindowsAreLeftAlone() {
+    #expect(WorkAreaGuard.adjustedSize(window: CGRect(x: 0, y: 0, width: 1470, height: 956), screen: screen,
+                                       taskbarHeight: 28, isFullScreen: true) == nil)
+}
+
+@Test func onlyCreatedAndResizedWindowsAreChecked() {
+    #expect(WorkAreaGuard.shouldCheck(notification: "AXWindowCreated"))
+    #expect(WorkAreaGuard.shouldCheck(notification: "AXWindowResized"))
+    #expect(!WorkAreaGuard.shouldCheck(notification: "AXWindowMoved"))   // never fight a drag
+    #expect(!WorkAreaGuard.shouldCheck(notification: "AXTitleChanged"))
+}
