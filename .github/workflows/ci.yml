@@ -14,5 +14,9 @@ jobs:
         run: swift build
       - name: Unit and integration tests
         run: swift test
-      - name: Uninstall script tests
-        run: bash Tests/scripts/test_uninstall.sh
+      - name: Build the Shell app bundle
+        run: bash scripts/build-shell-app.sh "$RUNNER_TEMP/Retro98 Shell.app"
+      - name: Install and uninstall script tests
+        run: |
+          bash Tests/scripts/test_uninstall.sh
+          bash Tests/scripts/test_install.sh

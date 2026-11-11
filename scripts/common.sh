@@ -16,3 +16,17 @@ say() {
         echo "$2"
     fi
 }
+
+# Retro98 Shell (taskbar) locations; overridable so tests never touch the real ones.
+APPS_DIR="${RETRO98_APPS_DIR:-$HOME/Applications/Retro98}"
+LAUNCH_AGENTS_DIR="${RETRO98_LAUNCH_AGENTS_DIR:-$HOME/Library/LaunchAgents}"
+SHELL_LABEL="io.github.matheushchaves.retro98.shell"
+SHELL_APP="$APPS_DIR/Retro98 Shell.app"
+LAUNCH_AGENT_PLIST="$LAUNCH_AGENTS_DIR/$SHELL_LABEL.plist"
+PIECES_FILE="$SUPPORT_DIR/pieces"
+
+# Stops the Shell (if running) and removes its LaunchAgent so launchd won't start it again.
+stop_shell() {
+    launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true
+    rm -f "$LAUNCH_AGENT_PLIST"
+}

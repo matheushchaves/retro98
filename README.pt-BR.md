@@ -13,7 +13,8 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | Fase | O quê | Estado |
 |---|---|---|
 | 1 | Ajustes base (esta versão) | ✅ disponível |
-| 2 | Base visual + Shell (área de trabalho, barra de tarefas, menu Iniciar) | planejada |
+| 2A | Base visual + barra de tarefas e menu Iniciar | ✅ disponível |
+| 2B | Botões das janelas na barra + ícones na área de trabalho | planejada |
 | 3 | Explorer (gerenciador de arquivos) | planejada |
 | 4 | Prompt (terminal) | planejada |
 | 5 | Painel de Controle | planejada |
@@ -34,7 +35,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois aplica os ajustes da Fase 1. Use `./install.sh --yes` para pular a pergunta.
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez).
 
 ## Desinstalar
 
@@ -43,6 +44,19 @@ O instalador compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de 
 ```
 
 Isso devolve todos os valores originais. Os arquivos do Retro98 só são removidos **se tudo foi restaurado**. Se algo não puder ser restaurado, o backup fica em `~/Library/Application Support/Retro98/` e você pode rodar `./uninstall.sh` de novo.
+
+## Barra de tarefas e menu Iniciar (Fase 2A)
+
+Uma barra de tarefas estilo 98 na base da tela principal:
+
+- **Iniciar** abre o menu: Programas (todos os apps do Mac, nas pastas deles), Documentos (arquivos abertos recentemente), Configurações (Ajustes do Sistema), Ajuda, Executar… (abre app, pasta, documento ou endereço pelo nome) e Desligar… (desligar, reiniciar, encerrar sessão ou repouso).
+- **Control-Esc** (⌃⎋) abre e fecha o menu Iniciar.
+- O canto direito mostra volume, bateria e relógio (passe o mouse para ver a data); clicar abre o painel correspondente dos Ajustes do Sistema.
+- O Dock encolhe e fica embaixo da barra, então janelas maximizadas param acima dela. Ele volta ao tamanho antigo quando você desinstala.
+- Se a barra cair, ela volta sozinha. Se cair 3 vezes em 1 minuto, ela se desliga e devolve o Dock.
+- Para manter os ajustes base e tirar só a barra, rode `./install.sh` de novo e responda "n" na pergunta da barra.
+
+Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell pode controlar o System Events.
 
 ## O que a Fase 1 muda
 

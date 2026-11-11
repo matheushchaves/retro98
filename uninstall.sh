@@ -3,6 +3,8 @@
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
 
+stop_shell
+
 if [[ -n "${RETRO98_SETTINGS_BIN:-}" ]]; then
     BIN="$RETRO98_SETTINGS_BIN"
 elif [[ -x "$INSTALLED_BIN" ]]; then
@@ -24,8 +26,11 @@ if [[ $status -ne 0 ]]; then
     exit $status
 fi
 
-# Remove only Retro98's own files, never the whole folder blindly.
-rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store"
+# Remove only Retro98's own files, never whole folders blindly.
+rm -rf "$SHELL_APP"
+rmdir "$APPS_DIR" 2>/dev/null || true
+rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store" \
+    "$PIECES_FILE" "$SUPPORT_DIR/shell-launches.plist"
 rmdir "$SUPPORT_DIR/bin" 2>/dev/null || true
 rmdir "$SUPPORT_DIR" 2>/dev/null || true
 say "Pronto: seu Mac voltou ao normal e o Retro98 foi removido." "Done: your Mac is back to normal and Retro98 was removed."

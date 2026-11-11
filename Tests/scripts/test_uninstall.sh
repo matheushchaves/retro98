@@ -10,6 +10,16 @@ STUB="$WORK/stub-settings"
 printf '#!/usr/bin/env bash\nexit "${STUB_EXIT:-0}"\n' > "$STUB"
 chmod +x "$STUB"
 
+# Never touch the real Shell: a fake launchctl first in PATH, and temporary app/agent folders.
+FAKE_BIN="$WORK/fake-bin"
+mkdir -p "$FAKE_BIN"
+printf '#!/usr/bin/env bash\necho "$*" >> "${LAUNCHCTL_LOG:-/dev/null}"\nexit 0\n' > "$FAKE_BIN/launchctl"
+chmod +x "$FAKE_BIN/launchctl"
+export PATH="$FAKE_BIN:$PATH"
+export RETRO98_APPS_DIR="$WORK/apps-default"
+export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-default"
+LABEL="io.github.matheushchaves.retro98.shell"
+
 failures=0
 
 run_case() {
@@ -49,5 +59,36 @@ mkdir -p "$BROKEN_DEFAULTS"
 printf '#!/usr/bin/env bash\nexit 1\n' > "$BROKEN_DEFAULTS/defaults"
 chmod +x "$BROKEN_DEFAULTS/defaults"
 run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
+
+run_shell_case() {
+    local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
+    local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
+    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$agents"
+    echo "<plist/>" > "$support/backup.plist"
+    echo "<plist/>" > "$agents/$LABEL.plist"
+
+    LAUNCHCTL_LOG="$calls" STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
+        RETRO98_APPS_DIR="$apps" RETRO98_LAUNCH_AGENTS_DIR="$agents" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+    local actual_exit=$?
+
+    local app_state="absent"
+    [[ -d "$apps/Retro98 Shell.app" ]] && app_state="present"
+    local problems=""
+    [[ "$actual_exit" == "$expected_exit" ]] || problems+=" exit=$actual_exit"
+    grep -q "bootout gui/$(id -u)/$LABEL" "$calls" 2>/dev/null || problems+=" no-bootout"
+    [[ ! -f "$agents/$LABEL.plist" ]] || problems+=" agent-plist-left"
+    [[ "$app_state" == "$expected_app" ]] || problems+=" app=$app_state"
+    if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
+
+    if [[ -z "$problems" ]]; then
+        echo "PASS $name"
+    else
+        echo "FAIL $name ($problems )"
+        failures=$((failures + 1))
+    fi
+}
+
+run_shell_case shell-removed 0 0 absent
+run_shell_case shell-kept-on-failure 2 2 present
 
 exit $((failures > 0 ? 1 : 0))

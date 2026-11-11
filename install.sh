@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Builds Retro98 on this Mac and applies the Phase 1 base tweaks (with a backup of every original).
+# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks and/or the taskbar (Shell).
+# Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
 
@@ -30,6 +31,26 @@ if ! xcode-select -p > /dev/null 2>&1; then
     exit 1
 fi
 
+# ask "pergunta" "question" → 0 for yes (default), 1 for no
+ask() {
+    local answer
+    read -r -p "$(say "$1 [S/n] " "$2 [Y/n] ")" answer
+    [[ "${answer:-}" != [nN]* ]]
+}
+
+pieces=""
+if $ASSUME_YES; then
+    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell")"
+elif [[ ! -t 0 ]]; then
+    say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
+        "No interactive terminal: run ./install.sh --yes to apply."
+    exit 1
+else
+    ask "Instalar os ajustes base?" "Install the base tweaks?" && pieces+=" base"
+    ask "Instalar a barra de tarefas e o menu Iniciar?" "Install the taskbar and Start menu?" && pieces+=" shell"
+fi
+pieces="$(echo $pieces)"
+
 if [[ -n "${RETRO98_SETTINGS_BIN:-}" ]]; then
     BIN="$RETRO98_SETTINGS_BIN"
 else
@@ -40,23 +61,41 @@ else
     BIN="$INSTALLED_BIN"
 fi
 
-if ! $ASSUME_YES; then
-    if [[ ! -t 0 ]]; then
-        say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
-            "No interactive terminal: run ./install.sh --yes to apply."
-        exit 1
-    fi
-    read -r -p "$(say 'Aplicar os ajustes base agora? [S/n] ' 'Apply the base tweaks now? [Y/n] ')" answer
-    if [[ "${answer:-}" == [nN]* ]]; then
-        say "Nada foi alterado." "Nothing was changed."
-        exit 0
-    fi
+mkdir -p "$SUPPORT_DIR"
+echo "$pieces" > "$PIECES_FILE"
+status=0
+
+if [[ " $pieces " == *" base "* ]]; then
+    "$BIN" apply || status=$?
 fi
 
-set +e
-"$BIN" apply
-status=$?
-set -e
+if [[ " $pieces " == *" shell "* ]]; then
+    "$BIN" apply --only dockUnderTaskbar || status=$?
+    say "Montando o Retro98 Shell..." "Building Retro98 Shell..."
+    bash "$RETRO98_ROOT/scripts/build-shell-app.sh" "$SHELL_APP"
+    mkdir -p "$LAUNCH_AGENTS_DIR"
+    cat > "$LAUNCH_AGENT_PLIST" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key><string>$SHELL_LABEL</string>
+    <key>ProgramArguments</key><array><string>$SHELL_APP/Contents/MacOS/Retro98Shell</string></array>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+    <key>ThrottleInterval</key><integer>5</integer>
+    <key>ProcessType</key><string>Interactive</string>
+</dict>
+</plist>
+PLIST
+    launchctl bootout "gui/$(id -u)/$SHELL_LABEL" > /dev/null 2>&1 || true
+    launchctl bootstrap "gui/$(id -u)" "$LAUNCH_AGENT_PLIST" || status=$?
+elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" ]]; then
+    # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.
+    stop_shell
+    rm -rf "$SHELL_APP"
+    "$BIN" restore --only dockUnderTaskbar || status=$?
+fi
 
 say "Para ver o estado: \"$BIN\" status · Para desfazer tudo: ./uninstall.sh" \
     "To check: \"$BIN\" status · To undo everything: ./uninstall.sh"
