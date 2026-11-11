@@ -86,12 +86,9 @@ Script que aplica ajustes nativos e reversíveis do macOS. **Antes de cada mudan
 ### Fase 2 — Base visual e Shell
 A base visual da seção 5, mais o Shell, que tem três partes:
 
-**Área de trabalho**
-- Fundo `#008080` (ou o papel de parede escolhido no Painel de Controle), em todas as telas.
-- Ícones fixos: Meu Computador, Meus Documentos (`~/Documents`), Lixeira.
-- Os arquivos de `~/Desktop` aparecem como ícones: a área de trabalho é a pasta real.
-- Duplo clique abre. Clique direito abre menu de contexto. Arrastar reorganiza ícones, move arquivos e troca arquivos com outros apps. Há seleção por retângulo.
-- A área de trabalho do Finder fica escondida enquanto o Shell estiver ativo.
+**Área de trabalho** — **[decidido em 2026-11-11: substituída]**
+- A área de trabalho do macOS **não é modificada**: ícones do Finder, widgets, clicar no papel de parede para mostrar a Mesa e o menu do Finder continuam como são. Princípio: o visual retrô não pode custar recursos do macOS.
+- No lugar de uma área de trabalho no fundo da tela, o **Explorer (Fase 3) abre por padrão em "Área de Trabalho"**: uma janela no estilo 98 com Meu Computador, Meus Documentos, Lixeira e os arquivos de `~/Desktop` em ícones grandes, com as operações do Explorer. O menu Iniciar e a barra de tarefas ganham um atalho para abri-la.
 
 **Barra de tarefas**
 - Embaixo, largura total, ~28 pt, por cima de tudo, só na tela principal. **[minha escolha]**
