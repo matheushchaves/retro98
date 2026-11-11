@@ -1,4 +1,4 @@
-import CoreGraphics
+import AppKit
 
 public struct PixelColor: Equatable, Hashable, Sendable {
     public let red: UInt8
@@ -13,6 +13,8 @@ public struct PixelColor: Equatable, Hashable, Sendable {
 
     public static let black = PixelColor(red: 0, green: 0, blue: 0)
     public static let white = PixelColor(red: 255, green: 255, blue: 255)
+
+    public var nsColor: NSColor { NSColor(cgColor: cgColor) ?? .gray }
 
     public var cgColor: CGColor {
         CGColor(srgbRed: CGFloat(red) / 255, green: CGFloat(green) / 255, blue: CGFloat(blue) / 255, alpha: 1)

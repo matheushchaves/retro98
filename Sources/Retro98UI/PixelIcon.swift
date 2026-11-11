@@ -47,6 +47,19 @@ public struct PixelIcon: @unchecked Sendable {
                          context: context)
     }
 
+    /// Disabled look: the icon's shape in light shifted by (1,1), then in shadow on top.
+    public func drawEmbossed(at origin: CGPoint, context: CGContext) {
+        let pixels = PixelCanvas.render(width: width, height: height) { draw(at: .zero, context: $0) }
+        for (color, offset) in [(Palette.light, CGFloat(1)), (Palette.shadow, CGFloat(0))] {
+            for y in 0..<height {
+                for x in 0..<width where pixels.alpha(x: x, y: y) > 0 {
+                    Bevel.fill(CGRect(x: origin.x + CGFloat(x) + offset, y: origin.y + CGFloat(y) + offset, width: 1, height: 1),
+                               color: color, context: context)
+                }
+            }
+        }
+    }
+
     /// CGContext.draw assumes a bottom-left origin; flip locally so images stay upright in top-left canvases.
     public static func drawUpright(_ image: CGImage, in rect: CGRect, context: CGContext) {
         context.saveGState()
