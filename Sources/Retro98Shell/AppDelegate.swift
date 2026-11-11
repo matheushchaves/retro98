@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard Recovery.shouldStart(languages: languages) else { return }
         let taskbar = TaskbarController(languages: languages)
         taskbar.show()
+        taskbar.setWindowButtons(enabled: true)   // permission gating arrives in the next task
         hotKey = HotKey { [weak taskbar] in taskbar?.toggleStartMenu() }
         self.taskbar = taskbar
     }
