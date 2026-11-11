@@ -68,6 +68,7 @@ run_shell_case() {
     local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
     mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$agents"
+    echo "finder" > "$apps/.DS_Store"   # Finder leaves one after the installer shows the folder
     echo "<plist/>" > "$support/backup.plist"
     echo "<plist/>" > "$agents/$LABEL.plist"
 
@@ -88,6 +89,7 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Explorer.app" "$calls"; then
         problems+=" explorer-not-unregistered"
     fi
+    if [[ "$expected_app" == "absent" && -d "$apps" ]]; then problems+=" apps-folder-left"; fi
     if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
 
     if [[ -z "$problems" ]]; then

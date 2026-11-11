@@ -31,6 +31,7 @@ fi
 remove_signing_identity
 rm -rf "$SHELL_APP"
 remove_explorer
+rm -f "$APPS_DIR/.DS_Store"
 rmdir "$APPS_DIR" 2>/dev/null || true
 rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store" \
     "$PIECES_FILE" "$SUPPORT_DIR/shell-launches.plist"
