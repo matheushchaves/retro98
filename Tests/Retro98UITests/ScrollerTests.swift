@@ -47,3 +47,30 @@ private func draw(_ size: CGSize, _ body: (CGContext) -> Void) -> PixelImage {
     #expect(scroll.scrollerStyle == .legacy)
     #expect(scroll.autohidesScrollers)   // like 98 list views: bars only when there is something to scroll
 }
+
+private final class TallDocument: NSView {
+    override var isFlipped: Bool { true }
+}
+
+@MainActor @Test func scrollerSendsRequestsWithoutAScrollView() {
+    let scroller = RetroScroller(frame: CGRect(x: 0, y: 0, width: 16, height: 200))
+    var requests: [RetroScroller.Request] = []
+    scroller.onScroll = { requests.append($0) }
+    scroller.perform(.decrement)
+    scroller.perform(.increment)
+    scroller.perform(.pageBack)
+    scroller.perform(.pageForward)
+    scroller.moveKnob(to: 0.25)
+    scroller.moveKnob(to: 1.7)
+    scroller.moveKnob(to: -3)
+    #expect(requests == [.lineUp, .lineDown, .pageUp, .pageDown, .position(0.25), .position(1), .position(0)])
+}
+
+@MainActor @Test func scrollViewScrollingIsUnchanged() throws {
+    let document = TallDocument(frame: CGRect(x: 0, y: 0, width: 100, height: 1000))
+    let scroll = RetroScroller.makeScrollView(document: document)
+    scroll.frame = CGRect(x: 0, y: 0, width: 100, height: 200)
+    let scroller = try #require(scroll.verticalScroller as? RetroScroller)
+    scroller.perform(.increment)
+    #expect(scroll.contentView.bounds.minY == 16)
+}

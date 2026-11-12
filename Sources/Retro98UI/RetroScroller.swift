@@ -4,7 +4,9 @@ import AppKit
 /// Modern macOS has no scroll arrows, so drawing and mouse tracking are done here.
 public final class RetroScroller: NSScroller {
     public enum Arrow: Sendable { case up, down, left, right }
-    private enum Part { case decrement, increment, pageBack, pageForward, knob }
+    /// What a click or drag asks for, when the scroller drives something other than a scroll view.
+    public enum Request: Equatable, Sendable { case lineUp, lineDown, pageUp, pageDown, position(Double) }
+    enum Part { case decrement, increment, pageBack, pageForward, knob }
 
     nonisolated public static let thickness: CGFloat = 16
     nonisolated public static let minimumKnob: CGFloat = 8
@@ -13,6 +15,8 @@ public final class RetroScroller: NSScroller {
     static let repeatPeriod: TimeInterval = 0.05
 
     weak var scrollView: NSScrollView?
+    /// When set, clicks and drags become requests instead of moving a scroll view (e.g. a terminal's history).
+    public var onScroll: ((Request) -> Void)?
     private var pressedPart: Part? { didSet { needsDisplay = true } }
 
     override public class var isCompatibleWithOverlayScrollers: Bool { false }
@@ -177,12 +181,22 @@ public final class RetroScroller: NSScroller {
         while let next = window?.nextEvent(matching: [.leftMouseUp, .leftMouseDragged]) {
             let point = convert(next.locationInWindow, from: nil)
             let delta = isVertical ? point.y - start.y : point.x - start.x
-            setScrollValue(startValue + Double(delta / travel))
+            moveKnob(to: startValue + Double(delta / travel))
             if next.type == .leftMouseUp { return }
         }
     }
 
-    private func perform(_ part: Part) {
+    func perform(_ part: Part) {
+        if let onScroll {
+            switch part {
+            case .decrement: onScroll(.lineUp)
+            case .increment: onScroll(.lineDown)
+            case .pageBack: onScroll(.pageUp)
+            case .pageForward: onScroll(.pageDown)
+            case .knob: break
+            }
+            return
+        }
         guard let scrollView, let document = scrollView.documentView else { return }
         let visible = scrollView.contentView.bounds
         let page = max((isVertical ? visible.height : visible.width) - Self.lineStep, Self.lineStep)
@@ -203,7 +217,11 @@ public final class RetroScroller: NSScroller {
         scroll(scrollView, to: origin)
     }
 
-    private func setScrollValue(_ value: Double) {
+    func moveKnob(to value: Double) {
+        if let onScroll {
+            onScroll(.position(min(max(value, 0), 1)))
+            return
+        }
         guard let scrollView, let document = scrollView.documentView else { return }
         let visible = scrollView.contentView.bounds
         let clamped = CGFloat(min(max(value, 0), 1))
