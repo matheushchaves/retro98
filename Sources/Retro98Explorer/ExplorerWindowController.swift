@@ -9,13 +9,14 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     static let shellBundleID = "io.github.matheushchaves.retro98.shell"
     static let menuHeight: CGFloat = 22, toolbarHeight: CGFloat = 42, addressHeight: CGFloat = 27, statusHeight: CGFloat = 24
     static let treeWidth: CGFloat = 210
-    static let spaceKey: UInt16 = 49, backspaceKey: UInt16 = 51, downArrowKey: UInt16 = 125
+    static let spaceKey: UInt16 = 49, backspaceKey: UInt16 = 51, downArrowKey: UInt16 = 125, forwardDeleteKey: UInt16 = 117
 
     let model: ExplorerModel
     let window: RetroAppWindow
+    let operations: ExplorerOperations
     var onClose: (() -> Void)?
-    private let languages: [String]
-    private let environment: ExplorerEnvironment
+    let languages: [String]
+    let environment: ExplorerEnvironment
     private let toolbar = RetroToolbar()
     private let statusBar = RetroStatusBar()
     let grid = RetroIconGrid()
@@ -30,11 +31,19 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     /// What the grid shows right now; a reload with the same place keeps selection and scroll.
     private var shownLocation: Location?
     private var shownURLs: [URL] = []
+    private var operationsObserver: NSObjectProtocol?
+    /// The item being renamed in place (its index changes when the folder reloads).
+    var renamingURL: URL?
+    var contextMenu: RetroMenu?
+    /// The last file operation this window started (tests wait for it).
+    var lastTask: Task<Void, Never>?
 
-    init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil) {
+    init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil, operations: ExplorerOperations? = nil) {
         self.languages = languages
-        self.environment = environment ?? .live(languages: languages)
-        model = ExplorerModel(start: start, environment: self.environment)
+        let environment = environment ?? operations?.environment ?? .live(languages: languages)
+        self.environment = environment
+        self.operations = operations ?? ExplorerOperations(environment: environment)
+        model = ExplorerModel(start: start, environment: environment)
         window = RetroAppWindow(title: model.title, icon: FileIcons.icon(.desktop, size: 16), contentSize: CGSize(width: 680, height: 480))
         treeSource = ExplorerTree(environment: self.environment, languages: languages)
         address = AddressBar(label: ExplorerText.address(languages))
@@ -47,6 +56,10 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         model.onChange = { [weak self] in self?.refresh() }
         refresh()
         observeVolumes()
+        operationsObserver = NotificationCenter.default.addObserver(forName: ExplorerOperations.didChange, object: self.operations,
+                                                                    queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.operationsChanged() }
+        }
     }
 
     func show() {
@@ -100,9 +113,13 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         grid.onOpen = { [weak self] index in self?.openEntry(at: index) }
         grid.onSelectionChange = { [weak self] _ in
             self?.updateStatus()
+            self?.updateCommands()
             self?.reloadPreviewPanel()
         }
         grid.onKey = { [weak self] event in self?.handleKey(event) ?? false }
+        grid.onRename = { [weak self] index in self?.beginRename(at: index) }
+        grid.onEndEditing = { [weak self] _, text in self?.endRename(text) }
+        grid.onContextMenu = { [weak self] index, _ in self?.showContextMenu(at: index) }
         messageView.onOpenFinder = { NSWorkspace.shared.open(FileManager.default.homeDirectoryForCurrentUser.appending(path: ".Trash")) }
         messageView.autoresizingMask = [.width, .height]
 
@@ -126,10 +143,13 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         tree.needsDisplay = true
         grid.reloadData()
         grid.setSelection(IndexSet(model.entries.indices.filter { kept.contains(model.entries[$0].url) }))
+        if grid.editingIndex != nil {
+            grid.moveEditing(to: navigated ? nil : renamingURL.flatMap { url in model.entries.firstIndex { $0.url == url } })
+        }
         showMessage(model.error)
+        updateCommands()
         if navigated {
             window.setTitle(model.title, icon: smallIcon(for: location))
-            toolbar.items = toolbarItems()
             grid.scroll(.zero)
             tree.reveal(path: treeSource.path(to: location))
             watch(location)
@@ -149,6 +169,16 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         }
     }
 
+    /// Toolbar and cut ghosts follow the selection, the clipboard and the undo history.
+    func updateCommands() {
+        toolbar.items = toolbarItems()
+        grid.needsDisplay = true
+    }
+
+    private func operationsChanged() {
+        updateCommands()
+    }
+
     private func toolbarItems() -> [ToolbarItem?] {
         let l = languages
         let item = { (title: String, icon: PixelIcon, enabled: Bool, action: @escaping @Sendable @MainActor () -> Void) in
@@ -159,17 +189,21 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
             item(ExplorerText.forward(l), FileIcons.forward, model.history.canGoForward) { [weak self] in self?.model.forward() },
             item(ExplorerText.up(l), FileIcons.up, model.history.current != .desktop) { [weak self] in self?.model.up() },
             nil,
-            item(ExplorerText.cut(l), FileIcons.cut, false) {}, item(ExplorerText.copy(l), FileIcons.copy, false) {},
-            item(ExplorerText.paste(l), FileIcons.paste, false) {},
+            item(ExplorerText.cut(l), FileIcons.cut, isEnabled(#selector(cut(_:)))) { [weak self] in self?.cut(nil) },
+            item(ExplorerText.copy(l), FileIcons.copy, isEnabled(#selector(copy(_:)))) { [weak self] in self?.copy(nil) },
+            item(ExplorerText.paste(l), FileIcons.paste, isEnabled(#selector(paste(_:)))) { [weak self] in self?.paste(nil) },
             nil,
-            item(ExplorerText.undo(l), FileIcons.undo, false) {}, item(ExplorerText.delete(l), FileIcons.delete, false) {},
+            item(ExplorerText.undo(l), FileIcons.undo, !isEditingText && operations.undoStack.canUndo) { [weak self] in
+                self?.spawn { await self?.operations.undo() }
+            },
+            item(ExplorerText.delete(l), FileIcons.delete, isEnabled(#selector(moveToTrash(_:)))) { [weak self] in self?.moveToTrash(nil) },
             item(ExplorerText.properties(l), FileIcons.properties, false) {},
             nil,
             item(ExplorerText.views(l), FileIcons.views, false) {},
         ]
     }
 
-    private var selectedEntries: [FileEntry] {
+    var selectedEntries: [FileEntry] {
         grid.selection.filter { model.entries.indices.contains($0) }.map { model.entries[$0] }
     }
 
@@ -186,7 +220,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
 
     // MARK: Actions
 
-    private func openEntry(at index: Int) {
+    func openEntry(at index: Int) {
         guard model.entries.indices.contains(index), let url = model.open(model.entries[index]) else { return }
         NSWorkspace.shared.open(url)
     }
@@ -217,6 +251,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     }
 
     /// Space: Quick Look. Backspace: up one level (98). ⌘↓: open the selection (Finder).
+    /// Del: to the Recycle Bin; ⇧Del: delete permanently.
     private func handleKey(_ event: NSEvent) -> Bool {
         let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask).subtracting([.numericPad, .function])
         switch (event.keyCode, modifiers) {
@@ -231,6 +266,10 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         case (Self.downArrowKey, [.command]):
             guard let index = grid.selection.first else { return true }
             openEntry(at: index)
+        case (Self.forwardDeleteKey, []):
+            moveToTrash(nil)
+        case (Self.forwardDeleteKey, [.shift]):
+            deletePermanently(nil)
         default:
             return false
         }
@@ -294,14 +333,21 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     func windowWillClose(_ notification: Notification) {
         watcher?.stop()
         observers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
+        operationsObserver.map(NotificationCenter.default.removeObserver)
         onClose?()
     }
+
+    /// One undo history for the whole app: Edit › Undo, ⌘Z and its title come from the operations.
+    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? { operations.undoManager }
+
+    func windowDidBecomeKey(_ notification: Notification) { updateCommands() }
 
     // MARK: Grid data
 
     func numberOfItems(in grid: RetroIconGrid) -> Int { model.entries.count }
     func grid(_ grid: RetroIconGrid, titleAt index: Int) -> String { model.entries[index].name }
     func grid(_ grid: RetroIconGrid, iconAt index: Int) -> PixelIcon { largeIcon(for: model.entries[index]) }
+    func grid(_ grid: RetroIconGrid, isDimmedAt index: Int) -> Bool { operations.isCut(model.entries[index].url) }
 
     private func largeIcon(for entry: FileEntry) -> PixelIcon {
         if entry.kind == .application {

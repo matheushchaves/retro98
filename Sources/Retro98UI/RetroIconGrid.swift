@@ -59,7 +59,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     public weak var dropDelegate: RetroIconGridDropDelegate? { didSet { registerForDrops() } }
     public internal(set) var editingIndex: Int?
     public internal(set) var dropTargetIndex: Int?
-    var editor: NSTextField?
+    public internal(set) var editor: NSTextField?
     var focus: Int?
     private var rubberBand: CGRect?
 

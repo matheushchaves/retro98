@@ -3,11 +3,15 @@ import Retro98FilesCore
 import Retro98UI
 
 /// The same commands in the macOS menu bar (with shortcuts) and in the window's retro menu bar.
-/// Every command goes up the responder chain: Cut/Copy/Paste only light up while the address
-/// field is editing (file operations arrive in Phase 3B); the rest end at the app delegate.
+/// Every command goes up the responder chain: text fields take Cut/Copy/Paste while editing, the
+/// window's controller takes the file commands, the window takes Undo/Redo (with the app's file
+/// undo history), and the rest end at the app delegate. Renaming has no menu shortcut: Enter and
+/// F2 belong to the icon grid, so typing Return in a text field never renames a file.
 @MainActor
 enum ExplorerMenus {
     static let helpURL = URL(string: "https://github.com/matheushchaves/retro98#readme")!
+    /// ⌘⌫ and friends.
+    static let backspace = "\u{8}"
 
     struct Command {
         let title: String
@@ -22,7 +26,16 @@ enum ExplorerMenus {
         }
         return [
             (ExplorerText.menuFile(l), [
+                command(ExplorerText.open(l), "o", .command, #selector(ExplorerWindowController.openSelection(_:))),
                 command(ExplorerText.newWindow(l), "n", .command, #selector(AppDelegate.newWindow(_:))),
+                command(ExplorerText.newFolder(l), "n", [.command, .shift], #selector(ExplorerWindowController.newFolder(_:))), nil,
+                command(ExplorerText.rename(l), "", [], #selector(ExplorerWindowController.renameSelection(_:))),
+                command(ExplorerText.delete(l), backspace, .command, #selector(ExplorerWindowController.moveToTrash(_:))),
+                command(ExplorerText.deletePermanently(l), backspace, [.command, .option],
+                        #selector(ExplorerWindowController.deletePermanently(_:))), nil,
+                command(ExplorerText.restore(l), "", [], #selector(ExplorerWindowController.restoreFromTrash(_:))),
+                command(ExplorerText.emptyTrash(l), backspace, [.command, .shift], #selector(ExplorerWindowController.emptyTrash(_:))),
+                command(ExplorerText.openInFinder(l), "", [], #selector(ExplorerWindowController.openTrashInFinder(_:))), nil,
                 command(ExplorerText.close(l), "w", .command, #selector(AppDelegate.closeWindow(_:))),
             ]),
             (ExplorerText.menuEdit(l), [
@@ -30,7 +43,8 @@ enum ExplorerMenus {
                 command(ExplorerText.redo(l), "z", [.command, .shift], Selector(("redo:"))), nil,
                 command(ExplorerText.cut(l), "x", .command, #selector(NSText.cut(_:))),
                 command(ExplorerText.copy(l), "c", .command, #selector(NSText.copy(_:))),
-                command(ExplorerText.paste(l), "v", .command, #selector(NSText.paste(_:))), nil,
+                command(ExplorerText.paste(l), "v", .command, #selector(NSText.paste(_:))),
+                command(ExplorerText.moveItemHere(l), "v", [.command, .option], #selector(ExplorerWindowController.moveItemHere(_:))), nil,
                 command(ExplorerText.selectAll(l), "a", .command, #selector(NSResponder.selectAll(_:))),
             ]),
             (ExplorerText.menuView(l), [command(ExplorerText.refresh(l), "r", .command, #selector(AppDelegate.refresh(_:)))]),
@@ -102,11 +116,24 @@ enum ExplorerMenus {
                 commands.map { command in
                     guard let command else { return .separator }
                     let selector = command.selector
-                    return RetroMenuItem(title: command.title, kind: .action({ NSApp.sendAction(selector, to: nil, from: nil) }),
-                                         isEnabled: NSApp.target(forAction: selector, to: nil, from: nil) != nil)
+                    let state = validated(command)
+                    return RetroMenuItem(title: state.title, kind: .action({ NSApp.sendAction(selector, to: nil, from: nil) }),
+                                         isEnabled: state.isEnabled)
                 }
             }
         }
+    }
+
+    /// Title and state as AppKit would show them: the target in the responder chain validates the item
+    /// (the window names Undo after the last action, "Desfazer Copiar"). `target` overrides the lookup.
+    static func validated(_ command: Command, target: AnyObject? = nil) -> (title: String, isEnabled: Bool) {
+        let item = NSMenuItem(title: command.title, action: command.selector, keyEquivalent: "")
+        guard let target = target ?? NSApp.target(forAction: command.selector, to: nil, from: item) as AnyObject? else {
+            return (command.title, false)
+        }
+        let enabled = (target as? NSMenuItemValidation)?.validateMenuItem(item)
+            ?? (target as? NSUserInterfaceValidations)?.validateUserInterfaceItem(item) ?? true
+        return (item.title, enabled)
     }
 
     private static func submenu(_ menu: NSMenu) -> NSMenuItem {

@@ -55,6 +55,19 @@ import Testing
     #expect(model.history.current == .folder(home.root.appending(path: "A", directoryHint: .notDirectory)))
 }
 
+/// Deleting or moving a folder in 3B makes Back and Forward reach places that are gone.
+@MainActor @Test func backToADeletedFolderRecovers() throws {
+    let home = try TempTree(["A/B", ".Trash"])
+    let a = home.root.appending(path: "A", directoryHint: .notDirectory), b = home.root.appending(path: "A/B", directoryHint: .notDirectory)
+    let model = ExplorerModel(start: .folder(b), environment: environment(home))
+    model.up()
+    try FileManager.default.removeItem(at: b)
+    model.back()
+    #expect(model.history.current == .folder(a))
+    #expect(model.error == nil)
+    #expect(!model.history.canGoBack)
+}
+
 @MainActor @Test func permissionErrorIsShownNotThrown() throws {
     let home = try TempTree(["Trancada/x.txt", ".Trash"])
     let locked = home.root.appending(path: "Trancada", directoryHint: .notDirectory)

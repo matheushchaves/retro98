@@ -33,6 +33,11 @@ public struct NavigationHistory: Equatable, Sendable {
         current = next
     }
 
+    /// Stands in for a place that vanished, without adding it to Back.
+    public mutating func replaceCurrent(with location: Location) {
+        current = location
+    }
+
     /// Folder → its parent folder; a volume's root → My Computer; My Computer and the Recycle Bin → Desktop.
     public static func parent(of location: Location, volumes: [URL]) -> Location? {
         switch location {

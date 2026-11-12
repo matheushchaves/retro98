@@ -79,13 +79,16 @@ public final class ExplorerModel {
         load()
     }
 
+    /// A folder deleted or moved since it was visited is replaced by its nearest existing parent.
     public func back() {
         history.back()
+        recoverIfVanished()
         load()
     }
 
     public func forward() {
         history.forward()
+        recoverIfVanished()
         load()
     }
 
@@ -104,12 +107,14 @@ public final class ExplorerModel {
     /// Re-reads the current place; if it no longer exists, moves up to the nearest place that does.
     public func reload() {
         volumes = environment.volumes()
-        if case .folder(let url) = history.current, !FileManager.default.fileExists(atPath: url.path) {
-            let recovered = NavigationHistory.recover(history.current, exists: { FileManager.default.fileExists(atPath: $0.path) },
-                                                      volumes: volumes.map(\.url))
-            history.go(to: recovered)
-        }
+        recoverIfVanished()
         load(readingVolumes: false)
+    }
+
+    private func recoverIfVanished() {
+        guard case .folder(let url) = history.current, !FileManager.default.fileExists(atPath: url.path) else { return }
+        history.replaceCurrent(with: NavigationHistory.recover(history.current, exists: { FileManager.default.fileExists(atPath: $0.path) },
+                                                               volumes: volumes.map(\.url)))
     }
 
     private func load(readingVolumes: Bool = true) {

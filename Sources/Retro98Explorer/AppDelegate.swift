@@ -6,6 +6,8 @@ import Retro98FilesCore
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controllers: [ExplorerWindowController] = []
     let languages = Locale.preferredLanguages
+    /// One clipboard, undo history and set of running operations for every window.
+    private lazy var operations = ExplorerOperations(environment: .live(languages: languages))
 
     var active: ExplorerWindowController? {
         controllers.first { $0.window.isKeyWindow } ?? controllers.first { $0.window.isMainWindow } ?? controllers.last
@@ -31,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
     func openWindow(at location: Location) {
-        let controller = ExplorerWindowController(start: location, languages: languages)
+        let controller = ExplorerWindowController(start: location, languages: languages, operations: operations)
         controller.onClose = { [weak self, weak controller] in
             self?.controllers.removeAll { $0 === controller }
         }
