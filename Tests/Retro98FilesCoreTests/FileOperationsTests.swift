@@ -298,3 +298,108 @@ private func fiftyFiles(_ tree: TempTree) throws {
     #expect(item == tree.url("B/a.txt"))
     #expect(reverted.changes.isEmpty)
 }
+
+// MARK: Final review fixes
+
+/// The same folder reached through a link (or another letter case) is still the same folder.
+@Test func copyIntoItsOwnFolderThroughALinkMakesACopy() throws {
+    let tree = try TempTree([])
+    try write(tree.url("A/a.txt"), "x")
+    try FileManager.default.createSymbolicLink(atPath: tree.url("Link").path, withDestinationPath: tree.url("A").path)
+    let asked = Recorder<FileConflict>()
+    let outcome = transfer(operations(tree), .copy, [tree.url("A/a.txt")], to: tree.url("Link"),
+                           resolve: { asked.append($0); return .replace })
+    #expect(asked.values.isEmpty)
+    #expect(outcome == OperationOutcome(changes: [.created(tree.url("Link/a cópia.txt"))]))
+    #expect(read(tree.url("A/a.txt")) == "x")
+}
+
+@Test func moveIntoItsOwnFolderThroughALinkDoesNothing() throws {
+    let tree = try TempTree([])
+    try write(tree.url("A/a.txt"), "x")
+    try FileManager.default.createSymbolicLink(atPath: tree.url("Link").path, withDestinationPath: tree.url("A").path)
+    let asked = Recorder<FileConflict>()
+    let outcome = transfer(operations(tree), .move, [tree.url("A/a.txt")], to: tree.url("Link"),
+                           resolve: { asked.append($0); return .replace })
+    #expect(asked.values.isEmpty)
+    #expect(outcome == OperationOutcome())
+    #expect(read(tree.url("A/a.txt")) == "x")
+}
+
+@Test func copyIntoACaseVariantOfItsOwnFolderMakesACopy() throws {
+    let tree = try TempTree([])
+    try write(tree.url("Docs/a.txt"), "x")
+    guard FileManager.default.fileExists(atPath: tree.url("docs").path) else { return }   // case-sensitive volume
+    let outcome = transfer(operations(tree), .copy, [tree.url("Docs/a.txt")], to: tree.url("docs"), resolve: { _ in .replace })
+    #expect(outcome == OperationOutcome(changes: [.created(tree.url("docs/a cópia.txt"))]))
+    #expect(read(tree.url("Docs/a.txt")) == "x")
+}
+
+@Test func copyIntoItsOwnSubfolderThroughALinkIsRefused() throws {
+    let tree = try TempTree(["A/Pasta/sub"])
+    try FileManager.default.createSymbolicLink(atPath: tree.url("Link").path, withDestinationPath: tree.url("A").path)
+    let outcome = transfer(operations(tree), .copy, [tree.url("A/Pasta")], to: tree.url("Link/Pasta/sub"))
+    #expect(outcome == OperationOutcome(failure: .intoItself(tree.url("A/Pasta"))))
+}
+
+@Test func replacingAnAncestorThroughALinkIsRefused() throws {
+    let tree = try TempTree([])
+    try write(tree.url("A/B/A/x.txt"), "x")
+    try FileManager.default.createSymbolicLink(atPath: tree.url("Root").path, withDestinationPath: tree.root.path)
+    let outcome = transfer(operations(tree), .move, [tree.url("A/B/A")], to: tree.url("Root"), resolve: { _ in .replace })
+    #expect(outcome == OperationOutcome(failure: .replacesItsOwnSource(tree.url("Root").appending(path: "A"))))
+    #expect(read(tree.url("A/B/A/x.txt")) == "x")
+}
+
+/// Cancelling or failing while replacing must leave the old item where it was.
+@Test func cancellingAReplaceKeepsTheOldItem() throws {
+    let tree = try TempTree([])
+    try fiftyFiles(tree)
+    try write(tree.url("B/Pasta/importante.txt"), "guardar")
+    let control = OperationControl(), seen = Recorder<Int64>()
+    let outcome = transfer(operations(tree), .copy, [tree.url("A/Pasta")], to: tree.url("B"), control: control,
+                           resolve: { _ in .replace },
+                           progress: { seen.append($0.completed); if seen.values.count == 5 { control.cancel() } })
+    #expect(outcome.failure == .cancelled)
+    #expect(read(tree.url("B/Pasta/importante.txt")) == "guardar")
+    #expect(((try? FileManager.default.contentsOfDirectory(atPath: tree.url(".Trash").path)) ?? []).isEmpty)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: tree.url("B").path) == ["Pasta"])
+}
+
+@Test func failedReplaceKeepsTheOldItem() throws {
+    let tree = try TempTree([])
+    try write(tree.url("A/Pasta/ok.txt"), "x")
+    try write(tree.url("A/Pasta/Trancada/x.txt"), "x")
+    try write(tree.url("B/Pasta/importante.txt"), "guardar")
+    let locked = tree.url("A/Pasta/Trancada").path
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: locked)
+    defer { try? FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: locked) }
+    let outcome = transfer(operations(tree), .copy, [tree.url("A/Pasta")], to: tree.url("B"), resolve: { _ in .replace })
+    guard case .failed = outcome.failure else {
+        Issue.record("expected a failure, got \(String(describing: outcome.failure))")
+        return
+    }
+    #expect(outcome.changes.isEmpty)
+    #expect(read(tree.url("B/Pasta/importante.txt")) == "guardar")
+    #expect(((try? FileManager.default.contentsOfDirectory(atPath: tree.url(".Trash").path)) ?? []).isEmpty)
+    #expect(try FileManager.default.contentsOfDirectory(atPath: tree.url("B").path) == ["Pasta"])
+}
+
+@Test func refusedTrashDuringAReplaceKeepsBothItems() throws {
+    let tree = try TempTree([])
+    try write(tree.url("A/a.txt"), "novo")
+    try write(tree.url("B/a.txt"), "velho")
+    for kind in [FileOperationKind.copy, .move] {
+        let outcome = transfer(operations(tree, refuseTrash: true), kind, [tree.url("A/a.txt")], to: tree.url("B"),
+                               resolve: { _ in .replace })
+        guard case .failed(let item, _) = outcome.failure else {
+            Issue.record("expected a failure, got \(String(describing: outcome.failure))")
+            return
+        }
+        #expect(item == tree.url("B/a.txt"))
+        #expect(outcome.changes.isEmpty)
+        #expect(read(tree.url("A/a.txt")) == "novo")
+        #expect(read(tree.url("B/a.txt")) == "velho")
+        #expect(try FileManager.default.contentsOfDirectory(atPath: tree.url("B").path) == ["a.txt"])
+    }
+}

@@ -12,9 +12,14 @@ final class ExplorerOperations {
     let environment: ExplorerEnvironment
     let undoStack = FileUndoStack()
     let trashOrigins: TrashOrigins
-    private(set) lazy var undoManager = ExplorerUndoManager(stack: undoStack, languages: environment.languages) { [weak self] redo in
-        Task { [weak self] in
-            if redo { await self?.redo() } else { await self?.undo() }
+    private(set) lazy var undoManager = makeUndoManager()
+
+    /// Each window gets its own, turned off while that window edits text.
+    func makeUndoManager(isBlocked: @escaping @MainActor () -> Bool = { false }) -> ExplorerUndoManager {
+        ExplorerUndoManager(stack: undoStack, languages: environment.languages, isBlocked: isBlocked) { [weak self] redo in
+            Task { [weak self] in
+                if redo { await self?.redo() } else { await self?.undo() }
+            }
         }
     }
     /// For tests: how many progress dialogs appeared, and how many are still on screen.
@@ -24,6 +29,9 @@ final class ExplorerOperations {
     private let pasteboard: NSPasteboard
     private let prompter: ExplorerPrompter
     private let progressDelay: TimeInterval
+    /// Operations in progress (quitting cancels them and waits for their cleanup).
+    private var running: [ObjectIdentifier: OperationControl] = [:]
+    private var idleWaiters: [CheckedContinuation<Void, Never>] = []
     /// The pasteboard's change count right after a cut; any other copy makes the cut stale.
     private var cutChangeCount: Int?
     private var cutItems: Set<String> = []
@@ -208,6 +216,18 @@ final class ExplorerOperations {
 
     // MARK: Running
 
+    var runningOperations: Int { running.count }
+
+    func cancelRunning() {
+        running.values.forEach { $0.cancel() }
+    }
+
+    /// Returns once nothing is running (a cancelled copy has removed what it had written by then).
+    func waitForOperations() async {
+        guard !running.isEmpty else { return }
+        await withCheckedContinuation { idleWaiters.append($0) }
+    }
+
     /// Runs `work` on a background queue with a progress dialog after `progressDelay`, then records
     /// undo (unless told not to), remembers where trashed items came from, and reports a failure.
     private func run(_ action: FileActionName, records: Bool = true, isUndo: Bool = false, style: ProgressStyle,
@@ -216,6 +236,7 @@ final class ExplorerOperations {
         let control = OperationControl()
         let presenter = ProgressPresenter(style: style, languages: languages, delay: progressDelay, control: control, owner: self)
         let engine = self.engine, box = presenter.box
+        running[ObjectIdentifier(control)] = control
         undoStack.beginWork()
         presenter.start()
         let outcome = await withCheckedContinuation { (continuation: CheckedContinuation<OperationOutcome, Never>) in
@@ -224,6 +245,11 @@ final class ExplorerOperations {
             }
         }
         presenter.finish()
+        running[ObjectIdentifier(control)] = nil
+        if running.isEmpty {
+            idleWaiters.forEach { $0.resume() }
+            idleWaiters = []
+        }
         undoStack.endWork()
         if records && !isUndo { undoStack.record(FileAction(name: action, changes: outcome.changes)) }
         trashOrigins.record(outcome.changes)

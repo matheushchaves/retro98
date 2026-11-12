@@ -32,6 +32,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 
+    /// Quitting (or logging out) during a copy cancels it and waits for its cleanup, so no
+    /// half-written file is left behind under its full name.
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard operations.runningOperations > 0 else { return .terminateNow }
+        operations.cancelRunning()
+        Task { [operations] in
+            await operations.waitForOperations()
+            sender.reply(toApplicationShouldTerminate: true)
+        }
+        return .terminateLater
+    }
+
     func openWindow(at location: Location) {
         let controller = ExplorerWindowController(start: location, languages: languages, operations: operations)
         controller.onClose = { [weak self, weak controller] in

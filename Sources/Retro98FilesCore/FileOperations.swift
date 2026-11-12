@@ -136,7 +136,9 @@ public struct FileOperations: Sendable {
                 completed += done
                 progress(OperationProgress(item: item, completed: completed, total: total))
             }
+            // The same folder can be spelled through a link or with other letter case.
             let inPlace = Self.parent(of: item) == destination.standardizedFileURL.path
+                || Self.sameFolder(item.deletingLastPathComponent(), destination)
             if request.kind == .move && inPlace { advance(countsBytes ? size : 1); continue }
             var name = item.lastPathComponent
             if request.kind == .copy && inPlace {
@@ -144,6 +146,7 @@ public struct FileOperations: Sendable {
                                           languages: environment.languages)
             }
             let target = destination.appending(path: name, directoryHint: .notDirectory)
+            let failure: OperationFailure?
             if Self.exists(target) {
                 if Self.contains(target, item) { outcome.failure = .replacesItsOwnSource(target); break }
                 let choice = replaceAll ? .replace : resolve(FileConflict(source: item, existing: target,
@@ -151,15 +154,13 @@ public struct FileOperations: Sendable {
                 if choice == .cancel { outcome.failure = .cancelled; break }
                 if choice == .skip { advance(countsBytes ? size : 1); continue }
                 replaceAll = replaceAll || choice == .replaceAll
-                do {
-                    outcome.changes.append(.trashed(original: target, trashed: try environment.moveToTrash(target)))
-                } catch {
-                    outcome.failure = .failed(target, error.localizedDescription)
-                    break
-                }
+                failure = replace(target, with: item, kind: request.kind, control: control, onBytes: { advance($0) },
+                                  changes: &outcome.changes)
+            } else {
+                failure = place(item, at: target, kind: request.kind, control: control, onBytes: { advance($0) },
+                                changes: &outcome.changes)
             }
-            if let failure = place(item, at: target, kind: request.kind, control: control,
-                                   onBytes: { advance($0) }, changes: &outcome.changes) {
+            if let failure {
                 outcome.failure = failure
                 break
             }
@@ -171,10 +172,44 @@ public struct FileOperations: Sendable {
     /// Copies or moves one item to a free `target`; records the change, or returns why it stopped.
     private func place(_ item: URL, at target: URL, kind: FileOperationKind, control: OperationControl,
                        onBytes: @escaping (Int64) -> Void, changes: inout [FileChange]) -> OperationFailure? {
-        if kind == .move && environment.isSameVolume(item, target.deletingLastPathComponent()) {
+        let renames = kind == .move && environment.isSameVolume(item, target.deletingLastPathComponent())
+        if let failure = put(item, at: target, renaming: renames, control: control, onBytes: onBytes) { return failure }
+        return finish(item, at: target, kind: kind, renamed: renames, changes: &changes)
+    }
+
+    /// Replacing: the new item first goes in under a hidden temporary name, so a cancel or a failure
+    /// leaves the old one where it was; only then does the old item go to the Trash and the new one
+    /// take its name.
+    private func replace(_ existing: URL, with item: URL, kind: FileOperationKind, control: OperationControl,
+                         onBytes: @escaping (Int64) -> Void, changes: inout [FileChange]) -> OperationFailure? {
+        let folder = existing.deletingLastPathComponent()
+        let staged = folder.appending(path: ".retro98-\(UUID().uuidString)", directoryHint: .notDirectory)
+        let renames = kind == .move && environment.isSameVolume(item, folder)
+        if let failure = put(item, at: staged, renaming: renames, control: control, onBytes: onBytes) { return failure }
+        let unstage = {
+            if renames { try? FileManager.default.moveItem(at: staged, to: item) } else { try? FileManager.default.removeItem(at: staged) }
+        }
+        do {
+            changes.append(.trashed(original: existing, trashed: try environment.moveToTrash(existing)))
+        } catch {
+            unstage()
+            return .failed(existing, error.localizedDescription)
+        }
+        guard Darwin.rename(staged.path, existing.path) == 0 else {
+            let reason = FileCopy.reason(errno: errno)
+            unstage()
+            return .failed(item, reason)
+        }
+        return finish(item, at: existing, kind: kind, renamed: renames, changes: &changes)
+    }
+
+    /// Puts `item` itself (`renaming`, a move on the same volume) or a copy of it at `target`, recording
+    /// nothing. A cancelled or failed copy removes what it had written.
+    private func put(_ item: URL, at target: URL, renaming: Bool, control: OperationControl,
+                     onBytes: @escaping (Int64) -> Void) -> OperationFailure? {
+        if renaming {
             do {
                 try FileManager.default.moveItem(at: item, to: target)
-                changes.append(.moved(from: item, to: target))
                 return nil
             } catch {
                 return .failed(item, error.localizedDescription)
@@ -182,24 +217,34 @@ public struct FileOperations: Sendable {
         }
         switch FileCopy.copy(item, to: target, control: control, onBytes: onBytes) {
         case .done:
-            guard kind == .move else {
-                changes.append(.created(target))
-                return nil
-            }
-            do {
-                try FileManager.default.removeItem(at: item)
-                changes.append(.moved(from: item, to: target))
-                return nil
-            } catch {
-                changes.append(.created(target))
-                return .failed(item, error.localizedDescription)
-            }
+            return nil
         case .cancelled:
             try? FileManager.default.removeItem(at: target)
             return .cancelled
         case .failed(let reason):
             try? FileManager.default.removeItem(at: target)
             return .failed(item, reason)
+        }
+    }
+
+    /// Records what happened; a move across volumes removes the source only now that the copy is whole.
+    private func finish(_ item: URL, at target: URL, kind: FileOperationKind, renamed: Bool,
+                        changes: inout [FileChange]) -> OperationFailure? {
+        guard kind == .move else {
+            changes.append(.created(target))
+            return nil
+        }
+        if renamed {
+            changes.append(.moved(from: item, to: target))
+            return nil
+        }
+        do {
+            try FileManager.default.removeItem(at: item)
+            changes.append(.moved(from: item, to: target))
+            return nil
+        } catch {
+            changes.append(.created(target))
+            return .failed(item, error.localizedDescription)
         }
     }
 
@@ -274,7 +319,7 @@ public struct FileOperations: Sendable {
             let failure: OperationFailure?
             switch change {
             case .created(let url):
-                if Self.exists(url) {
+                if !Self.isGone(url) {
                     do {
                         outcome.changes.append(.trashed(original: url, trashed: try environment.moveToTrash(url)))
                         failure = nil
@@ -297,7 +342,7 @@ public struct FileOperations: Sendable {
 
     /// Moves `item` to the exact path `target`, recreating missing parent folders.
     private func moveBack(_ item: URL, to target: URL, control: OperationControl, changes: inout [FileChange]) -> OperationFailure? {
-        guard Self.exists(item) else { return .failed(item, FileCopy.reason(errno: ENOENT)) }
+        guard !Self.isGone(item) else { return .failed(item, FileCopy.reason(errno: ENOENT)) }
         if Self.exists(target) {
             guard Self.sameFile(item, target) else { return .alreadyExists(target) }
             guard Darwin.rename(item.path, target.path) == 0 else { return .failed(item, FileCopy.reason(errno: errno)) }
@@ -320,16 +365,44 @@ public struct FileOperations: Sendable {
         return lstat(url.path, &info) == 0
     }
 
-    static func sameFile(_ a: URL, _ b: URL) -> Bool {
-        var first = stat(), second = stat()
-        guard lstat(a.path, &first) == 0, lstat(b.path, &second) == 0 else { return false }
-        return first.st_dev == second.st_dev && first.st_ino == second.st_ino
+    /// Known to be missing, as opposed to unreadable (the Trash without Full Disk Access).
+    static func isGone(_ url: URL) -> Bool {
+        var info = stat()
+        guard lstat(url.path, &info) != 0 else { return false }
+        return errno == ENOENT || errno == ENOTDIR
     }
 
-    /// `inner` is `outer` or inside it.
+    /// Device and inode: the same item whatever path spells it. `following` resolves a final link
+    /// (for folders); otherwise the item itself, a link included.
+    static func identity(_ url: URL, following: Bool) -> [UInt64]? {
+        var info = stat()
+        guard (following ? stat(url.path, &info) : lstat(url.path, &info)) == 0 else { return nil }
+        return [UInt64(info.st_dev), info.st_ino]
+    }
+
+    static func sameFile(_ a: URL, _ b: URL) -> Bool {
+        guard let first = identity(a, following: false) else { return false }
+        return first == identity(b, following: false)
+    }
+
+    static func sameFolder(_ a: URL, _ b: URL) -> Bool {
+        guard let first = identity(a, following: true) else { return false }
+        return first == identity(b, following: true)
+    }
+
+    /// `inner` is `outer` or inside it: by path, or by file identity when a link or another letter
+    /// case spells the same place differently.
     static func contains(_ outer: URL, _ inner: URL) -> Bool {
         let outerPath = outer.standardizedFileURL.path, innerPath = inner.standardizedFileURL.path
-        return innerPath == outerPath || innerPath.hasPrefix(outerPath == "/" ? "/" : outerPath + "/")
+        if innerPath == outerPath || innerPath.hasPrefix(outerPath == "/" ? "/" : outerPath + "/") { return true }
+        guard let target = identity(outer, following: false) else { return false }
+        var current = inner.standardizedFileURL
+        if identity(current, following: false) == target { return true }
+        while current.path != "/" {
+            current = current.deletingLastPathComponent()
+            if identity(current, following: true) == target { return true }
+        }
+        return false
     }
 
     static func parent(of url: URL) -> String { url.standardizedFileURL.deletingLastPathComponent().path }

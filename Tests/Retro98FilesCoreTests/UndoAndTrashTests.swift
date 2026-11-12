@@ -130,3 +130,16 @@ private let a = URL(filePath: "/T/a.txt"), b = URL(filePath: "/T/B/a.txt"), t = 
     origins.record([.trashed(original: tree.url("A/x.txt"), trashed: tree.url(".Trash/x.txt"))])
     #expect(origins.origin(of: tree.url(".Trash/x.txt")) == tree.url("A/x.txt"))
 }
+
+/// Without Full Disk Access the Trash can't be read: that is not the same as the items being gone.
+@MainActor @Test func unreadableTrashKeepsItsRecords() throws {
+    let tree = try TempTree([".Trash/x.txt"])
+    let file = tree.url("support/trash-origins.json"), trash = tree.url(".Trash").path
+    TrashOrigins(file: file, trash: tree.url(".Trash"))
+        .record([.trashed(original: tree.url("A/x.txt"), trashed: tree.url(".Trash/x.txt"))])
+    try FileManager.default.setAttributes([.posixPermissions: 0o000], ofItemAtPath: trash)
+    let whileLocked = TrashOrigins(file: file, trash: tree.url(".Trash"))
+    #expect(whileLocked.origin(of: tree.url(".Trash/x.txt")) == tree.url("A/x.txt"))
+    try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: trash)
+    #expect(TrashOrigins(file: file, trash: tree.url(".Trash")).origin(of: tree.url(".Trash/x.txt")) == tree.url("A/x.txt"))
+}

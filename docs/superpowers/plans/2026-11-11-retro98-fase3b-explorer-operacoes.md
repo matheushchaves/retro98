@@ -766,4 +766,7 @@ O autor roda `./install.sh --yes` (ou autoriza explicitamente) e confere:
   - Na Lixeira, Restaurar devolve itens excluídos pelo Explorer, e Esvaziar Lixeira pergunta e esvazia (com Acesso Total ao Disco).
 - [ ] **Desfazer:** ⌘Z e o botão Desfazer revertem colar, mover, renomear, nova pasta e excluir; ⇧⌘Z refaz. O menu do macOS mostra "Desfazer <ação>".
 - [ ] **Digitando:** com o cursor no endereço, ⌘⌫, ⌘Z, ⌘C e ⌘V mexem só no texto.
+  - Sem ter digitado nada, ⌘Z com o cursor no endereço não muda nenhum arquivo.
+- [ ] **Encerrar no meio:** ⌘Q durante uma cópia longa cancela e não deixa arquivo pela metade no destino.
+- [ ] **Substituir e cancelar:** substituir uma pasta e cancelar no meio deixa a pasta antiga no lugar.
 - [ ] **Desinstalar:** `./uninstall.sh` continua removendo tudo.

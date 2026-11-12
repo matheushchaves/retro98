@@ -8,10 +8,12 @@ private let pt = ["pt-BR"]
 /// Answers prompts from a queue (default: the last button, like Esc) and remembers what was asked.
 @MainActor final class ScriptedPrompter: ExplorerPrompter {
     var answers: [Int] = []
+    var onAsk: ((Prompt) -> Void)?
     private(set) var asked: [Prompt] = []
 
     func ask(_ prompt: Prompt) -> Int {
         asked.append(prompt)
+        onAsk?(prompt)
         return answers.isEmpty ? prompt.buttons.count - 1 : answers.removeFirst()
     }
 }
@@ -234,4 +236,24 @@ private let pt = ["pt-BR"]
     let renamed = await h.operations.rename(entry, to: "a.md")
     #expect(renamed?.path == h.url("A/a.md").path)
     #expect(h.exists("A/a.md"))
+}
+
+/// Quitting while files are being copied cancels them and waits for the cleanup: nothing half-written stays.
+@MainActor @Test func cancellingRunningOperationsWaitsForThem() async throws {
+    let h = try OperationsHarness((0..<50).map { "A/Pasta/f\($0).txt" } + ["B/Pasta/importante.txt"])
+    h.operations.copy([h.url("A/Pasta")])
+    h.prompter.answers = [0]
+    var runningWhenAsked = 0
+    h.prompter.onAsk = { _ in
+        runningWhenAsked = h.operations.runningOperations
+        h.operations.cancelRunning()
+    }
+    let paste = Task { await h.operations.paste(into: h.url("B")) }
+    while h.operations.runningOperations == 0 { await Task.yield() }
+    await h.operations.waitForOperations()
+    #expect(runningWhenAsked == 1)
+    #expect(h.operations.runningOperations == 0)
+    #expect(h.exists("B/Pasta/importante.txt"))
+    #expect(!h.exists("B/Pasta/f0.txt"))
+    _ = await paste.value
 }

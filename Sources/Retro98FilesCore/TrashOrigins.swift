@@ -14,12 +14,13 @@ public final class TrashOrigins {
     /// Trashed path → original path.
     private var records: [String: String] = [:]
 
-    /// A missing or unreadable file starts empty; records whose item already left the Trash are dropped.
+    /// A missing or unreadable file starts empty; records whose item already left the Trash are dropped
+    /// (a Trash that can't be read, without Full Disk Access, keeps them).
     public init(file: URL, trash: URL) {
         self.file = file
         self.trash = trash
         if let data = try? Data(contentsOf: file), let saved = try? JSONDecoder().decode([Record].self, from: data) {
-            for record in saved where FileOperations.exists(URL(filePath: record.trashed)) {
+            for record in saved where !FileOperations.isGone(URL(filePath: record.trashed)) {
                 records[record.trashed] = record.original
             }
             if records.count != saved.count { save() }
@@ -30,7 +31,7 @@ public final class TrashOrigins {
     public func origin(of trashed: URL) -> URL? {
         let key = Self.key(trashed)
         guard let original = records[key] else { return nil }
-        guard FileOperations.exists(trashed) else {
+        guard !FileOperations.isGone(trashed) else {
             records[key] = nil
             save()
             return nil

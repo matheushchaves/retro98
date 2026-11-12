@@ -169,3 +169,22 @@ private let pt = ["pt-BR"]
     let background = h.controller.contextMenuItems(at: nil).map(\.title)
     #expect(background.contains("Esvaziar Lixeira") && background.contains("Abrir no Finder"))
 }
+
+/// ⌘Z typed in the address field (or in a name being edited) belongs to the text, never to the files.
+@MainActor @Test func undoWhileTypingLeavesFilesAlone() async throws {
+    let h = try WindowHarness(["A/a.txt", "B"], at: "B")
+    h.ops.operations.copy([h.ops.url("A/a.txt")])
+    h.controller.paste(nil)
+    await h.settle()
+    let window = h.controller.window
+    window.makeFirstResponder(h.controller.address.field)
+    for action in ["undo:", "redo:"] {
+        #expect(!window.validateMenuItem(NSMenuItem(title: "", action: Selector(action), keyEquivalent: "")))
+        _ = window.perform(Selector(action), with: nil)
+    }
+    try await Task.sleep(for: .milliseconds(200))
+    #expect(h.ops.exists("B/a.txt"))
+    #expect(h.ops.operations.undoStack.canUndo)
+    window.makeFirstResponder(h.controller.grid)
+    #expect(window.validateMenuItem(NSMenuItem(title: "", action: Selector(("undo:")), keyEquivalent: "")))
+}

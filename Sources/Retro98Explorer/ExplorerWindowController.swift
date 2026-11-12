@@ -37,6 +37,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     var contextMenu: RetroMenu?
     /// The last file operation this window started (tests wait for it).
     var lastTask: Task<Void, Never>?
+    /// The app's file undo history, as seen from this window (off while it edits text).
+    private lazy var windowUndoManager = operations.makeUndoManager { [weak self] in self?.isEditingText ?? false }
 
     init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil, operations: ExplorerOperations? = nil) {
         self.languages = languages
@@ -338,8 +340,9 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         onClose?()
     }
 
-    /// One undo history for the whole app: Edit › Undo, ⌘Z and its title come from the operations.
-    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? { operations.undoManager }
+    /// One undo history for the whole app: Edit › Undo, ⌘Z and its title come from the operations,
+    /// except while typing in the address or a name, where ⌘Z belongs to the text.
+    func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? { windowUndoManager }
 
     func windowDidBecomeKey(_ notification: Notification) { updateCommands() }
 
