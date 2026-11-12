@@ -25,3 +25,9 @@ let vgaFontURL = repoRoot.appending(path: "Resources/Prompt/PxPlus_IBM_VGA_8x16.
     }
     return colors.count
 }
+
+/// /bin/sh with a throwaway home, no history file and no startup file, so tests never read or write the user's files.
+func sh(_ arguments: [String], home: URL) -> ShellLaunch {
+    let environment = ["HOME=\(home.path)", "HISTFILE=/dev/null", "PATH=/usr/bin:/bin:/usr/sbin:/sbin", "PS1=", "TERM=xterm-256color"]
+    return ShellLaunch(executable: "/bin/sh", arguments: arguments, execName: "sh", environment: environment, directory: home.path)
+}
