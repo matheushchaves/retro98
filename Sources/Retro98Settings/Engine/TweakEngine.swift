@@ -13,6 +13,7 @@ public struct TweakFailure: Equatable, Sendable {
 
 public enum EngineWarning: Equatable, Sendable {
     case appearanceNeedsLogout
+    case wallpaperResetToSystemDefault
 }
 
 public struct EngineReport: Equatable, Sendable {
@@ -162,22 +163,21 @@ public struct TweakEngine {
                     == .string("Dark")
             }
         )
-        let outcomes = selected.map { (tweak: $0, reason: restore($0, from: backup)) }
+        var wallpaperWarnings: [EngineWarning] = []
+        let outcomes = selected.map { tweak in
+            (tweak: tweak, reason: restore(tweak, from: backup) { wallpaperWarnings.append(.wallpaperResetToSystemDefault) })
+        }
         let succeeded = outcomes.filter { $0.reason == nil }.map(\.tweak.id)
         let failed = outcomes.compactMap { outcome in
             outcome.reason.map { TweakFailure(id: outcome.tweak.id, reason: $0) }
         }
 
         try backupFile.save(backup.removing(tweaks: Set(succeeded)))
-        let restoredFiles = backup.files.contains { succeeded.contains($0.tweak) }
-        performEffects(
-            of: selected.filter { succeeded.contains($0.id) },
-            extra: restoredFiles ? [.restartWallpaperAgent] : []
-        )
-        return EngineReport(succeeded: succeeded, failed: failed, warnings: warnings)
+        performEffects(of: selected.filter { succeeded.contains($0.id) })
+        return EngineReport(succeeded: succeeded, failed: failed, warnings: warnings + wallpaperWarnings)
     }
 
-    private func restore(_ tweak: Tweak, from backup: Backup) -> FailureReason? {
+    private func restore(_ tweak: Tweak, from backup: Backup, onSystemPicture: () -> Void) -> FailureReason? {
         let denied = backup.preferences.filter { $0.tweak == tweak.id }.compactMap { entry -> PreferenceKey? in
             // Already back at the original (e.g. fixed by hand): nothing to write, so nothing to deny.
             guard store.value(for: entry.key) != entry.original else { return nil }
@@ -190,10 +190,10 @@ public struct TweakEngine {
         }
         guard denied.isEmpty else { return .writeDenied(denied) }
 
-        for entry in backup.files
-        where entry.tweak == tweak.id && (try? files.read(URL(filePath: entry.path))) != entry.original {
+        // The only file backed up is the wallpaper agent's store; the setter knows how to put it back safely.
+        for entry in backup.files where entry.tweak == tweak.id {
             do {
-                try files.write(entry.original, to: URL(filePath: entry.path))
+                if try wallpaper.restoreIndex(entry.original, at: URL(filePath: entry.path)) == .systemDefault { onSystemPicture() }
             } catch {
                 return .fileWriteFailed(String(describing: error))
             }

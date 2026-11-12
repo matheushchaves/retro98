@@ -12,7 +12,7 @@ public enum TweakGroup: String, Codable, Sendable {
 
 /// Side effects needed after preferences change so running apps pick them up.
 public enum RefreshEffect: Hashable, Sendable {
-    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartWallpaperAgent, restartDock
+    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartDock
 }
 
 /// Work that is not a plain preference write.

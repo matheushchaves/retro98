@@ -66,7 +66,7 @@ import Testing
     #expect(fixture.log.events.isEmpty)
 }
 
-@Test func restoringWallpaperRewritesIndexAndRestartsAgent() throws {
+@Test func restoringWallpaperHandsTheIndexToTheWallpaperSetter() throws {
     let fixture = EngineFixture()
     _ = try fixture.engine.apply([.wallpaper])
     try fixture.files.write(Data("teal".utf8), to: indexURL)
@@ -74,8 +74,21 @@ import Testing
 
     _ = try fixture.engine.restore([.wallpaper])
 
+    #expect(fixture.wallpaper.restoredIndexes == [originalIndex])
     #expect(fixture.files.snapshot[indexURL] == originalIndex)
-    #expect(fixture.refresher.calls == ["perform(restartWallpaperAgent)"])
+    // The setter restarts the agent itself, right after writing; a later restart could race it again.
+    #expect(fixture.refresher.calls.isEmpty)
+}
+
+@Test func restoringWallpaperToTheSystemPictureWarns() throws {
+    let fixture = EngineFixture()
+    _ = try fixture.engine.apply([.wallpaper])
+    fixture.wallpaper.restoreResult = .systemDefault
+
+    let report = try fixture.engine.restore([.wallpaper])
+
+    #expect(report.succeeded == [.wallpaper])
+    #expect(report.warnings == [.wallpaperResetToSystemDefault])
 }
 
 @Test func restoringWallpaperRemovesIndexThatDidNotExist() throws {

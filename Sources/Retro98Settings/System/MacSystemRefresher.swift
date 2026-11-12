@@ -24,7 +24,7 @@ public struct ProcessCommandRunner: CommandRunner {
     }
 }
 
-/// Makes running apps pick up changed preferences: restarts Finder or the wallpaper agent,
+/// Makes running apps pick up changed preferences: restarts Finder or the Dock,
 /// broadcasts the system's own change notifications and switches appearance live.
 public struct MacSystemRefresher: SystemRefresher {
     private let runner: CommandRunner
@@ -51,8 +51,6 @@ public struct MacSystemRefresher: SystemRefresher {
             switch effect {
             case .restartFinder:
                 _ = runner.run("/usr/bin/killall", ["Finder"])
-            case .restartWallpaperAgent:
-                _ = runner.run("/usr/bin/killall", ["WallpaperAgent"])
             case .restartDock:
                 _ = runner.run("/usr/bin/killall", ["Dock"])
             case .notifyColorChange:

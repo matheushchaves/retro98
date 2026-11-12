@@ -52,9 +52,9 @@ private final class RecordingRunner: CommandRunner {
     var posted: [String] = []
     let refresher = MacSystemRefresher(runner: runner, post: { posted.append($0) })
 
-    refresher.perform([.restartFinder, .notifyColorChange, .notifyScrollBarChange, .restartWallpaperAgent, .syncAppearance])
+    refresher.perform([.restartFinder, .notifyColorChange, .notifyScrollBarChange, .syncAppearance])
 
-    #expect(Set(runner.runs) == [["/usr/bin/killall", "Finder"], ["/usr/bin/killall", "WallpaperAgent"]])
+    #expect(Set(runner.runs) == [["/usr/bin/killall", "Finder"]])
     #expect(Set(posted) == [
         "AppleColorPreferencesChangedNotification", "AppleAquaColorVariantChanged", "AppleShowScrollBarsSettingChanged",
     ])

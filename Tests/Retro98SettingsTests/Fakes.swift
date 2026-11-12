@@ -13,10 +13,21 @@ final class FakeWallpaperSetter: WallpaperSetter {
     var error: Error?
     var beforeSet: (() -> Void)?
 
+    /// Where restored indexes land, like the real setter's file store.
+    var files: FileStore?
+    var restoredIndexes: [Data?] = []
+    var restoreResult = WallpaperRestore.original
+
     func setSolidColor(hex: String) throws {
         beforeSet?()
         if let error { throw error }
         hexes.append(hex)
+    }
+
+    func restoreIndex(_ original: Data?, at index: URL) throws -> WallpaperRestore {
+        restoredIndexes.append(original)
+        try files?.write(original, to: index)
+        return restoreResult
     }
 }
 
@@ -119,6 +130,7 @@ final class EngineFixture {
         observer = ObservingPreferenceStore(wrapping: store) { key in log.events.append("write(\(key.name))") }
         files = InMemoryFileStore(indexContents.map { [indexURL: $0] } ?? [:])
         backupFile = BackupFile(url: fixtureBackupURL, files: files)
+        wallpaper.files = files
         refresher = RecordingRefresher(log: log)
         engine = TweakEngine(
             catalog: phase1Catalog, store: observer, files: files, backupFile: backupFile,

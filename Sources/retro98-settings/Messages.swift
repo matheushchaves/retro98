@@ -43,6 +43,16 @@ struct Messages {
         )
     }
 
+    /// The saved wallpaper was Retro98's own color (left by an earlier uninstall), so macOS's picture came back instead.
+    var wallpaperResetToSystemDefault: String {
+        text(
+            en: "Your wallpaper from before Retro98 wasn't in the backup, so the macOS default is back. "
+                + "To use another one, pick it in System Settings › Wallpaper.",
+            ptBR: "O papel de parede de antes do Retro98 não estava no backup, então voltou o padrão do macOS. "
+                + "Para usar outro, escolha em Ajustes do Sistema › Papel de Parede."
+        )
+    }
+
     func unreadableBackup(_ path: String) -> String {
         text(
             en: "The backup at \(path) is unreadable. Nothing was changed. Don't delete that file; please open a GitHub issue.",

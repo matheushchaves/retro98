@@ -51,6 +51,9 @@ func printReport(_ report: EngineReport, restoring: Bool) {
     if report.warnings.contains(.appearanceNeedsLogout) {
         print(messages.appearanceNeedsLogout)
     }
+    if report.warnings.contains(.wallpaperResetToSystemDefault) {
+        print(messages.wallpaperResetToSystemDefault)
+    }
 }
 
 let command: SettingsCommand
