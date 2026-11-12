@@ -30,7 +30,8 @@ struct ShellLaunch: Equatable {
         variables["TERM_PROGRAM"] = "Retro98_Prompt"
         variables["TERM_PROGRAM_VERSION"] = version
         if ["LANG", "LC_ALL", "LC_CTYPE"].allSatisfy({ variables[$0] == nil }) {
-            variables["LANG"] = language(for: locale)
+            // Without a real locale for this language and region, UTF-8 text still works, as in Terminal.
+            if let name = language(for: locale) { variables["LANG"] = name } else { variables["LC_CTYPE"] = "UTF-8" }
         }
         return ShellLaunch(
             executable: shell, arguments: [], execName: "-" + (shell as NSString).lastPathComponent,
@@ -38,11 +39,13 @@ struct ShellLaunch: Equatable {
         )
     }
 
-    /// "pt_BR.UTF-8" for Brazilian Portuguese; "en_US.UTF-8" when the locale has no language or region.
-    static func language(for locale: Locale) -> String {
-        guard let language = locale.language.languageCode?.identifier, let region = locale.region?.identifier else {
-            return "en_US.UTF-8"
-        }
-        return "\(language)_\(region).UTF-8"
+    /// "pt_BR.UTF-8" for Brazilian Portuguese; nil when macOS has no locale for the pair (English with region
+    /// Brazil has no en_BR) or the locale lacks a language or region.
+    static func language(for locale: Locale) -> String? {
+        guard let language = locale.language.languageCode?.identifier, let region = locale.region?.identifier else { return nil }
+        let name = "\(language)_\(region).UTF-8"
+        guard let handle = newlocale(LC_CTYPE_MASK, name, nil) else { return nil }
+        freelocale(handle)
+        return name
     }
 }

@@ -61,6 +61,8 @@ check "prompt-built" 'codesign --verify "$PROMPT" 2> /dev/null'
 check "prompt-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1'
 check "prompt-has-font" '[[ -s "$PROMPT/Contents/Resources/PxPlus_IBM_VGA_8x16.ttf" && -s "$PROMPT/Contents/Resources/LICENSE-PxPlus_IBM_VGA_8x16.txt" ]]'
 check "prompt-has-icon" '[[ -s "$PROMPT/Contents/Resources/AppIcon.icns" ]]'
+check "prompt-apple-events-usage" '[[ -n "$(/usr/libexec/PlistBuddy -c "Print :NSAppleEventsUsageDescription" "$PROMPT/Contents/Info.plist" 2> /dev/null)" ]]'
+check "prompt-registered" 'grep -qx "lsregister -f $PROMPT" "$WORK_LOG"'
 check "prompt-not-default-terminal" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1 && ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1'
 
 # Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.

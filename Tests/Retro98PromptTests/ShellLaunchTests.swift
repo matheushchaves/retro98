@@ -53,10 +53,14 @@ private func variables(_ launch: ShellLaunch) -> [String: String] {
     #expect(withCAll["LC_ALL"] == "C")
     #expect(variables(launch(["SHELL": "/bin/bash", "LC_CTYPE": "UTF-8"]))["LANG"] == nil)
     #expect(variables(launch(["SHELL": "/bin/bash", "LANG": "en_GB.UTF-8"]))["LANG"] == "en_GB.UTF-8")
+    // English with region Brazil has no en_BR locale: the shell would fall back to C and lose accents.
+    let englishInBrazil = variables(launch(["SHELL": "/bin/bash"], locale: Locale(identifier: "en_BR")))
+    #expect(englishInBrazil["LANG"] == nil)
+    #expect(englishInBrazil["LC_CTYPE"] == "UTF-8")
 }
 
 @Test func languageForLocales() {
     #expect(ShellLaunch.language(for: ptBR) == "pt_BR.UTF-8")
-    #expect(ShellLaunch.language(for: Locale(identifier: "en")) == "en_US.UTF-8")
+    #expect(ShellLaunch.language(for: Locale(identifier: "en_BR")) == nil)
     #expect(ShellLaunch.language(for: Locale(identifier: "fr_FR")) == "fr_FR.UTF-8")
 }
