@@ -19,13 +19,17 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     let environment: ExplorerEnvironment
     private let toolbar = RetroToolbar()
     private let statusBar = RetroStatusBar()
-    let grid = RetroIconGrid()
+    let grid: RetroIconGrid
+    /// The Details header above the scrolling grid.
+    let gridPane: GridPane
     private let tree = RetroTreeView()
     private let treeSource: ExplorerTree
     let address: AddressBar
     private let messageView = MessageView()
     private var watcher: DirectoryWatcher?
     private var iconCache: [URL: PixelIcon] = [:]
+    private var smallIconCache: [URL: PixelIcon] = [:]
+    var viewObserver: NSObjectProtocol?
     private var observers: [NSObjectProtocol] = []
     private var reloadPending = false
     /// What the grid shows right now; a reload with the same place keeps selection and scroll.
@@ -49,6 +53,9 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         window = RetroAppWindow(title: model.title, icon: FileIcons.icon(.desktop, size: 16), contentSize: CGSize(width: 680, height: 480))
         treeSource = ExplorerTree(environment: self.environment, languages: languages)
         address = AddressBar(label: ExplorerText.address(languages))
+        let grid = RetroIconGrid()
+        self.grid = grid
+        gridPane = GridPane(scroll: RetroScroller.makeScrollView(document: grid, as: QuickLookScrollView.self), frame: .zero)
         super.init()
         window.delegate = self
         window.taskbarHeight = {
@@ -58,6 +65,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         model.onChange = { [weak self] in self?.refresh() }
         refresh()
         observeVolumes()
+        observeViewChanges()
+        applyViewMode(environment.preferences.viewMode)
         operationsObserver = NotificationCenter.default.addObserver(forName: ExplorerOperations.didChange, object: self.operations,
                                                                     queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.operationsChanged() }
@@ -101,12 +110,12 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         tree.onSelect = { [weak self] id in self?.treeSelected(id) }
         let treeScroll = RetroScroller.makeScrollView(document: tree)
         treeScroll.frame = CGRect(x: 0, y: 0, width: Self.treeWidth, height: split.bounds.height)
-        let gridScroll = RetroScroller.makeScrollView(document: grid, as: QuickLookScrollView.self)
-        gridScroll.controller = self
-        gridScroll.hasHorizontalScroller = false
-        gridScroll.frame = CGRect(x: Self.treeWidth + 4, y: 0, width: width - Self.treeWidth - 4, height: split.bounds.height)
+        (gridPane.scroll as? QuickLookScrollView)?.controller = self
+        gridPane.scroll.hasHorizontalScroller = false
+        gridPane.frame = CGRect(x: Self.treeWidth + 4, y: 0, width: width - Self.treeWidth - 4, height: split.bounds.height)
+        gridPane.header.onClick = { [weak self] column in self?.sortByColumn(column) }
         split.addSubview(FieldFrame(wrapping: treeScroll))
-        split.addSubview(FieldFrame(wrapping: gridScroll))
+        split.addSubview(FieldFrame(wrapping: gridPane))
         content.addSubview(split)
         tree.roots = [ExplorerTree.desktopID]
         tree.expand(ExplorerTree.desktopID)
@@ -150,6 +159,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
             grid.moveEditing(to: navigated ? nil : renamingURL.flatMap { url in model.entries.firstIndex { $0.url == url } })
         }
         showMessage(model.error)
+        updateColumns()
         updateCommands()
         if navigated {
             window.setTitle(model.title, icon: smallIcon(for: location))
@@ -202,7 +212,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
             item(ExplorerText.delete(l), FileIcons.delete, isEnabled(#selector(moveToTrash(_:)))) { [weak self] in self?.moveToTrash(nil) },
             item(ExplorerText.properties(l), FileIcons.properties, false) {},
             nil,
-            item(ExplorerText.views(l), FileIcons.views, false) {},
+            item(ExplorerText.views(l), FileIcons.views, true) { [weak self] in self?.showViewsMenu() },
         ]
     }
 
@@ -337,6 +347,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         watcher?.stop()
         observers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
         operationsObserver.map(NotificationCenter.default.removeObserver)
+        viewObserver.map(NotificationCenter.default.removeObserver)
         onClose?()
     }
 
@@ -351,7 +362,19 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     func numberOfItems(in grid: RetroIconGrid) -> Int { model.entries.count }
     func grid(_ grid: RetroIconGrid, titleAt index: Int) -> String { model.entries[index].name }
     func grid(_ grid: RetroIconGrid, iconAt index: Int) -> PixelIcon { largeIcon(for: model.entries[index]) }
-    func grid(_ grid: RetroIconGrid, isDimmedAt index: Int) -> Bool { operations.isCut(model.entries[index].url) }
+    func grid(_ grid: RetroIconGrid, isDimmedAt index: Int) -> Bool {
+        model.entries[index].isHidden || operations.isCut(model.entries[index].url)
+    }
+    func grid(_ grid: RetroIconGrid, smallIconAt index: Int) -> PixelIcon { smallIcon(for: model.entries[index]) }
+
+    private func smallIcon(for entry: FileEntry) -> PixelIcon {
+        guard entry.kind == .application else { return FileIcons.icon(ExplorerIcons.kind(for: entry.kind), size: 16) }
+        if let cached = smallIconCache[entry.url] { return cached }
+        let image = PixelIcon.appIcon(for: entry.url, size: 16)
+        let icon = PixelIcon(width: 16, height: 16) { PixelIcon.drawUpright(image, in: CGRect(x: 0, y: 0, width: 16, height: 16), context: $0) }
+        smallIconCache[entry.url] = icon
+        return icon
+    }
 
     private func largeIcon(for entry: FileEntry) -> PixelIcon {
         if entry.kind == .application {

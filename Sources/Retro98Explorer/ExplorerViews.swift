@@ -9,13 +9,13 @@ final class EtchedLine: PixelView {
     }
 }
 
-/// A sunken 2-pt field border around a scroll view (tree and icon panes).
+/// A sunken 2-pt field border around a pane (tree and icon panes).
 final class FieldFrame: PixelView {
-    init(wrapping scroll: NSScrollView) {
-        super.init(frame: scroll.frame)
-        scroll.frame = bounds.insetBy(dx: 2, dy: 2)
-        scroll.autoresizingMask = [.width, .height]
-        addSubview(scroll)
+    init(wrapping content: NSView) {
+        super.init(frame: content.frame)
+        content.frame = bounds.insetBy(dx: 2, dy: 2)
+        content.autoresizingMask = [.width, .height]
+        addSubview(content)
     }
 
     @available(*, unavailable)
@@ -23,6 +23,40 @@ final class FieldFrame: PixelView {
 
     override func drawPixels(in context: CGContext, size: CGSize) {
         Bevel.draw(.sunken, in: CGRect(origin: .zero, size: size), context: context)
+    }
+}
+
+/// The right pane: the Details column header (only in Details) above the scrolling grid.
+final class GridPane: NSView {
+    let header = RetroColumnHeader()
+    let scroll: NSScrollView
+    var showsHeader = false {
+        didSet {
+            header.isHidden = !showsHeader
+            layoutPane()
+        }
+    }
+
+    init(scroll: NSScrollView, frame: CGRect) {
+        self.scroll = scroll
+        super.init(frame: frame)
+        header.isHidden = true
+        addSubview(header)
+        addSubview(scroll)
+        layoutPane()
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+    override var isFlipped: Bool { true }
+
+    override func resizeSubviews(withOldSize oldSize: NSSize) { layoutPane() }
+
+    private func layoutPane() {
+        let headerHeight = showsHeader ? RetroColumnHeader.height : 0
+        header.frame = CGRect(x: 0, y: 0, width: bounds.width, height: RetroColumnHeader.height)
+        scroll.frame = CGRect(x: 0, y: headerHeight, width: bounds.width, height: max(bounds.height - headerHeight, 0))
     }
 }
 

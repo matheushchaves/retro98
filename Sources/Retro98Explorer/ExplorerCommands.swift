@@ -22,6 +22,7 @@ extension ExplorerWindowController: NSMenuItemValidation {
     }
 
     func isEnabled(_ action: Selector?) -> Bool {
+        if let action, Self.viewActions.contains(action) { return true }
         guard !isEditingText, let action else { return false }
         let selected = selectedEntries
         let files = !selected.isEmpty && selected.allSatisfy(\.isFileItem)
@@ -38,7 +39,10 @@ extension ExplorerWindowController: NSMenuItemValidation {
         }
     }
 
-    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool { isEnabled(menuItem.action) }
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        menuItem.state = isChecked(menuItem.action) ? .on : .off
+        return isEnabled(menuItem.action)
+    }
 
     func spawn(_ work: @escaping @MainActor () async -> Void) {
         lastTask = Task { await work() }

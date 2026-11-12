@@ -47,7 +47,18 @@ enum ExplorerMenus {
                 command(ExplorerText.moveItemHere(l), "v", [.command, .option], #selector(ExplorerWindowController.moveItemHere(_:))), nil,
                 command(ExplorerText.selectAll(l), "a", .command, #selector(NSResponder.selectAll(_:))),
             ]),
-            (ExplorerText.menuView(l), [command(ExplorerText.refresh(l), "r", .command, #selector(AppDelegate.refresh(_:)))]),
+            (ExplorerText.menuView(l), [
+                command(ExplorerText.viewMode(.largeIcons, l), "1", .command, #selector(ExplorerWindowController.showLargeIcons(_:))),
+                command(ExplorerText.viewMode(.smallIcons, l), "2", .command, #selector(ExplorerWindowController.showSmallIcons(_:))),
+                command(ExplorerText.viewMode(.list, l), "3", .command, #selector(ExplorerWindowController.showList(_:))),
+                command(ExplorerText.viewMode(.details, l), "4", .command, #selector(ExplorerWindowController.showDetails(_:))), nil,
+                command(ExplorerText.arrange(by: .name, l), "", [], #selector(ExplorerWindowController.arrangeByName(_:))),
+                command(ExplorerText.arrange(by: .type, l), "", [], #selector(ExplorerWindowController.arrangeByType(_:))),
+                command(ExplorerText.arrange(by: .size, l), "", [], #selector(ExplorerWindowController.arrangeBySize(_:))),
+                command(ExplorerText.arrange(by: .modified, l), "", [], #selector(ExplorerWindowController.arrangeByDate(_:))), nil,
+                command(ExplorerText.showHiddenFiles(l), ".", [.command, .shift], #selector(ExplorerWindowController.toggleHiddenFiles(_:))), nil,
+                command(ExplorerText.refresh(l), "r", .command, #selector(AppDelegate.refresh(_:))),
+            ]),
             (ExplorerText.menuGo(l), [
                 command(ExplorerText.back(l), "[", .command, #selector(AppDelegate.goBack(_:))),
                 command(ExplorerText.forward(l), "]", .command, #selector(AppDelegate.goForward(_:))),
@@ -118,7 +129,7 @@ enum ExplorerMenus {
                     let selector = command.selector
                     let state = validated(command)
                     return RetroMenuItem(title: state.title, kind: .action({ NSApp.sendAction(selector, to: nil, from: nil) }),
-                                         isEnabled: state.isEnabled)
+                                         isEnabled: state.isEnabled, mark: state.mark)
                 }
             }
         }
@@ -126,14 +137,18 @@ enum ExplorerMenus {
 
     /// Title and state as AppKit would show them: the target in the responder chain validates the item
     /// (the window names Undo after the last action, "Desfazer Copiar"). `target` overrides the lookup.
-    static func validated(_ command: Command, target: AnyObject? = nil) -> (title: String, isEnabled: Bool) {
+    /// The view modes and sort keys are one-of choices (a bullet); other "on" items get a check.
+    static let radioActions: Set<Selector> = ExplorerWindowController.viewActions.subtracting([#selector(ExplorerWindowController.toggleHiddenFiles(_:))])
+
+    static func validated(_ command: Command, target: AnyObject? = nil) -> (title: String, isEnabled: Bool, mark: RetroMenuItem.Mark) {
         let item = NSMenuItem(title: command.title, action: command.selector, keyEquivalent: "")
         guard let target = target ?? NSApp.target(forAction: command.selector, to: nil, from: item) as AnyObject? else {
-            return (command.title, false)
+            return (command.title, false, .none)
         }
         let enabled = (target as? NSMenuItemValidation)?.validateMenuItem(item)
             ?? (target as? NSUserInterfaceValidations)?.validateUserInterfaceItem(item) ?? true
-        return (item.title, enabled)
+        let mark: RetroMenuItem.Mark = item.state == .on ? (radioActions.contains(command.selector) ? .bullet : .check) : .none
+        return (item.title, enabled, mark)
     }
 
     private static func submenu(_ menu: NSMenu) -> NSMenuItem {
