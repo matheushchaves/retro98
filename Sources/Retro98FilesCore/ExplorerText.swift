@@ -57,6 +57,24 @@ public enum ExplorerText {
     public static func emptyTrash(_ l: [String]) -> String { text("Empty Recycle Bin", "Esvaziar Lixeira", l) }
     public static func moveItemHere(_ l: [String]) -> String { text("Move Item Here", "Mover para cá", l) }
 
+    public static func actionName(_ name: FileActionName, _ l: [String]) -> String {
+        switch name {
+        case .copy: copy(l)
+        case .move: text("Move", "Mover", l)
+        case .rename: rename(l)
+        case .newFolder: newFolder(l)
+        case .delete: delete(l)
+        case .restore: restore(l)
+        }
+    }
+    /// "Desfazer Copiar" / "Undo Copy"; just "Desfazer" / "Undo" when there is nothing to undo.
+    public static func undoTitle(_ name: FileActionName?, _ l: [String]) -> String {
+        name.map { undo(l) + " " + actionName($0, l) } ?? undo(l)
+    }
+    public static func redoTitle(_ name: FileActionName?, _ l: [String]) -> String {
+        name.map { redo(l) + " " + actionName($0, l) } ?? redo(l)
+    }
+
     public static func nameCantContainSeparators(_ l: [String]) -> String {
         text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
     }
