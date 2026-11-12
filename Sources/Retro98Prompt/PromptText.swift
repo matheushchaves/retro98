@@ -29,4 +29,25 @@ enum PromptText {
 
     static func end(_ l: [String]) -> String { text(l, "Encerrar", "End") }
     static func cancel(_ l: [String]) -> String { text(l, "Cancelar", "Cancel") }
+
+    // MARK: Menus (the Explorer's wording)
+
+    static func menuFile(_ l: [String]) -> String { text(l, "Arquivo", "File") }
+    static func menuEdit(_ l: [String]) -> String { text(l, "Editar", "Edit") }
+    static func menuWindow(_ l: [String]) -> String { text(l, "Janela", "Window") }
+    static func menuHelp(_ l: [String]) -> String { text(l, "Ajuda", "Help") }
+    static func newWindow(_ l: [String]) -> String { text(l, "Nova janela", "New Window") }
+    static func close(_ l: [String]) -> String { text(l, "Fechar", "Close") }
+    static func copy(_ l: [String]) -> String { text(l, "Copiar", "Copy") }
+    static func paste(_ l: [String]) -> String { text(l, "Colar", "Paste") }
+    static func selectAll(_ l: [String]) -> String { text(l, "Selecionar tudo", "Select All") }
+    static func readme(_ l: [String]) -> String { text(l, "Ajuda do Retro98 (README)", "Retro98 Help (README)") }
+    static func about(_ l: [String]) -> String { text(l, "Sobre o Retro98 Prompt", "About Retro98 Prompt") }
+    static func hide(_ l: [String]) -> String { text(l, "Ocultar Retro98 Prompt", "Hide Retro98 Prompt") }
+    static func hideOthers(_ l: [String]) -> String { text(l, "Ocultar Outros", "Hide Others") }
+    static func showAll(_ l: [String]) -> String { text(l, "Mostrar Tudo", "Show All") }
+    static func quit(_ l: [String]) -> String { text(l, "Encerrar Retro98 Prompt", "Quit Retro98 Prompt") }
+    static func minimize(_ l: [String]) -> String { text(l, "Minimizar", "Minimize") }
+    static func zoom(_ l: [String]) -> String { "Zoom" }
+    static func bringAllToFront(_ l: [String]) -> String { text(l, "Trazer Tudo para a Frente", "Bring All to Front") }
 }

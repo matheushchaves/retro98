@@ -21,6 +21,7 @@ final class PromptTerminalView: LocalProcessTerminalView {
 /// Closing it while a program runs asks first; a shell that exits cleanly closes it.
 @MainActor
 final class PromptWindowController: NSObject, NSWindowDelegate {
+    static let shellBundleID = "io.github.matheushchaves.retro98.shell"
     static let menuHeight: CGFloat = 22
     /// 80×25 cells of 8×16, the scroll bar, and the menu bar over an etched line.
     static let contentSize = CGSize(width: 656, height: 424)
@@ -45,6 +46,10 @@ final class PromptWindowController: NSObject, NSWindowDelegate {
         super.init()
         window.delegate = self
         window.tabbingMode = .disallowed
+        // Maximizing leaves the Retro98 taskbar visible while it runs, as in the Explorer.
+        window.taskbarHeight = {
+            NSRunningApplication.runningApplications(withBundleIdentifier: Self.shellBundleID).isEmpty ? 0 : 28
+        }
         build()
     }
 
@@ -52,6 +57,7 @@ final class PromptWindowController: NSObject, NSWindowDelegate {
         let content = window.contentContainer
         let width = content.bounds.width, height = content.bounds.height
         let barWidth = RetroScroller.thickness
+        menuBar.menus = PromptMenus.retroMenus(languages: languages)
         menuBar.frame = CGRect(x: 0, y: 0, width: width, height: Self.menuHeight)
         menuBar.autoresizingMask = [.width]
         let line = EtchedLine(frame: CGRect(x: 0, y: Self.menuHeight, width: width, height: 2))
