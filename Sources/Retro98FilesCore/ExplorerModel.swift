@@ -1,4 +1,5 @@
 import Foundation
+import Retro98Settings
 
 /// What an Explorer window needs from the outside world (injectable in tests).
 public struct ExplorerEnvironment: Sendable {
@@ -7,19 +8,48 @@ public struct ExplorerEnvironment: Sendable {
     public let showHidden: Bool
     public let volumes: @Sendable () -> [VolumeInfo]
     public let trash: URL
+    /// Where the Explorer keeps its own records (where trashed items came from).
+    public let supportDirectory: URL
+    /// Sends an item to the Trash and returns where it went.
+    public let moveToTrash: @Sendable (URL) throws -> URL
+    public let isSameVolume: @Sendable (URL, URL) -> Bool
 
-    public init(home: URL, languages: [String], showHidden: Bool, volumes: @escaping @Sendable () -> [VolumeInfo], trash: URL) {
+    /// The defaults keep tests away from the real Trash: items go into `trash` under a free name,
+    /// and records go under `home`.
+    public init(home: URL, languages: [String], showHidden: Bool, volumes: @escaping @Sendable () -> [VolumeInfo], trash: URL,
+                supportDirectory: URL? = nil, moveToTrash: (@Sendable (URL) throws -> URL)? = nil,
+                isSameVolume: (@Sendable (URL, URL) -> Bool)? = nil) {
         self.home = home
         self.languages = languages
         self.showHidden = showHidden
         self.volumes = volumes
         self.trash = trash
+        self.supportDirectory = supportDirectory ?? home.appending(path: "Library/Application Support/Retro98")
+        self.moveToTrash = moveToTrash ?? { try Self.move($0, into: trash) }
+        self.isSameVolume = isSameVolume ?? { Volumes.same($0, $1) }
     }
 
     public static func live(languages: [String]) -> ExplorerEnvironment {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        return ExplorerEnvironment(home: home, languages: languages, showHidden: false, volumes: { Volumes.mounted() },
-                                   trash: home.appending(path: ".Trash"))
+        return ExplorerEnvironment(
+            home: home, languages: languages, showHidden: false, volumes: { Volumes.mounted() }, trash: home.appending(path: ".Trash"),
+            supportDirectory: Retro98Paths.standard(home: home, environment: ProcessInfo.processInfo.environment).supportDirectory,
+            moveToTrash: { url in
+                var trashed: NSURL?
+                try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
+                return (trashed as URL?) ?? url
+            })
+    }
+
+    private static func move(_ item: URL, into trash: URL) throws -> URL {
+        let fileManager = FileManager.default
+        try fileManager.createDirectory(at: trash, withIntermediateDirectories: true)
+        let values = try? item.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey])
+        let name = FileNames.available(item.lastPathComponent, isFolder: values?.isDirectory == true && values?.isPackage != true,
+                                       existing: Set((try? fileManager.contentsOfDirectory(atPath: trash.path)) ?? []))
+        let target = trash.appending(path: name, directoryHint: .notDirectory)
+        try fileManager.moveItem(at: item, to: target)
+        return target
     }
 }
 

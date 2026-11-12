@@ -79,6 +79,13 @@ public enum Volumes {
             .max { $0.url.path.count < $1.url.path.count }
     }
 
+    /// Whether two items live on the same volume (a move there is a rename); false when either can't be read.
+    public static func same(_ a: URL, _ b: URL) -> Bool {
+        guard let first = try? a.resourceValues(forKeys: [.volumeIdentifierKey]).volumeIdentifier,
+              let second = try? b.resourceValues(forKeys: [.volumeIdentifierKey]).volumeIdentifier else { return false }
+        return first.isEqual(second)
+    }
+
     public static func mounted(fileManager: FileManager = .default) -> [VolumeInfo] {
         let keys: [URLResourceKey] = [.volumeNameKey, .volumeIsRemovableKey, .volumeIsEjectableKey, .volumeIsInternalKey,
                                       .volumeIsLocalKey, .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey]
