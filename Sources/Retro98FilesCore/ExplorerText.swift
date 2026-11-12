@@ -49,6 +49,20 @@ public enum ExplorerText {
     public static func views(_ l: [String]) -> String { text("Views", "Modos", l) }
     public static func address(_ l: [String]) -> String { text("Address", "Endereço", l) }
 
+    public static func open(_ l: [String]) -> String { text("Open", "Abrir", l) }
+    public static func newFolder(_ l: [String]) -> String { text("New Folder", "Nova pasta", l) }
+    public static func rename(_ l: [String]) -> String { text("Rename", "Renomear", l) }
+    public static func deletePermanently(_ l: [String]) -> String { text("Delete Permanently", "Excluir permanentemente", l) }
+    public static func restore(_ l: [String]) -> String { text("Restore", "Restaurar", l) }
+    public static func emptyTrash(_ l: [String]) -> String { text("Empty Recycle Bin", "Esvaziar Lixeira", l) }
+    public static func moveItemHere(_ l: [String]) -> String { text("Move Item Here", "Mover para cá", l) }
+
+    public static func nameCantContainSeparators(_ l: [String]) -> String {
+        text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
+    }
+    public static func invalidName(_ l: [String]) -> String { text("This name isn't valid.", "Este nome não é válido.", l) }
+    public static func nameTooLong(_ l: [String]) -> String { text("The name is too long.", "O nome é longo demais.", l) }
+
     public static func notFound(_ input: String, _ l: [String]) -> String {
         text("Cannot find '\(input)'.", "Não foi possível encontrar '\(input)'.", l)
     }
