@@ -19,7 +19,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 3A | Explorer: navegar pelos arquivos | ✅ disponível |
 | 3B | Explorer: copiar, mover, renomear, excluir | ✅ disponível |
 | 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | ✅ disponível |
-| 4 | Prompt (terminal) | planejada |
+| 4 | Prompt (terminal) | ✅ disponível |
 | 5 | Painel de Controle | planejada |
 | 6 | Bloco de Notas | planejada |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | planejada |
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez).
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Prompt, entra junto, a menos que você a tenha recusado antes.
 
 ## Desinstalar
 
@@ -132,6 +132,21 @@ Quando outro app pede "Mostrar no Finder" (os downloads do Safari, por exemplo),
 - **Desligar:** rode `./install.sh` de novo e responda Não, ou desinstale. O Finder volta a ser usado antes de o Explorer sair do disco.
 - **Limites:** apps que já estavam abertos podem precisar ser reabertos para perceber a troca. Abrir uma pasta com dois cliques em outros apps continua indo para o Finder. Um interruptor no Painel de Controle chega na Fase 5.
 
+## Prompt (Fase 4)
+
+O Retro98 Prompt é um terminal completo numa janela no estilo 98 (`~/Applications/Retro98/Retro98 Prompt.app`): texto cinza-claro sobre preto, numa fonte VGA clássica desenhada com os pixels nítidos. Ele roda o seu próprio shell (`$SHELL`, como login, igual ao Terminal), então seus atalhos, seu prompt e suas ferramentas estão todos lá.
+
+- **Abrir:** em Iniciar › Programas › Retro98 › Retro98 Prompt, pelo Spotlight ou com `open -a "Retro98 Prompt"`. O instalador pergunta por ele separado da barra de tarefas (a resposta padrão é Sim).
+- **Janelas, não abas:** ⌘N abre outra janela, cada uma com o seu shell. Fechar uma janela (⌘W ou o botão ×) com um programa rodando (vim, ssh, um build) pergunta antes; um shell parado fecha na hora, e digitar `exit` fecha a janela. Encerrar o app pergunta uma vez se alguma janela tiver programa rodando.
+- **O de sempre de um terminal:** copiar e colar com ⌘C/⌘V (selecione com o mouse), 10.000 linhas de histórico pela barra de rolagem retrô ou pelo trackpad, cores ANSI e 256 cores, Unicode e acentos. O Option digita caracteres (é, ã, ü) em vez de funcionar como Meta. Redimensione a janela e as linhas acompanham.
+- **Não substitui o Terminal:** o Terminal continua sendo o app que abre arquivos `.command` e `.sh`, e nada nele muda. Um perfil do Terminal com o mesmo visual chega na Fase 7.
+
+| Ação | Atalho |
+|---|---|
+| Nova janela, fechar | ⌘N · ⌘W |
+| Copiar, colar, selecionar tudo | ⌘C · ⌘V · ⌘A |
+| Minimizar | ⌘M |
+
 ## O que a Fase 1 muda
 
 | Id | Ajuste | O que muda |
@@ -161,6 +176,11 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 - Os ajustes de Acessibilidade (`contrast`, `pointer`) precisam de **Acesso Total ao Disco** para o app de terminal em que você roda o instalador. Se o macOS recusar, a ferramenta abre **Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco**: ative o seu app de terminal e rode o mesmo comando de novo. Os outros ajustes são aplicados normalmente. Use o mesmo app de terminal para desinstalar.
 - Alguns apps só mostram as novas cores, barras de rolagem ou animações depois de fechados e abertos de novo.
 
+## Créditos
+
+- **Fonte do Prompt:** PxPlus IBM VGA 8x16, do [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/), de VileR, sob a licença [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br). A fonte e a licença dela ficam em `Resources/Prompt/` e vão dentro do app. É a versão "Plus" porque a original, da página de código 437, não tem ã nem õ.
+- **Motor do terminal:** [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), de Miguel de Icaza, licença MIT, incluído na versão 1.11.2 em `Vendor/SwiftTerm` com três pequenas correções trazidas do SwiftTerm 1.19 (fonte de pixel nítida, espaço para a nossa barra de rolagem e perceber quando o shell termina). As versões mais novas precisam do Metal Toolchain, que se baixa à parte do Xcode, e quebrariam a instalação na maioria dos Macs; os detalhes estão em `Vendor/SwiftTerm/VENDORED.md`.
+
 ## Licença
 
-[MIT](LICENSE)
+[MIT](LICENSE) para o código do próprio Retro98. A fonte do Prompt mantém a licença CC BY-SA 4.0, e o SwiftTerm, a MIT.

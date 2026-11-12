@@ -19,7 +19,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 3A | Explorer: browse files | ✅ available |
 | 3B | Explorer: copy, move, rename, delete | ✅ available |
 | 3C | Explorer: views, search, Open With, Properties | ✅ available |
-| 4 | Prompt (terminal) | planned |
+| 4 | Prompt (terminal) | ✅ available |
 | 5 | Control Panel | planned |
 | 6 | Notepad | planned |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | planned |
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar with the Explorer), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time).
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Prompt, comes in unless you declined it before.
 
 ## Uninstall
 
@@ -132,6 +132,21 @@ When another app asks to "Show in Finder" (Safari's downloads, for example), mac
 - **Turn off:** run `./install.sh` again and answer No, or uninstall. Finder is put back before the Explorer leaves the disk.
 - **Limits:** apps that were already open may need to be reopened to notice the change. Opening a folder with a double-click in other apps still goes to Finder. A switch in the Control Panel comes in Phase 5.
 
+## Prompt (Phase 4)
+
+Retro98 Prompt is a full terminal in a 98-style window (`~/Applications/Retro98/Retro98 Prompt.app`): light gray text on black in a classic VGA font, drawn pixel-sharp. It runs your own shell (`$SHELL`, as a login shell, like Terminal), so your aliases, prompt and tools are all there.
+
+- **Open it** from Start › Programs › Retro98 › Retro98 Prompt, from Spotlight, or with `open -a "Retro98 Prompt"`. The installer asks about it separately from the taskbar (default Yes).
+- **Windows, not tabs:** ⌘N opens another window; each one is its own shell. Closing a window (⌘W, or the × button) while a program runs (vim, ssh, a build) asks first; an idle shell closes right away, and typing `exit` closes the window. Quitting asks once if any window has a program running.
+- **Everyday terminal things:** copy and paste with ⌘C/⌘V (select with the mouse), 10,000 lines of scrollback with the retro scroll bar or the trackpad, ANSI and 256 colors, Unicode and accents. Option types characters (é, ã, ü) instead of acting as Meta. Resize the window and the lines follow.
+- **It doesn't replace Terminal:** Terminal stays the app that opens `.command` and `.sh` files, and nothing about it changes. A Terminal profile with the same look comes in Phase 7.
+
+| Action | Shortcut |
+|---|---|
+| New window, close | ⌘N · ⌘W |
+| Copy, paste, select all | ⌘C · ⌘V · ⌘A |
+| Minimize | ⌘M |
+
 ## What Phase 1 changes
 
 | Id | Tweak | What changes |
@@ -161,6 +176,11 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 - The Accessibility tweaks (`contrast`, `pointer`) need **Full Disk Access** for the terminal app you run the installer from. If macOS refuses them, the tool opens **System Settings › Privacy & Security › Full Disk Access**: turn on your terminal app and run the same command again. Every other tweak still gets applied. Use the same terminal app to uninstall.
 - Some apps only show the new colors, scroll bars or animation setting after you quit and reopen them.
 
+## Credits
+
+- **Prompt font:** PxPlus IBM VGA 8x16 from [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/) by VileR, licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The font and its license travel in `Resources/Prompt/` and inside the app. It's the "Plus" version because the original code page 437 one has no ã or õ.
+- **Terminal engine:** [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) by Miguel de Icaza, MIT license, vendored at 1.11.2 in `Vendor/SwiftTerm` with three small fixes taken from SwiftTerm 1.19 (crisp pixel fonts, room for our own scroll bar, noticing the shell's exit). Newer versions need Xcode's separately downloaded Metal Toolchain to build, which would break the install on most Macs; `Vendor/SwiftTerm/VENDORED.md` has the details.
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) for Retro98's own code. The Prompt font keeps its CC BY-SA 4.0 license and SwiftTerm its MIT license.
