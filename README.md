@@ -17,7 +17,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 2B | Window buttons on the taskbar, hidden Dock | ✅ available |
 | 2C | Desktop icons | replaced by the Explorer's Desktop (the macOS desktop and widgets stay as they are) |
 | 3A | Explorer: browse files | ✅ available |
-| 3B | Explorer: copy, move, rename, delete | planned |
+| 3B | Explorer: copy, move, rename, delete | ✅ available |
 | 3C | Explorer: views, search, Open With, Properties | planned |
 | 4 | Prompt (terminal) | planned |
 | 5 | Control Panel | planned |
@@ -70,7 +70,7 @@ The first time you use Shut Down…, macOS asks whether Retro98 Shell may contro
 
 These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain; you can also remove Retro98 Shell from the Accessibility list.
 
-## Explorer (Phase 3A)
+## Explorer (Phases 3A and 3B)
 
 Retro98 Explorer is a 98-style file manager installed with the taskbar (`~/Applications/Retro98/Retro98 Explorer.app`). It's a separate app: Finder keeps working as always.
 
@@ -78,10 +78,23 @@ Retro98 Explorer is a 98-style file manager installed with the taskbar (`~/Appli
 - It opens on the **Desktop**: My Computer, My Documents, Recycle Bin and the files in your Desktop folder, as large icons. Your macOS desktop and widgets are not touched.
 - On screen: folder tree on the left, toolbar, address bar and status bar (objects, selection size, free space). In the address bar, type a path (`~/Downloads`) or a place name ("My Computer"); its arrow lists the folders above the current one.
 - My Computer lists your disks, USB drives and network volumes, and updates when you plug one in or eject it. Open folders refresh by themselves when their files change.
-- Double-click or Enter opens: folders open in place, files and apps open in their usual macOS app. The space bar previews the selection with Quick Look.
-- Shortcuts: ⌘[ Back · ⌘] Forward · ⌘↑ or Backspace Up · ⌘↓ Open · ⇧⌘D Desktop · ⇧⌘C My Computer · ⇧⌘O My Documents · ⌥⌘L Downloads · ⌘R Refresh · ⌘N New window · ⌘W Close · ⌘A Select all.
-- **Full Disk Access (optional, only for the Recycle Bin):** macOS protects the Trash folder. The installer opens System Settings › Privacy & Security › Full Disk Access and shows the app in Finder: turn on Retro98 Explorer (or drag it into the list). Without it, the Recycle Bin window offers "Open in Finder".
-- Coming next: copy, move, rename, new folder, delete to the Recycle Bin and undo (3B); list and details views, sorting, search, eject, Open With and Properties (3C).
+- Double-click, ⌘O or ⌘↓ opens: folders open in place, files and apps open in their usual macOS app. The space bar previews the selection with Quick Look.
+- Navigation shortcuts: ⌘[ Back · ⌘] Forward · ⌘↑ or Backspace Up · ⌘↓ or ⌘O Open · ⇧⌘D Desktop · ⇧⌘C My Computer · ⇧⌘O My Documents · ⌥⌘L Downloads · ⌘R Refresh · ⌘N New window · ⌘W Close · ⌘A Select all.
+
+### Working with files (3B)
+
+- **Copy, cut and paste** work together with Finder: copy on one side and paste on the other. A cut item looks faded until you paste, and pasting moves it. **⌥⌘V** moves what was copied (in the Explorer or in Finder), like Finder's "Move Item Here".
+- **Drag and drop** between Explorer windows, to and from Finder, and from other apps (photos from Photos, Mail attachments). On the same disk a drag moves; to another disk it copies. Hold **⌥** to copy or **⌘** to move. Dropping on a folder, My Documents, a disk or the Recycle Bin sends the items there.
+- **Rename** with **Enter** or **F2** (or the context menu). The name without its extension comes selected; changing the extension asks first. **New Folder** (⇧⌘N) starts out renaming.
+- **Delete** (⌘⌫ or Del) asks, then sends to the macOS Trash. **Delete Permanently** (⌥⌘⌫ or ⇧Del) asks, then deletes for good. In the Recycle Bin window, **Restore** puts items back where they came from, and **Empty Recycle Bin** (⇧⌘⌫) asks, then empties it.
+- **Replace:** when an item with the same name exists, the Explorer asks (Yes, Yes to All, No, Cancel) and shows the size and date of both. The replaced item goes to the Trash; it doesn't vanish.
+- **Long operations** show a progress dialog with Cancel; the window stays usable meanwhile. Cancelling never leaves a half-copied file.
+- **Undo** (⌘Z, or the Undo button) covers the whole app: it undoes paste, move, rename, new folder, delete and restore; ⇧⌘Z redoes. Undoing a copy sends the copy to the Trash, as in Finder.
+- Right-click opens the context menu for an item or the window background.
+- Limits: "Restore" only knows what the Explorer itself sent to the Trash (the rest goes back with Finder's "Put Back"; macOS doesn't offer that to other apps). The Recycle Bin window shows and empties only your disk's Trash; Finder empties items deleted from USB drives. Dragging from Photos or Mail isn't undoable.
+
+- **Full Disk Access (optional, only for the Recycle Bin):** macOS protects the Trash folder: seeing it needs this, and restoring, emptying or undoing a delete may need it. The installer opens System Settings › Privacy & Security › Full Disk Access and shows the app in Finder: turn on Retro98 Explorer (or drag it into the list). Without it, the Recycle Bin window offers "Open in Finder".
+- Coming next (3C): list and details views, sorting, search, eject, Open With and Properties.
 
 ## What Phase 1 changes
 

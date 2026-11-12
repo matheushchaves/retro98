@@ -17,7 +17,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 2B | Botões das janelas na barra, Dock escondido | ✅ disponível |
 | 2C | Ícones na área de trabalho | substituída pela Área de Trabalho do Explorer (a mesa e os widgets do macOS ficam como estão) |
 | 3A | Explorer: navegar pelos arquivos | ✅ disponível |
-| 3B | Explorer: copiar, mover, renomear, excluir | planejada |
+| 3B | Explorer: copiar, mover, renomear, excluir | ✅ disponível |
 | 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | planejada |
 | 4 | Prompt (terminal) | planejada |
 | 5 | Painel de Controle | planejada |
@@ -70,7 +70,7 @@ Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell 
 
 Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro; você também pode tirar o Retro98 Shell da lista de Acessibilidade.
 
-## Explorer (Fase 3A)
+## Explorer (Fases 3A e 3B)
 
 O Retro98 Explorer é um gerenciador de arquivos no estilo 98, instalado junto com a barra de tarefas (`~/Applications/Retro98/Retro98 Explorer.app`). É um app separado: o Finder continua funcionando como sempre.
 
@@ -78,10 +78,23 @@ O Retro98 Explorer é um gerenciador de arquivos no estilo 98, instalado junto c
 - Ele abre na **Área de Trabalho**: Meu Computador, Meus Documentos, Lixeira e os arquivos da sua pasta Mesa, em ícones grandes. A mesa e os widgets do macOS não são tocados.
 - Na tela: árvore de pastas à esquerda, barra de ferramentas, barra de endereço e barra de status (objetos, tamanho da seleção, espaço livre). No endereço, digite um caminho (`~/Downloads`) ou o nome de um local ("Meu Computador"); a seta lista as pastas acima da atual.
 - Meu Computador mostra os discos, pen drives e volumes de rede, e se atualiza quando você pluga ou ejeta um. Pastas abertas se atualizam sozinhas quando os arquivos mudam.
-- Clique duplo ou Enter abre: pastas abrem na própria janela, arquivos e apps abrem no app de sempre do macOS. A barra de espaço espia a seleção com o Visualização Rápida.
-- Atalhos: ⌘[ Voltar · ⌘] Avançar · ⌘↑ ou Backspace Acima · ⌘↓ Abrir · ⇧⌘D Área de Trabalho · ⇧⌘C Meu Computador · ⇧⌘O Meus Documentos · ⌥⌘L Downloads · ⌘R Atualizar · ⌘N Nova janela · ⌘W Fechar · ⌘A Selecionar tudo.
-- **Acesso Total ao Disco (opcional, só para a Lixeira):** o macOS protege a pasta da Lixeira. O instalador abre Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco e mostra o app no Finder: ative o Retro98 Explorer (ou arraste-o para a lista). Sem isso, a janela da Lixeira oferece "Abrir no Finder".
-- Nas próximas entregas: copiar, mover, renomear, nova pasta, excluir para a Lixeira e desfazer (3B); modos lista e detalhes, ordenação, busca, ejetar, Abrir com e Propriedades (3C).
+- Clique duplo, ⌘O ou ⌘↓ abre: pastas abrem na própria janela, arquivos e apps abrem no app de sempre do macOS. A barra de espaço espia a seleção com o Visualização Rápida.
+- Atalhos de navegação: ⌘[ Voltar · ⌘] Avançar · ⌘↑ ou Backspace Acima · ⌘↓ ou ⌘O Abrir · ⇧⌘D Área de Trabalho · ⇧⌘C Meu Computador · ⇧⌘O Meus Documentos · ⌥⌘L Downloads · ⌘R Atualizar · ⌘N Nova janela · ⌘W Fechar · ⌘A Selecionar tudo.
+
+### Mexendo nos arquivos (3B)
+
+- **Copiar, recortar e colar** funcionam junto com o Finder: copie de um lado e cole do outro. Um item recortado fica esmaecido até você colar, e colar move. **⌥⌘V** move o que foi copiado (no Explorer ou no Finder), como o "Mover Item Para Cá" do Finder.
+- **Arrastar e soltar** entre janelas do Explorer, para o Finder e do Finder, e de outros apps (fotos do Fotos, anexos do Mail). No mesmo disco, arrastar move; para outro disco, copia. Segure **⌥** para copiar ou **⌘** para mover. Soltar sobre uma pasta, sobre Meus Documentos, sobre um disco ou sobre a Lixeira manda para lá.
+- **Renomear** com **Enter** ou **F2** (ou o menu de contexto). O nome sem a extensão já vem selecionado; mudar a extensão pede confirmação. **Nova pasta** (⇧⌘N) já entra renomeando.
+- **Excluir** (⌘⌫ ou Del) pergunta e manda para a Lixeira do macOS. **Excluir permanentemente** (⌥⌘⌫ ou ⇧Del) pergunta e apaga de vez. Na janela da Lixeira, **Restaurar** devolve os itens ao lugar de onde vieram, e **Esvaziar Lixeira** (⇧⌘⌫) pergunta e esvazia.
+- **Substituir:** se já existe um item com o mesmo nome, o Explorer pergunta (Sim, Sim para todos, Não, Cancelar), mostrando o tamanho e a data dos dois. O item substituído vai para a Lixeira, não some.
+- **Operações longas** mostram um diálogo de progresso com Cancelar; a janela continua usável enquanto isso. Cancelar não deixa arquivo pela metade.
+- **Desfazer** (⌘Z, ou o botão Desfazer) vale para o app inteiro: desfaz colar, mover, renomear, nova pasta, excluir e restaurar; ⇧⌘Z refaz. Desfazer uma cópia manda a cópia para a Lixeira, como no Finder.
+- O botão direito abre o menu de contexto do item ou do fundo da janela.
+- Limites: "Restaurar" só conhece o que o próprio Explorer mandou para a Lixeira (o resto volta pelo "Devolver" do Finder; o macOS não oferece isso a outros apps). A janela da Lixeira mostra e esvazia só a Lixeira do seu disco; itens apagados de pen drives o Finder esvazia. Arrastar do Fotos ou do Mail não entra no Desfazer.
+
+- **Acesso Total ao Disco (opcional, só para a Lixeira):** o macOS protege a pasta da Lixeira: ver a Lixeira precisa dele, e restaurar, esvaziar ou desfazer uma exclusão podem precisar. O instalador abre Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco e mostra o app no Finder: ative o Retro98 Explorer (ou arraste-o para a lista). Sem isso, a janela da Lixeira oferece "Abrir no Finder".
+- Na próxima entrega (3C): modos lista e detalhes, ordenação, busca, ejetar, Abrir com e Propriedades.
 
 ## O que a Fase 1 muda
 
