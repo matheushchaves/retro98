@@ -110,6 +110,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         tree.expand(ExplorerTree.desktopID)
 
         grid.dataSource = self
+        grid.dropDelegate = self
         grid.onOpen = { [weak self] index in self?.openEntry(at: index) }
         grid.onSelectionChange = { [weak self] _ in
             self?.updateStatus()
