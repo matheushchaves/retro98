@@ -6,9 +6,10 @@
 ## Why vendored, and why 1.11.2
 
 - SwiftTerm 1.12 and later ship a Metal shader as a SwiftPM resource. Building it needs Xcode's separately downloaded "Metal Toolchain", which the Command Line Tools don't have, so `install.sh` would fail on most Macs. Don't upgrade past 1.11.x while that is true.
-- 1.11.2 turns font smoothing on for every line it draws, which blurs pixel fonts. The two patches below come from SwiftTerm 1.19 and keep upstream names, so a future upgrade drops them.
+- 1.11.2 turns font smoothing on for every line it draws, which blurs pixel fonts, and can miss the shell's exit. The patches below come from SwiftTerm 1.19 and keep upstream names, so a future upgrade drops them.
 
 ## Patches (search for "Retro98 patch")
 
 1. **`fontSmoothing`:** a public `TerminalView.fontSmoothing` (default `true`, as upstream). `AppleTerminalView.swift` passes it to `setShouldSmoothFonts`/`setAllowsFontSmoothing` instead of `true`.
 2. **`reservedScrollerWidth`:** when the built-in scroller is hidden, `getEffectiveWidth` and `getOptimalFrameSize` reserve no width for it, so a host can show its own scroll bar.
+3. **Exit after end of file:** `childStopped(cancelProcessMonitor:)`. When the pseudo-terminal's end of file arrives before the exit event, the process monitor stays alive, so `processTerminated` still reaches the delegate. Before, typing `exit` could leave a window with a dead shell.

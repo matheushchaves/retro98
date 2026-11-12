@@ -165,11 +165,13 @@ public class LocalProcess {
     }
     #endif
 
-    func childStopped() {
+    func childStopped(cancelProcessMonitor: Bool = true) {
         running = false
 #if os(macOS)
-        childMonitor?.cancel()
-        childMonitor = nil
+        if cancelProcessMonitor {
+            childMonitor?.cancel()
+            childMonitor = nil
+        }
 #endif
     }
 
@@ -191,7 +193,9 @@ public class LocalProcess {
         if data.count == 0 {
             childfd = -1
             if running {
-                childStopped()
+                // Retro98 patch 3 (from SwiftTerm 1.19): keep the process monitor alive so the exit event
+                // can still deliver processTerminated when the PTY's end of file arrives first.
+                childStopped(cancelProcessMonitor: false)
                 // delegate.processTerminated (self, exitCode: nil)
             }
             return

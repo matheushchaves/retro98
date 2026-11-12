@@ -36,3 +36,9 @@ private func opaqueRatio(_ icon: PixelIcon) -> Double {
     #expect(FileIcons.icon(.folder, size: 32).image() === FileIcons.icon(.folder, size: 32).image())
     #expect(FileIcons.icon(.folder, size: 16).image() !== FileIcons.icon(.folder, size: 32).image())
 }
+
+@Test func promptAppIsOriginalPixelArt() {
+    #expect(FileIcons.promptApp.width == 32 && FileIcons.promptApp.height == 32 && opaqueRatio(FileIcons.promptApp) > 1.0 / 8.0)
+    #expect(FileIcons.promptAppSmall.width == 16 && FileIcons.promptAppSmall.height == 16
+        && opaqueRatio(FileIcons.promptAppSmall) > 1.0 / 8.0)
+}

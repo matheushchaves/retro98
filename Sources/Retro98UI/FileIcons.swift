@@ -101,6 +101,19 @@ public enum FileIcons {
         s.fill(14, 13, 2, 2, .black)
     }
 
+    public static let promptApp = PixelIcon(width: 32, height: 32) { drawPrompt(Sketch(context: $0, scale: 2)) }
+    public static let promptAppSmall = PixelIcon(width: 16, height: 16) { drawPrompt(Sketch(context: $0, scale: 1)) }
+
+    /// A small window: navy title bar over a black screen with a gray ">_" prompt.
+    private static func drawPrompt(_ s: Sketch) {
+        s.box(0, 1, 16, 14, fill: gray)
+        s.fill(1, 2, 14, 3, navy)
+        s.fill(12, 3, 2, 1, .white)
+        s.fill(1, 5, 14, 9, .black)
+        s.fill(3, 7, 1, 1, gray); s.fill(4, 8, 1, 1, gray); s.fill(3, 9, 1, 1, gray)
+        s.fill(6, 10, 3, 1, gray)
+    }
+
     // MARK: Sketches
 
     private static func sketch(_ kind: FileIconKind, _ s: Sketch) {

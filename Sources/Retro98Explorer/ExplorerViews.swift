@@ -1,14 +1,6 @@
 import AppKit
 import Retro98UI
 
-/// Horizontal etched separator (shadow over light).
-final class EtchedLine: PixelView {
-    override func drawPixels(in context: CGContext, size: CGSize) {
-        Bevel.fill(CGRect(x: 0, y: 0, width: size.width, height: 1), color: Palette.shadow, context: context)
-        Bevel.fill(CGRect(x: 0, y: 1, width: size.width, height: 1), color: Palette.light, context: context)
-    }
-}
-
 /// A sunken 2-pt field border around a pane (tree and icon panes).
 final class FieldFrame: PixelView {
     init(wrapping content: NSView) {

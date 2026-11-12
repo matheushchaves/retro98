@@ -1,4 +1,5 @@
 import AppKit
+import SwiftTerm
 @testable import Retro98Prompt
 
 /// The repository root, from this file's location.
@@ -30,4 +31,21 @@ let vgaFontURL = repoRoot.appending(path: "Resources/Prompt/PxPlus_IBM_VGA_8x16.
 func sh(_ arguments: [String], home: URL) -> ShellLaunch {
     let environment = ["HOME=\(home.path)", "HISTFILE=/dev/null", "PATH=/usr/bin:/bin:/usr/sbin:/sbin", "PS1=", "TERM=xterm-256color"]
     return ShellLaunch(executable: "/bin/sh", arguments: arguments, execName: "sh", environment: environment, directory: home.path)
+}
+
+/// Polls every 20 ms until `condition` holds or `seconds` pass; the main queue keeps running in between,
+/// so the terminal reads its process meanwhile.
+@MainActor func waitUntil(_ seconds: Double = 5, _ condition: () -> Bool) async -> Bool {
+    let deadline = Date().addingTimeInterval(seconds)
+    while !condition() {
+        if Date() > deadline { return false }
+        try? await Task.sleep(for: .milliseconds(20))
+    }
+    return true
+}
+
+/// The visible rows of the terminal, right-trimmed and joined by newlines.
+@MainActor func screenText(_ view: TerminalView) -> String {
+    let terminal = view.getTerminal()
+    return (0..<terminal.rows).compactMap { terminal.getLine(row: $0)?.translateToString(trimRight: true) }.joined(separator: "\n")
 }
