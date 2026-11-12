@@ -1,11 +1,13 @@
 public enum TweakID: String, Codable, CaseIterable, Sendable {
     case wallpaper, lightAppearance, colors, contrast, pointer, scrollBars, windowAnimations, titleBarDoubleClick, finderExplorer
     case dockUnderTaskbar
+    case explorerFileViewer
 }
 
-/// Which installable piece a tweak belongs to: the base tweaks or the Shell (taskbar).
+/// Which installable piece a tweak belongs to: the base tweaks, the Shell (taskbar), or the optional
+/// Explorer-as-file-viewer.
 public enum TweakGroup: String, Codable, Sendable {
-    case base, shell
+    case base, shell, fileViewer
 }
 
 /// Side effects needed after preferences change so running apps pick them up.

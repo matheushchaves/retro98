@@ -54,6 +54,12 @@ extension ExplorerWindowController: NSMenuItemValidation {
         lastTask = Task { await work() }
     }
 
+    /// Selects these items (a reveal request), by path.
+    func select(_ urls: [URL]) {
+        let paths = Set(urls.map(\.standardizedFileURL.path))
+        grid.setSelection(IndexSet(model.entries.indices.filter { paths.contains(model.entries[$0].url.standardizedFileURL.path) }))
+    }
+
     /// After an operation: list the folder again and select what landed in it.
     func showResults(_ urls: [URL]) {
         model.reload()

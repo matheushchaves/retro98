@@ -38,6 +38,13 @@ ask() {
     [[ "${answer:-}" != [nN]* ]]
 }
 
+# Like ask, but an empty answer means no.
+ask_no() {
+    local answer
+    read -r -p "$(say "$1 [s/N] " "$2 [y/N] ")" answer
+    [[ "${answer:-}" == [sSyY]* ]]
+}
+
 pieces=""
 if $ASSUME_YES; then
     pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell")"
@@ -48,6 +55,10 @@ elif [[ ! -t 0 ]]; then
 else
     ask "Instalar os ajustes base?" "Install the base tweaks?" && pieces+=" base"
     ask "Instalar a barra de tarefas e o menu Iniciar?" "Install the taskbar and Start menu?" && pieces+=" shell"
+    if [[ " $pieces " == *" shell "* ]]; then
+        ask_no "Usar o Retro98 Explorer no lugar do Finder quando outros apps pedem \"Mostrar no Finder\"? (opcional)" \
+            "Use Retro98 Explorer instead of Finder when other apps ask to \"Show in Finder\"? (optional)" && pieces+=" fileviewer"
+    fi
 fi
 pieces="$(echo $pieces)"
 
@@ -104,10 +115,17 @@ PLIST
         "For the Explorer to show, restore and empty the Recycle Bin, give only Retro98 Explorer Full Disk Access in System Settings › Privacy & Security › Full Disk Access (optional; everything else works without it, and Retro98 Shell doesn't need it)."
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" || true
     open -R "$EXPLORER_APP" || true
+    if [[ " $pieces " == *" fileviewer "* ]]; then
+        "$BIN" apply --only explorerFileViewer || status=$?
+    else
+        "$BIN" restore --only explorerFileViewer || status=$?
+    fi
 elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" || -d "$EXPLORER_APP" ]]; then
     # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.
     stop_shell
     rm -rf "$SHELL_APP"
+    # "Show in Finder" must point back at Finder before the Explorer leaves the disk.
+    "$BIN" restore --only explorerFileViewer || status=$?
     remove_explorer
     "$BIN" restore --only dockUnderTaskbar || status=$?
 fi

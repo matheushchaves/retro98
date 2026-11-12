@@ -55,6 +55,7 @@ check "explorer-registered" 'grep -qx "lsregister -f $EXPLORER" "$WORK_LOG"'
 register_line="$(grep -n "^lsregister -f" "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "explorer-registered-before-shell-starts" '[[ -n "$register_line" && -n "$bootstrap_line" && "$register_line" -lt "$bootstrap_line" ]]'
 check "explorer-fda-hint" 'grep -qE "Acesso Total ao Disco|Full Disk Access" "$WORK/out.log" && grep -q "open x-apple.systempreferences:.*Privacy_AllFiles" "$WORK_LOG" && grep -qx "open -R $EXPLORER" "$WORK_LOG"'
+check "fileviewer-off-by-default" '! grep -qx "settings apply --only explorerFileViewer" "$WORK_LOG"'
 
 # A Shell copy opened outside launchd must not survive a reinstall next to the LaunchAgent's copy.
 mkdir -p "$WORK/apps/Retro98 Shell.app/Contents/MacOS"
@@ -71,6 +72,12 @@ check "stray-shell-was-running" '[[ -n "$stray_alive_before" ]]'
 check "install-stops-stray-shell" '! kill -0 $stray_pid 2> /dev/null'
 kill "$stray_pid" 2> /dev/null
 
+# Choosing the Explorer as the file viewer applies its tweak.
+echo "base shell fileviewer" > "$WORK/support/pieces"
+: > "$WORK_LOG"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-viewer.log" 2>&1
+check "fileviewer-applied-when-chosen" 'grep -qx "settings apply --only explorerFileViewer" "$WORK_LOG"'
+
 # Re-install with only the base tweaks: the taskbar must be turned off and the Dock restored.
 echo "base" > "$WORK/support/pieces"
 : > "$WORK_LOG"
@@ -78,6 +85,10 @@ bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out2.log" 2>&1
 check "shell-removed-when-not-chosen" '[[ ! -e "$WORK/agents/$LABEL.plist" && ! -e "$WORK/apps/Retro98 Shell.app" ]]'
 check "explorer-removed-when-not-chosen" '[[ ! -e "$EXPLORER" ]] && grep -qx "lsregister -u $EXPLORER" "$WORK_LOG"'
 check "dock-restored" 'grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG"'
+viewer_line="$(grep -nx "settings restore --only explorerFileViewer" "$WORK_LOG" | head -1 | cut -d: -f1)"
+unregister_line="$(grep -nx "lsregister -u $EXPLORER" "$WORK_LOG" | head -1 | cut -d: -f1)"
+# "Show in Finder" must point back at Finder before the Explorer leaves the disk.
+check "install-without-shell-restores-file-viewer-first" '[[ -n "$viewer_line" && -n "$unregister_line" && "$viewer_line" -lt "$unregister_line" ]]'
 
 # The bundle script must refuse anything that isn't an .app path (it deletes its target first).
 mkdir -p "$WORK/nao-e-app" && touch "$WORK/nao-e-app/keep"

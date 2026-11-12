@@ -7,7 +7,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var controllers: [ExplorerWindowController] = []
     let languages = Locale.preferredLanguages
     /// One clipboard, undo history and set of running operations for every window.
-    private lazy var operations = ExplorerOperations(environment: .live(languages: languages))
+    private lazy var operations = injectedOperations ?? ExplorerOperations(environment: injectedEnvironment ?? .live(languages: languages))
+    private let injectedEnvironment: ExplorerEnvironment?
+    private let injectedOperations: ExplorerOperations?
+    /// Tests open windows without putting them on screen.
+    var presentsWindows = true
+
+    var windowControllers: [ExplorerWindowController] { controllers }
+
+    init(environment: ExplorerEnvironment? = nil, operations: ExplorerOperations? = nil) {
+        injectedEnvironment = environment
+        injectedOperations = operations
+        super.init()
+    }
+
+    /// Other apps' "Show in Finder" arrives as the reveal event when the Explorer is the file viewer.
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSAppleEventManager.shared().setEventHandler(self, andSelector: #selector(handleReveal(_:withReply:)),
+                                                     forEventClass: Self.miscStandards, andEventID: Self.makeObjectsVisible)
+    }
 
     var active: ExplorerWindowController? {
         controllers.first { $0.window.isKeyWindow } ?? controllers.first { $0.window.isMainWindow } ?? controllers.last
@@ -22,6 +40,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        let files = urls.filter(\.isFileURL)
+        if !files.isEmpty { reveal(files) }
         for request in urls.compactMap(ExplorerURL.request(from:)) {
             switch request {
             case .open(let location): openWindow(at: location)
@@ -49,13 +69,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    func openWindow(at location: Location, searching: Bool = false) {
+    @discardableResult
+    func openWindow(at location: Location, searching: Bool = false) -> ExplorerWindowController {
         let controller = ExplorerWindowController(start: location, languages: languages, operations: operations, searching: searching)
         controller.onClose = { [weak self, weak controller] in
             self?.controllers.removeAll { $0 === controller }
         }
         controllers.append(controller)
-        controller.show()
+        if presentsWindows { controller.show() }
+        return controller
+    }
+
+    // MARK: Reveal ("Show in Finder")
+
+    static let miscStandards: AEEventClass = 0x6D69_7363      // 'misc'
+    static let makeObjectsVisible: AEEventID = 0x6D76_6973    // 'mvis'
+    static let directObject: AEKeyword = 0x2D2D_2D2D          // '----'
+    static let fileURLType: DescType = 0x6675_726C            // 'furl'
+
+    /// One window per folder (reusing one already showing it), with the items selected.
+    func reveal(_ urls: [URL]) {
+        for plan in RevealPlan.windows(for: urls) {
+            let path = plan.folder.standardizedFileURL.path
+            let existing = controllers.first { controller in
+                if case .folder(let url) = controller.model.history.current { return url.standardizedFileURL.path == path }
+                return false
+            }
+            let controller = existing ?? openWindow(at: .folder(plan.folder))
+            if existing != nil, presentsWindows { controller.show() }
+            controller.select(plan.select)
+        }
+    }
+
+    @objc func handleReveal(_ event: NSAppleEventDescriptor, withReply reply: NSAppleEventDescriptor) {
+        guard let items = event.paramDescriptor(forKeyword: Self.directObject) else { return }
+        let descriptors = items.numberOfItems > 0 ? (1...items.numberOfItems).compactMap { items.atIndex($0) } : [items]
+        reveal(descriptors.compactMap { $0.coerce(toDescriptorType: Self.fileURLType)?.fileURLValue })
     }
 
     // MARK: Menu actions (both menu bars send these up the responder chain)

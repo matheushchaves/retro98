@@ -154,4 +154,21 @@ else
     [[ -e "$SIGN_KEYCHAIN" ]] && security delete-keychain "$SIGN_KEYCHAIN" > /dev/null 2>&1
 fi
 
+# "Show in Finder" must point back at Finder (the restore) while the Explorer still exists.
+VIEWER_SUPPORT="$WORK/support-viewer"
+VIEWER_APPS="$WORK/apps-viewer"
+mkdir -p "$VIEWER_SUPPORT" "$VIEWER_APPS/Retro98 Explorer.app/Contents"
+echo "<plist/>" > "$VIEWER_SUPPORT/backup.plist"
+VIEWER_STUB="$WORK/stub-viewer"
+printf '#!/usr/bin/env bash\nif [[ -d "$RETRO98_APPS_DIR/Retro98 Explorer.app" ]]; then state=present; else state=gone; fi\necho "settings $* explorer-$state" >> "$VIEWER_LOG"\nexit 0\n' > "$VIEWER_STUB"
+chmod +x "$VIEWER_STUB"
+VIEWER_LOG="$WORK/viewer.log" RETRO98_SETTINGS_BIN="$VIEWER_STUB" RETRO98_SUPPORT_DIR="$VIEWER_SUPPORT" RETRO98_APPS_DIR="$VIEWER_APPS" \
+    bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+if grep -qx "settings restore explorer-present" "$WORK/viewer.log" && [[ ! -e "$VIEWER_APPS/Retro98 Explorer.app" ]]; then
+    echo "PASS uninstall-restores-file-viewer-before-removing-explorer"
+else
+    echo "FAIL uninstall-restores-file-viewer-before-removing-explorer ($(cat "$WORK/viewer.log" 2>/dev/null))"
+    failures=$((failures + 1))
+fi
+
 exit $((failures > 0 ? 1 : 0))

@@ -124,8 +124,23 @@ public enum TweakCatalog {
         ]
     }
 
+    /// Optional: other apps' "Show in Finder" opens Retro98 Explorer (the global NSFileViewer preference).
+    public static func fileViewer() -> [Tweak] {
+        [
+            Tweak(
+                id: .explorerFileViewer,
+                title: LocalizedText(en: "Explorer instead of Finder for \"Show in Finder\"",
+                                     ptBR: "Explorer no lugar do Finder em \"Mostrar no Finder\""),
+                changes: [change(.global, "NSFileViewer", .string(explorerBundleID))],
+                group: .fileViewer
+            ),
+        ]
+    }
+
+    static let explorerBundleID = "io.github.matheushchaves.retro98.explorer"
+
     public static func all(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
-        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory) + shell()
+        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory) + shell() + fileViewer()
     }
 
     private static func change(_ domain: PreferenceDomain, _ name: String, _ target: PreferenceValue?) -> PreferenceChange {
