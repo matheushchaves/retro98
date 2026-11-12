@@ -70,6 +70,12 @@ public final class ExplorerModel {
     public private(set) var freeSpace: Int64?
     public private(set) var sort: SortOrder
     public private(set) var showHidden: Bool
+    /// While searching, `entries` holds the matches instead of the listing.
+    public private(set) var search: SearchQuery?
+    /// nil while a search in subfolders is still running.
+    public private(set) var searchEnd: SearchEnd?
+    private var listed: [FileEntry] = []
+    private var results: [FileEntry] = []
     private let environment: ExplorerEnvironment
 
     public init(start: Location, environment: ExplorerEnvironment) {
@@ -84,8 +90,49 @@ public final class ExplorerModel {
     public func setSort(_ order: SortOrder) {
         sort = order
         environment.preferences.sort = order
+        listed = FileSorting.sorted(listed, by: order, languages: environment.languages)
         entries = FileSorting.sorted(entries, by: order, languages: environment.languages)
         onChange?()
+    }
+
+    // MARK: Search
+
+    /// Without subfolders, filters what is listed right away; with them, waits for `addResults`.
+    public func beginSearch(_ query: SearchQuery) {
+        search = query
+        results = []
+        if query.includeSubfolders {
+            entries = []
+            searchEnd = nil
+        } else {
+            entries = FileSearch.filter(listed, text: query.text)
+            searchEnd = .finished
+        }
+        onChange?()
+    }
+
+    public func addResults(_ batch: [FileEntry]) {
+        guard search?.includeSubfolders == true else { return }
+        results += batch
+        entries = FileSorting.sorted(results, by: sort, languages: environment.languages)
+        onChange?()
+    }
+
+    public func finishSearch(_ end: SearchEnd) {
+        searchEnd = end
+        onChange?()
+    }
+
+    /// Back to the listing of the place (navigating ends a search too).
+    public func endSearch() {
+        clearSearch()
+        load(readingVolumes: false)
+    }
+
+    private func clearSearch() {
+        search = nil
+        searchEnd = nil
+        results = []
     }
 
     public func setShowHidden(_ show: Bool) {
@@ -104,18 +151,21 @@ public final class ExplorerModel {
     public var title: String { ExplorerText.locationTitle(history.current, environment.languages) }
 
     public func go(to location: Location) {
+        clearSearch()
         history.go(to: location)
         load()
     }
 
     /// A folder deleted or moved since it was visited is replaced by its nearest existing parent.
     public func back() {
+        clearSearch()
         history.back()
         recoverIfVanished()
         load()
     }
 
     public func forward() {
+        clearSearch()
         history.forward()
         recoverIfVanished()
         load()
@@ -175,7 +225,15 @@ public final class ExplorerModel {
         case .folder(let url):
             entries = list(url) ?? []
         }
-        entries = FileSorting.sorted(entries, by: sort, languages: languages)
+        listed = FileSorting.sorted(entries, by: sort, languages: languages)
+        // A reload during a search refreshes the filter; matches from subfolders stay as they are.
+        if let search {
+            entries = search.includeSubfolders
+                ? FileSorting.sorted(results, by: sort, languages: languages)
+                : FileSearch.filter(listed, text: search.text)
+        } else {
+            entries = listed
+        }
         onChange?()
     }
 

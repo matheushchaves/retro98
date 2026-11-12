@@ -133,8 +133,31 @@ public enum StatusText {
     }
 }
 
+/// What a `retro98-explorer://` link asks for: a window on a place, or a window that searches (nil = the home folder).
+public enum ExplorerRequest: Equatable, Sendable {
+    case open(Location)
+    case search(Location?)
+}
+
 public enum ExplorerURL {
     public static let scheme = "retro98-explorer"
+
+    /// `retro98-explorer://search`, or `…/search?path=<folder>` to search a given folder.
+    public static func searchURL(in location: Location?) -> URL {
+        var components = URLComponents()
+        components.scheme = scheme
+        components.host = "search"
+        if case .folder(let url)? = location { components.queryItems = [URLQueryItem(name: "path", value: url.path)] }
+        return components.url!
+    }
+
+    public static func request(from url: URL) -> ExplorerRequest? {
+        if let location = location(from: url) { return .open(location) }
+        guard url.scheme == scheme, let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.host == "search" else { return nil }
+        guard let path = components.queryItems?.first(where: { $0.name == "path" })?.value, path.hasPrefix("/") else { return .search(nil) }
+        return .search(.folder(URL(filePath: path)))
+    }
 
     public static func url(for location: Location) -> URL {
         var components = URLComponents()
