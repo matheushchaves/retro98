@@ -121,6 +121,30 @@ public enum ExplorerText {
     }
     public static func showHiddenFiles(_ l: [String]) -> String { text("Show Hidden Files", "Mostrar arquivos ocultos", l) }
 
+    public static func propertiesTitle(_ name: String, _ l: [String]) -> String { text("\(name) Properties", "Propriedades de \(name)", l) }
+    public static func itemCount(_ count: Int, _ l: [String]) -> String { text("\(count) items", "\(count) itens", l) }
+    public static func multipleTypes(_ l: [String]) -> String { text("Multiple Types", "Vários tipos", l) }
+    public static func labelType(_ l: [String]) -> String { text("Type:", "Tipo:", l) }
+    public static func labelLocation(_ l: [String]) -> String { text("Location:", "Local:", l) }
+    public static func labelSize(_ l: [String]) -> String { text("Size:", "Tamanho:", l) }
+    public static func labelContains(_ l: [String]) -> String { text("Contains:", "Contém:", l) }
+    public static func labelCreated(_ l: [String]) -> String { text("Created:", "Criado:", l) }
+    public static func labelModified(_ l: [String]) -> String { text("Modified:", "Modificado:", l) }
+    public static func labelAccessed(_ l: [String]) -> String { text("Accessed:", "Acessado:", l) }
+    public static func labelUsedSpace(_ l: [String]) -> String { text("Used space:", "Espaço usado:", l) }
+    public static func labelFreeSpace(_ l: [String]) -> String { text("Free space:", "Espaço livre:", l) }
+    public static func labelCapacity(_ l: [String]) -> String { text("Capacity:", "Capacidade:", l) }
+    public static func calculating(_ l: [String]) -> String { text("Calculating...", "Calculando...", l) }
+    public static func someFoldersUnreadable(_ l: [String]) -> String {
+        text("Some folders couldn't be read.", "Algumas pastas não puderam ser lidas.", l)
+    }
+    public static func ok(_ l: [String]) -> String { "OK" }
+    public static func openWith(_ l: [String]) -> String { text("Open With", "Abrir com", l) }
+    public static func openWithMenu(_ l: [String]) -> String { text("Open With…", "Abrir com…", l) }
+    public static func defaultApp(_ name: String, _ l: [String]) -> String { text("\(name) (default)", "\(name) (padrão)", l) }
+    public static func otherApp(_ l: [String]) -> String { text("Other…", "Outro…", l) }
+    public static func eject(_ l: [String]) -> String { text("Eject", "Ejetar", l) }
+
     public static func nameCantContainSeparators(_ l: [String]) -> String {
         text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
     }

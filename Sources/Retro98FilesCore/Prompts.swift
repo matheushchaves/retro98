@@ -138,6 +138,12 @@ public enum Prompts {
                icon: .warning, buttons: yesNo(l))
     }
 
+    public static func ejectFailed(name: String, reason: String, languages l: [String]) -> Prompt {
+        Prompt(title: text("Error Ejecting", "Erro ao ejetar", l),
+               message: text("Couldn't eject '\(name)': \(reason)", "Não foi possível ejetar '\(name)': \(reason)", l),
+               icon: .error, buttons: ["OK"])
+    }
+
     public static func invalidName(_ message: String, languages l: [String]) -> Prompt {
         Prompt(title: errorTitle(.rename, isUndo: false, l), message: message, icon: .error, buttons: ["OK"])
     }
