@@ -22,7 +22,7 @@ public enum FolderListingError: Error, Equatable {
 public enum FolderListing {
     /// Prefetched for every entry. The localized name is not: it costs more than everything else
     /// together and only folders and apps use it.
-    static let keys: [URLResourceKey] = [.isDirectoryKey, .isPackageKey, .fileSizeKey, .contentModificationDateKey]
+    static let keys: [URLResourceKey] = [.isDirectoryKey, .isPackageKey, .fileSizeKey, .contentModificationDateKey, .isHiddenKey]
 
     /// Folders first, then by name (Finder order); hidden files only when asked; packages are items.
     public static func entries(of folder: URL, showHidden: Bool, fileManager: FileManager = .default)
@@ -59,7 +59,8 @@ public enum FolderListing {
         default: name = url.lastPathComponent
         }
         return FileEntry(url: url, name: name, kind: kind, size: values?.fileSize.map(Int64.init),
-                         modified: values?.contentModificationDate, location: kind == .folder ? .folder(url) : nil)
+                         modified: values?.contentModificationDate, location: kind == .folder ? .folder(url) : nil,
+                         isHidden: values?.isHidden ?? false)
     }
 }
 

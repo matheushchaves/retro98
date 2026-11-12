@@ -88,6 +88,39 @@ public enum ExplorerText {
              "Para tirar itens da Lixeira, dê Acesso Total ao Disco ao Retro98 Explorer, ou use \"Devolver\" na Lixeira do Finder.", l)
     }
 
+    public static func typeFolder(_ l: [String]) -> String { text("File Folder", "Pasta de arquivos", l) }
+    public static func typeApplication(_ l: [String]) -> String { text("Application", "Aplicativo", l) }
+    public static func typeFile(_ l: [String]) -> String { text("File", "Arquivo", l) }
+    public static func typeFile(_ ext: String, _ l: [String]) -> String { text("\(ext) File", "Arquivo \(ext)", l) }
+    public static func typeLocalDisk(_ l: [String]) -> String { text("Local Disk", "Disco local", l) }
+    public static func typeRemovableDisk(_ l: [String]) -> String { text("Removable Disk", "Disco removível", l) }
+    public static func typeNetworkDrive(_ l: [String]) -> String { text("Network Drive", "Unidade de rede", l) }
+    public static func typeSystemFolder(_ l: [String]) -> String { text("System Folder", "Pasta do sistema", l) }
+
+    public static func columnName(_ l: [String]) -> String { text("Name", "Nome", l) }
+    public static func columnInFolder(_ l: [String]) -> String { text("In Folder", "Em pasta", l) }
+    public static func columnSize(_ l: [String]) -> String { text("Size", "Tamanho", l) }
+    public static func columnType(_ l: [String]) -> String { text("Type", "Tipo", l) }
+    public static func columnModified(_ l: [String]) -> String { text("Modified", "Modificado", l) }
+
+    public static func viewMode(_ mode: ViewMode, _ l: [String]) -> String {
+        switch mode {
+        case .largeIcons: text("Large Icons", "Ícones grandes", l)
+        case .smallIcons: text("Small Icons", "Ícones pequenos", l)
+        case .list: text("List", "Lista", l)
+        case .details: text("Details", "Detalhes", l)
+        }
+    }
+    public static func arrange(by key: SortKey, _ l: [String]) -> String {
+        switch key {
+        case .name: text("Arrange by Name", "Organizar por nome", l)
+        case .type: text("Arrange by Type", "Organizar por tipo", l)
+        case .size: text("Arrange by Size", "Organizar por tamanho", l)
+        case .modified: text("Arrange by Date", "Organizar por data", l)
+        }
+    }
+    public static func showHiddenFiles(_ l: [String]) -> String { text("Show Hidden Files", "Mostrar arquivos ocultos", l) }
+
     public static func nameCantContainSeparators(_ l: [String]) -> String {
         text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
     }

@@ -13,12 +13,14 @@ public struct ExplorerEnvironment: Sendable {
     /// Sends an item to the Trash and returns where it went.
     public let moveToTrash: @Sendable (URL) throws -> URL
     public let isSameVolume: @Sendable (URL, URL) -> Bool
+    /// View mode, sort order and hidden files shared by every window.
+    public let preferences: ExplorerPreferences
 
     /// The defaults keep tests away from the real Trash: items go into `trash` under a free name,
     /// and records go under `home`.
     public init(home: URL, languages: [String], showHidden: Bool, volumes: @escaping @Sendable () -> [VolumeInfo], trash: URL,
                 supportDirectory: URL? = nil, moveToTrash: (@Sendable (URL) throws -> URL)? = nil,
-                isSameVolume: (@Sendable (URL, URL) -> Bool)? = nil) {
+                isSameVolume: (@Sendable (URL, URL) -> Bool)? = nil, preferences: ExplorerPreferences? = nil) {
         self.home = home
         self.languages = languages
         self.showHidden = showHidden
@@ -27,6 +29,7 @@ public struct ExplorerEnvironment: Sendable {
         self.supportDirectory = supportDirectory ?? home.appending(path: "Library/Application Support/Retro98")
         self.moveToTrash = moveToTrash ?? { try Self.move($0, into: trash) }
         self.isSameVolume = isSameVolume ?? { Volumes.same($0, $1) }
+        self.preferences = preferences ?? .memory(showHidden: showHidden)
     }
 
     public static func live(languages: [String]) -> ExplorerEnvironment {
@@ -38,7 +41,8 @@ public struct ExplorerEnvironment: Sendable {
                 var trashed: NSURL?
                 try FileManager.default.trashItem(at: url, resultingItemURL: &trashed)
                 return (trashed as URL?) ?? url
-            })
+            },
+            preferences: ExplorerPreferences(defaults: .standard))
     }
 
     private static func move(_ item: URL, into trash: URL) throws -> URL {
@@ -64,12 +68,37 @@ public final class ExplorerModel {
     /// mount can block that call for seconds, so it must never run per click.
     public private(set) var volumes: [VolumeInfo] = []
     public private(set) var freeSpace: Int64?
+    public private(set) var sort: SortOrder
+    public private(set) var showHidden: Bool
     private let environment: ExplorerEnvironment
 
     public init(start: Location, environment: ExplorerEnvironment) {
         self.environment = environment
         history = NavigationHistory(start: start)
+        sort = environment.preferences.sort
+        showHidden = environment.preferences.showHidden
         load()
+    }
+
+    /// Re-sorts what is listed (no disk read) and remembers the order for every window.
+    public func setSort(_ order: SortOrder) {
+        sort = order
+        environment.preferences.sort = order
+        entries = FileSorting.sorted(entries, by: order, languages: environment.languages)
+        onChange?()
+    }
+
+    public func setShowHidden(_ show: Bool) {
+        showHidden = show
+        environment.preferences.showHidden = show
+        reload()
+    }
+
+    /// Another window changed the shared preferences.
+    public func applyPreferences() {
+        sort = environment.preferences.sort
+        showHidden = environment.preferences.showHidden
+        reload()
     }
 
     public var title: String { ExplorerText.locationTitle(history.current, environment.languages) }
@@ -146,12 +175,13 @@ public final class ExplorerModel {
         case .folder(let url):
             entries = list(url) ?? []
         }
+        entries = FileSorting.sorted(entries, by: sort, languages: languages)
         onChange?()
     }
 
     private func list(_ folder: URL) -> [FileEntry]? {
         do {
-            return try FolderListing.entries(of: folder, showHidden: environment.showHidden)
+            return try FolderListing.entries(of: folder, showHidden: showHidden)
         } catch {
             switch error {
             case .permissionDenied: self.error = ExplorerText.permissionDenied(environment.languages)

@@ -24,13 +24,16 @@ public struct FileEntry: Equatable, Sendable {
     public let modified: Date?
     /// Where opening goes; nil means open with an app.
     public let location: Location?
+    /// A dot file or one flagged hidden (listed only when hidden files are shown, and drawn ghosted).
+    public let isHidden: Bool
 
-    public init(url: URL, name: String, kind: FileKind, size: Int64?, modified: Date?, location: Location?) {
+    public init(url: URL, name: String, kind: FileKind, size: Int64?, modified: Date?, location: Location?, isHidden: Bool = false) {
         self.url = url
         self.name = name
         self.kind = kind
         self.size = size
         self.modified = modified
         self.location = location
+        self.isHidden = isHidden
     }
 }
