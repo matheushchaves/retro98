@@ -36,6 +36,11 @@ extension ExplorerWindowController: NSMenuItemValidation {
         case #selector(emptyTrash(_:)): return TrashState.isFull(trash: environment.trash) == true
         case #selector(openTrashInFinder(_:)): return isInTrash
         case #selector(showSearch(_:)): return searchRoot != nil
+        case #selector(showProperties(_:)):
+            let hasDisk = selected.contains { if case .volume = $0.kind { true } else { false } }
+            return !selected.isEmpty && !selected.contains { $0.kind == .myComputer } && (!hasDisk || selected.count == 1)
+        case #selector(ejectSelection(_:)): return !selected.isEmpty && selected.allSatisfy { volumeInfo(for: $0)?.isEjectable == true }
+        case #selector(openWith(_:)): return files && selected.allSatisfy { $0.kind != .folder }
         default: return true
         }
     }
@@ -199,11 +204,20 @@ extension ExplorerWindowController: NSMenuItemValidation {
         }
         let entry = model.entries[index]
         let open = command(ExplorerText.open(l), #selector(openSelection(_:)))
+        let properties = command(ExplorerText.properties(l), #selector(showProperties(_:)))
         guard entry.isFileItem else {
-            guard case .recycleBin = entry.kind else { return [open] }
-            return [open, .separator, command(ExplorerText.emptyTrash(l), #selector(emptyTrash(_:)))]
+            var items = [open]
+            if case .recycleBin = entry.kind { items += [.separator, command(ExplorerText.emptyTrash(l), #selector(emptyTrash(_:)))] }
+            if volumeInfo(for: entry)?.isEjectable == true { items += [.separator, command(ExplorerText.eject(l), #selector(ejectSelection(_:)))] }
+            if entry.kind != .myComputer { items += [.separator, properties] }
+            return items
         }
         var items = [open]
+        if entry.kind != .folder {
+            let urls = selectedEntries.map(\.url)
+            items.append(RetroMenuItem(title: ExplorerText.openWith(l), kind: .submenu({ [weak self] in self?.openWithItems(for: urls) ?? [] }),
+                                       isEnabled: isEnabled(#selector(openWith(_:)))))
+        }
         if isInTrash { items.append(command(ExplorerText.restore(l), #selector(restoreFromTrash(_:)))) }
         items += [.separator, command(ExplorerText.cut(l), #selector(cut(_:))), command(ExplorerText.copy(l), #selector(copy(_:)))]
         if entry.kind == .folder {
@@ -212,8 +226,7 @@ extension ExplorerWindowController: NSMenuItemValidation {
                                        isEnabled: !isEditingText && operations.canPaste))
         }
         items += [.separator, command(ExplorerText.delete(l), #selector(moveToTrash(_:))),
-                  command(ExplorerText.rename(l), #selector(renameSelection(_:))), .separator,
-                  RetroMenuItem(title: ExplorerText.properties(l), kind: .action({}), isEnabled: false)]
+                  command(ExplorerText.rename(l), #selector(renameSelection(_:))), .separator, properties]
         return items
     }
 }

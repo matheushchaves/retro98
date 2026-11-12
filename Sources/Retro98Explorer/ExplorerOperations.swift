@@ -12,6 +12,7 @@ final class ExplorerOperations {
     let environment: ExplorerEnvironment
     let undoStack = FileUndoStack()
     let trashOrigins: TrashOrigins
+    let services: ExplorerServices
     private(set) lazy var undoManager = makeUndoManager()
 
     /// Each window gets its own, turned off while that window edits text.
@@ -37,8 +38,9 @@ final class ExplorerOperations {
     private var cutItems: Set<String> = []
 
     init(environment: ExplorerEnvironment, pasteboard: NSPasteboard = .general, prompter: ExplorerPrompter = RetroPrompter(),
-         progressDelay: TimeInterval = 1) {
+         progressDelay: TimeInterval = 1, services: ExplorerServices = .live) {
         self.environment = environment
+        self.services = services
         self.pasteboard = pasteboard
         self.prompter = prompter
         self.progressDelay = progressDelay
@@ -48,6 +50,9 @@ final class ExplorerOperations {
     }
 
     private var languages: [String] { environment.languages }
+
+    /// A question or message from a window (ejecting, for instance), through the same prompter.
+    func ask(_ prompt: Prompt) -> Int { prompter.ask(prompt) }
 
     // MARK: Clipboard
 

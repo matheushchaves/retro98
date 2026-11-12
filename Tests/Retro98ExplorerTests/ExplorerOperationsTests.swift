@@ -18,6 +18,15 @@ private let pt = ["pt-BR"]
     }
 }
 
+extension ExplorerServices {
+    /// Never ejects or opens anything; tests pass their own closures when they need them.
+    static func fake(eject: @escaping @Sendable (URL) throws -> Void = { _ in },
+                     applications: @escaping @Sendable (URL) -> (default: URL?, all: [URL]) = { _ in (nil, []) },
+                     open: @escaping @Sendable ([URL], URL) -> Void = { _, _ in }) -> ExplorerServices {
+        ExplorerServices(eject: eject, applications: applications, open: open)
+    }
+}
+
 /// Operations on a temp tree with a private pasteboard and scripted prompts.
 @MainActor final class OperationsHarness {
     let tree: TempTree
@@ -25,14 +34,15 @@ private let pt = ["pt-BR"]
     let pasteboard = NSPasteboard(name: NSPasteboard.Name("retro98-test-\(UUID().uuidString)"))
     let operations: ExplorerOperations
 
-    init(_ paths: [String], refuseTrash: Bool = false, progressDelay: TimeInterval = .infinity) throws {
+    init(_ paths: [String], refuseTrash: Bool = false, progressDelay: TimeInterval = .infinity,
+         volumes: [VolumeInfo] = [], services: ExplorerServices = .fake()) throws {
         tree = try TempTree(paths + [".Trash"])
         var refuse: (@Sendable (URL) throws -> URL)?
         if refuseTrash { refuse = { _ in throw CocoaError(.fileWriteNoPermission) } }
-        let environment = ExplorerEnvironment(home: tree.root, languages: pt, showHidden: false, volumes: { [] },
+        let environment = ExplorerEnvironment(home: tree.root, languages: pt, showHidden: false, volumes: { volumes },
                                               trash: tree.url(".Trash"), moveToTrash: refuse)
         operations = ExplorerOperations(environment: environment, pasteboard: pasteboard, prompter: prompter,
-                                        progressDelay: progressDelay)
+                                        progressDelay: progressDelay, services: services)
     }
 
     func url(_ path: String) -> URL { tree.url(path) }

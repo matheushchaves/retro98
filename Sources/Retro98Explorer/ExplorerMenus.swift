@@ -27,6 +27,7 @@ enum ExplorerMenus {
         return [
             (ExplorerText.menuFile(l), [
                 command(ExplorerText.open(l), "o", .command, #selector(ExplorerWindowController.openSelection(_:))),
+                command(ExplorerText.openWithMenu(l), "", [], #selector(ExplorerWindowController.openWith(_:))),
                 command(ExplorerText.newWindow(l), "n", .command, #selector(AppDelegate.newWindow(_:))),
                 command(ExplorerText.newFolder(l), "n", [.command, .shift], #selector(ExplorerWindowController.newFolder(_:))),
                 command(ExplorerText.searchMenu(l), "f", .command, #selector(ExplorerWindowController.showSearch(_:))), nil,
@@ -34,6 +35,8 @@ enum ExplorerMenus {
                 command(ExplorerText.delete(l), backspace, .command, #selector(ExplorerWindowController.moveToTrash(_:))),
                 command(ExplorerText.deletePermanently(l), backspace, [.command, .option],
                         #selector(ExplorerWindowController.deletePermanently(_:))), nil,
+                command(ExplorerText.properties(l), "i", .command, #selector(ExplorerWindowController.showProperties(_:))),
+                command(ExplorerText.eject(l), "e", .command, #selector(ExplorerWindowController.ejectSelection(_:))), nil,
                 command(ExplorerText.restore(l), "", [], #selector(ExplorerWindowController.restoreFromTrash(_:))),
                 command(ExplorerText.emptyTrash(l), backspace, [.command, .shift], #selector(ExplorerWindowController.emptyTrash(_:))),
                 command(ExplorerText.openInFinder(l), "", [], #selector(ExplorerWindowController.openTrashInFinder(_:))), nil,

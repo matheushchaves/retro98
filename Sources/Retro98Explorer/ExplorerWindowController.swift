@@ -12,6 +12,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     /// Where the panes start, under the menu bar, toolbar and address (the search bar goes here when open).
     static let panesTop: CGFloat = menuHeight + 2 + toolbarHeight + 2 + addressHeight
     static let spaceKey: UInt16 = 49, backspaceKey: UInt16 = 51, downArrowKey: UInt16 = 125, forwardDeleteKey: UInt16 = 117
+    static let returnKey: UInt16 = 36
 
     let model: ExplorerModel
     let window: RetroAppWindow
@@ -48,6 +49,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     var contextMenu: RetroMenu?
     /// The last file operation this window started (tests wait for it).
     var lastTask: Task<Void, Never>?
+    /// Properties windows opened from here (each leaves the list when closed).
+    var propertiesWindows: [PropertiesWindow] = []
     /// The app's file undo history, as seen from this window (off while it edits text).
     private lazy var windowUndoManager = operations.makeUndoManager { [weak self] in self?.isEditingText ?? false }
 
@@ -226,7 +229,9 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
                 self?.spawn { await self?.operations.undo() }
             },
             item(ExplorerText.delete(l), FileIcons.delete, isEnabled(#selector(moveToTrash(_:)))) { [weak self] in self?.moveToTrash(nil) },
-            item(ExplorerText.properties(l), FileIcons.properties, false) {},
+            item(ExplorerText.properties(l), FileIcons.properties, isEnabled(#selector(showProperties(_:)))) { [weak self] in
+                self?.showProperties(nil)
+            },
             nil,
             item(ExplorerText.views(l), FileIcons.views, true) { [weak self] in self?.showViewsMenu() },
         ]
@@ -295,6 +300,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         case (Self.downArrowKey, [.command]):
             guard let index = grid.selection.first else { return true }
             openEntry(at: index)
+        case (Self.returnKey, [.option]):
+            showProperties(nil)
         case (Self.escapeKey, []):
             guard isSearchBarVisible else { return false }
             closeSearch()
