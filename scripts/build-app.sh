@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Builds one Retro98 app product and assembles it as a signed app bundle:
-#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text]
-# "agent" apps (LSUIElement) have no Dock icon or menu bar; the icon name goes to `retro98-tools iconset`.
+#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text] [resources folder]
+# "agent" apps (LSUIElement) have no Dock icon or menu bar; the icon name goes to `retro98-tools iconset`;
+# the files in the resources folder (not its subfolders) are copied to Contents/Resources.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "$ROOT/scripts/common.sh"
 source "$ROOT/scripts/signing.sh"
 
-usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage]"
+usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage] [resources folder]"
 PRODUCT="${1:?$usage}"
 BUNDLE_ID="${2:?$usage}"
 NAME="${3:?$usage}"
@@ -16,8 +17,9 @@ MODE="${5:?$usage}"
 SCHEME="${6:-}"
 ICON="${7:-}"
 APPLE_EVENTS_USAGE="${8:-}"
-VERSION="0.6.0"
-BUILD="6"
+RESOURCES="${9:-}"
+VERSION="0.7.0"
+BUILD="7"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
@@ -35,6 +37,11 @@ fi
 rm -rf "$OUT"
 mkdir -p "$OUT/Contents/MacOS" "$OUT/Contents/Resources"
 cp "$ROOT/.build/release/$PRODUCT" "$OUT/Contents/MacOS/$PRODUCT"
+if [[ -n "$RESOURCES" ]]; then
+    for file in "$RESOURCES"/*; do
+        [[ -f "$file" ]] && cp "$file" "$OUT/Contents/Resources/"
+    done
+fi
 
 extra=""
 if [[ "$MODE" == agent ]]; then

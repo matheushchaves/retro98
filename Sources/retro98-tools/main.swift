@@ -2,7 +2,7 @@ import AppKit
 import Retro98UI
 
 /// Build-time helpers for the app bundles.
-///   retro98-tools iconset <explorer|shell> <output.iconset>
+///   retro98-tools iconset <explorer|shell|prompt> <output.iconset>
 /// Writes every standard iconset PNG (16 to 1024, @1x and @2x), enlarging the pixel art without smoothing.
 
 let iconsetSizes: [(name: String, pixels: Int)] = [
@@ -16,6 +16,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
     switch icon {
     case "explorer": pixels >= 32 ? FileIcons.explorerApp : FileIcons.explorerAppSmall
     case "shell": Icons.startLogo
+    case "prompt": pixels >= 32 ? FileIcons.promptApp : FileIcons.promptAppSmall
     default: nil
     }
 }
@@ -32,7 +33,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
 
 @MainActor func writeIconset(icon: String, to folder: URL) -> Int32 {
     guard art(for: icon, pixels: 16) != nil else {
-        FileHandle.standardError.write(Data("retro98-tools: unknown icon '\(icon)' (explorer or shell)\n".utf8))
+        FileHandle.standardError.write(Data("retro98-tools: unknown icon '\(icon)' (explorer, shell or prompt)\n".utf8))
         return 2
     }
     do {

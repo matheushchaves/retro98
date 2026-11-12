@@ -67,7 +67,7 @@ run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
 run_shell_case() {
     local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
-    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$agents"
+    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$apps/Retro98 Prompt.app/Contents" "$agents"
     echo "finder" > "$apps/.DS_Store"   # Finder leaves one after the installer shows the folder
     echo "<plist/>" > "$support/backup.plist"
     echo "<plist/>" > "$agents/$LABEL.plist"
@@ -88,6 +88,12 @@ run_shell_case() {
     [[ "$explorer_state" == "$expected_app" ]] || problems+=" explorer=$explorer_state"
     if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Explorer.app" "$calls"; then
         problems+=" explorer-not-unregistered"
+    fi
+    local prompt_state="absent"
+    [[ -d "$apps/Retro98 Prompt.app" ]] && prompt_state="present"
+    [[ "$prompt_state" == "$expected_app" ]] || problems+=" prompt=$prompt_state"
+    if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Prompt.app" "$calls"; then
+        problems+=" prompt-not-unregistered"
     fi
     if [[ "$expected_app" == "absent" && -d "$apps" ]]; then problems+=" apps-folder-left"; fi
     if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
@@ -119,20 +125,23 @@ mkdir -p "$STRAY_SUPPORT" "$WORK/agents-stray"
 echo "<plist/>" > "$STRAY_SUPPORT/backup.plist"
 shell_pid="$(start_fake_app "$STRAY_APPS/Retro98 Shell.app" Retro98Shell)"
 explorer_pid="$(start_fake_app "$STRAY_APPS/Retro98 Explorer.app" Retro98Explorer)"
+prompt_pid="$(start_fake_app "$STRAY_APPS/Retro98 Prompt.app" Retro98Prompt)"
 bystander_pid="$(start_fake_app "$WORK/other/Retro98 Shell.app" Retro98Shell)"   # same name, other path
 sleep 0.3
 STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$STRAY_SUPPORT" RETRO98_APPS_DIR="$STRAY_APPS" \
     RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-stray" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
 sleep 0.3
-if ! kill -0 "$shell_pid" 2>/dev/null && ! kill -0 "$explorer_pid" 2>/dev/null && kill -0 "$bystander_pid" 2>/dev/null; then
+if ! kill -0 "$shell_pid" 2>/dev/null && ! kill -0 "$explorer_pid" 2>/dev/null && ! kill -0 "$prompt_pid" 2>/dev/null \
+    && kill -0 "$bystander_pid" 2>/dev/null; then
     echo "PASS stray-copies-stopped"
 else
     echo "FAIL stray-copies-stopped (shell $(kill -0 "$shell_pid" 2>/dev/null && echo alive || echo gone)," \
         "explorer $(kill -0 "$explorer_pid" 2>/dev/null && echo alive || echo gone)," \
+        "prompt $(kill -0 "$prompt_pid" 2>/dev/null && echo alive || echo gone)," \
         "bystander $(kill -0 "$bystander_pid" 2>/dev/null && echo alive || echo gone))"
     failures=$((failures + 1))
 fi
-kill "$shell_pid" "$explorer_pid" "$bystander_pid" 2>/dev/null
+kill "$shell_pid" "$explorer_pid" "$prompt_pid" "$bystander_pid" 2>/dev/null
 
 # The local signing keychain goes away with a successful uninstall; the search list is untouched.
 BEFORE_LIST="$(security list-keychains -d user)"

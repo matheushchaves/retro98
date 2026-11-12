@@ -40,6 +40,19 @@ remove_explorer() {
     fi
 }
 
+# Retro98 Prompt, the retro terminal: a piece of its own, independent of the taskbar.
+PROMPT_ID="io.github.matheushchaves.retro98.prompt"
+PROMPT_APP="$APPS_DIR/Retro98 Prompt.app"
+
+# Quits, unregisters and deletes the Prompt bundle (no-op when it isn't installed).
+remove_prompt() {
+    if [[ -d "$PROMPT_APP" ]]; then
+        stop_executable "$PROMPT_APP/Contents/MacOS/Retro98Prompt"
+        "$LSREGISTER" -u "$PROMPT_APP" > /dev/null 2>&1 || true
+        rm -rf "$PROMPT_APP"
+    fi
+}
+
 # Stops every process running the executable at $1, however it was started: politely first,
 # then for good after 5 seconds. Matches the full path, so other apps are never touched.
 stop_executable() {

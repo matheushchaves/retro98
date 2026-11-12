@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks and/or the taskbar (Shell).
+# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell) and the Prompt.
 # Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
@@ -47,7 +47,9 @@ ask_no() {
 
 pieces=""
 if $ASSUME_YES; then
-    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell")"
+    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt")"
+    # Pieces saved before the Prompt existed get it: a new piece arrives on unless it was declined.
+    [[ " $pieces " == *" prompt "* || " $pieces " == *" noprompt "* ]] || pieces+=" prompt"
 elif [[ ! -t 0 ]]; then
     say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
         "No interactive terminal: run ./install.sh --yes to apply."
@@ -58,6 +60,11 @@ else
     if [[ " $pieces " == *" shell "* ]]; then
         ask_no "Usar o Retro98 Explorer no lugar do Finder quando outros apps pedem \"Mostrar no Finder\"? (opcional)" \
             "Use Retro98 Explorer instead of Finder when other apps ask to \"Show in Finder\"? (optional)" && pieces+=" fileviewer"
+    fi
+    if ask "Instalar o Prompt (terminal retrô)?" "Install the Prompt (retro terminal)?"; then
+        pieces+=" prompt"
+    else
+        pieces+=" noprompt"
     fi
 fi
 pieces="$(echo $pieces)"
@@ -128,6 +135,14 @@ elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" || -d "$EXPLORER_APP" ]]; th
     "$BIN" restore --only explorerFileViewer || status=$?
     remove_explorer
     "$BIN" restore --only dockUnderTaskbar || status=$?
+fi
+
+if [[ " $pieces " == *" prompt "* ]]; then
+    say "Montando o Retro98 Prompt..." "Building Retro98 Prompt..."
+    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Prompt "$PROMPT_ID" "Retro98 Prompt" "$PROMPT_APP" regular "" prompt "" \
+        "$RETRO98_ROOT/Resources/Prompt"
+else
+    remove_prompt
 fi
 
 say "Para ver o estado: \"$BIN\" status · Para desfazer tudo: ./uninstall.sh" \

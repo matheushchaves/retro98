@@ -44,7 +44,7 @@ check "bootstrapped" 'grep -q "bootstrap gui/$(id -u) $WORK/agents/$LABEL.plist"
 enable_line="$(grep -n "^enable gui/$(id -u)/$LABEL" "$WORK_LOG" | head -1 | cut -d: -f1)"
 bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
-check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell" ]]'
+check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell prompt" ]]'
 check "accessibility-hint" 'grep -qE "Acessibilidade|Accessibility" "$WORK/out.log"'
 EXPLORER="$WORK/apps/Retro98 Explorer.app"
 check "explorer-built" 'codesign --verify "$EXPLORER" 2> /dev/null'
@@ -56,6 +56,22 @@ register_line="$(grep -n "^lsregister -f" "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "explorer-registered-before-shell-starts" '[[ -n "$register_line" && -n "$bootstrap_line" && "$register_line" -lt "$bootstrap_line" ]]'
 check "explorer-fda-hint" 'grep -qE "Acesso Total ao Disco|Full Disk Access" "$WORK/out.log" && grep -q "open x-apple.systempreferences:.*Privacy_AllFiles" "$WORK_LOG" && grep -qx "open -R $EXPLORER" "$WORK_LOG"'
 check "fileviewer-off-by-default" '! grep -qx "settings apply --only explorerFileViewer" "$WORK_LOG"'
+PROMPT="$WORK/apps/Retro98 Prompt.app"
+check "prompt-built" 'codesign --verify "$PROMPT" 2> /dev/null'
+check "prompt-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1'
+check "prompt-has-font" '[[ -s "$PROMPT/Contents/Resources/PxPlus_IBM_VGA_8x16.ttf" && -s "$PROMPT/Contents/Resources/LICENSE-PxPlus_IBM_VGA_8x16.txt" ]]'
+check "prompt-has-icon" '[[ -s "$PROMPT/Contents/Resources/AppIcon.icns" ]]'
+check "prompt-not-default-terminal" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1 && ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1'
+
+# Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.
+rm -rf "$PROMPT"
+echo "base shell" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-old-pieces.log" 2>&1
+check "old-pieces-get-prompt" '[[ -d "$PROMPT" && "$(cat "$WORK/support/pieces")" == "base shell prompt" ]]'
+echo "base shell noprompt" > "$WORK/support/pieces"
+: > "$WORK_LOG"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-noprompt.log" 2>&1
+check "declined-prompt-stays-off" '[[ ! -e "$PROMPT" ]] && grep -qx "lsregister -u $PROMPT" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell noprompt" ]]'
 
 # A Shell copy opened outside launchd must not survive a reinstall next to the LaunchAgent's copy.
 mkdir -p "$WORK/apps/Retro98 Shell.app/Contents/MacOS"
