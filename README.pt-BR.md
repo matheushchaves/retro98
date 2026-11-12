@@ -18,7 +18,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 2C | Ícones na área de trabalho | substituída pela Área de Trabalho do Explorer (a mesa e os widgets do macOS ficam como estão) |
 | 3A | Explorer: navegar pelos arquivos | ✅ disponível |
 | 3B | Explorer: copiar, mover, renomear, excluir | ✅ disponível |
-| 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | planejada |
+| 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | ✅ disponível |
 | 4 | Prompt (terminal) | planejada |
 | 5 | Painel de Controle | planejada |
 | 6 | Bloco de Notas | planejada |
@@ -70,16 +70,24 @@ Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell 
 
 Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro; você também pode tirar o Retro98 Shell da lista de Acessibilidade.
 
-## Explorer (Fases 3A e 3B)
+## Explorer (Fase 3)
 
 O Retro98 Explorer é um gerenciador de arquivos no estilo 98, instalado junto com a barra de tarefas (`~/Applications/Retro98/Retro98 Explorer.app`). É um app separado: o Finder continua funcionando como sempre.
 
 - Abra pelo botão de Início rápido ao lado do Iniciar, por Iniciar › Programas › Retro98 › Retro98 Explorer, ou por um link: `open retro98-explorer://desktop` (também `retro98-explorer://my-computer` e `retro98-explorer://folder?path=/Applications`).
-- Ele abre na **Área de Trabalho**: Meu Computador, Meus Documentos, Lixeira e os arquivos da sua pasta Mesa, em ícones grandes. A mesa e os widgets do macOS não são tocados.
+- Ele abre na **Área de Trabalho**: Meu Computador, Meus Documentos, Lixeira e os arquivos da sua pasta Mesa. A mesa e os widgets do macOS não são tocados.
 - Na tela: árvore de pastas à esquerda, barra de ferramentas, barra de endereço e barra de status (objetos, tamanho da seleção, espaço livre). No endereço, digite um caminho (`~/Downloads`) ou o nome de um local ("Meu Computador"); a seta lista as pastas acima da atual.
 - Meu Computador mostra os discos, pen drives e volumes de rede, e se atualiza quando você pluga ou ejeta um. Pastas abertas se atualizam sozinhas quando os arquivos mudam.
 - Clique duplo, ⌘O ou ⌘↓ abre: pastas abrem na própria janela, arquivos e apps abrem no app de sempre do macOS. A barra de espaço espia a seleção com o Visualização Rápida.
-- Atalhos de navegação: ⌘[ Voltar · ⌘] Avançar · ⌘↑ ou Backspace Acima · ⌘↓ ou ⌘O Abrir · ⇧⌘D Área de Trabalho · ⇧⌘C Meu Computador · ⇧⌘O Meus Documentos · ⌥⌘L Downloads · ⌘R Atualizar · ⌘N Nova janela · ⌘W Fechar · ⌘A Selecionar tudo.
+
+### Ver e procurar (3C)
+
+- **Modos de exibição:** ícones grandes, ícones pequenos, lista e detalhes (⌘1 a ⌘4, o menu Exibir ou o botão Modos). A lista rola para o lado. Em Detalhes, as colunas Nome, Tamanho, Tipo e Modificado ordenam com um clique, e um segundo clique inverte; Exibir › Organizar por… faz o mesmo nos outros modos. O modo e a ordem valem para todas as janelas e ficam guardados.
+- **Arquivos ocultos:** Exibir › Mostrar arquivos ocultos (⇧⌘.). Eles aparecem esmaecidos, como no 98.
+- **Procurar** (⌘F): abre a barra "Procurar" abaixo do endereço. Digitar filtra a pasta na hora; com **Incluir subpastas**, a busca entra nas subpastas em segundo plano (até 5.000 resultados) e Detalhes ganha a coluna "Em pasta". **Parar** interrompe e Esc fecha. **Iniciar › Localizar…** abre uma janela já procurando na sua pasta pessoal.
+- **Propriedades** (⌘I ou ⌥↩︎): tipo, local, tamanho (o de pastas é calculado em segundo plano), o que a pasta contém e as datas. Em discos e pen drives, o espaço usado e o livre.
+- **Abrir com:** botão direito › Abrir com, com o app padrão primeiro e "Outro…" para escolher qualquer app. Também em Arquivo › Abrir com….
+- **Ejetar** (⌘E): em Meu Computador, para pen drives e volumes de rede. Se o disco estiver em uso, aparece o motivo.
 
 ### Mexendo nos arquivos (3B)
 
@@ -92,9 +100,37 @@ O Retro98 Explorer é um gerenciador de arquivos no estilo 98, instalado junto c
 - **Desfazer** (⌘Z, ou o botão Desfazer) vale para o app inteiro: desfaz colar, mover, renomear, nova pasta, excluir e restaurar; ⇧⌘Z refaz. Desfazer uma cópia manda a cópia para a Lixeira, como no Finder.
 - O botão direito abre o menu de contexto do item ou do fundo da janela.
 - Limites: "Restaurar" só conhece o que o próprio Explorer mandou para a Lixeira (o resto volta pelo "Devolver" do Finder; o macOS não oferece isso a outros apps). A janela da Lixeira mostra e esvazia só a Lixeira do seu disco; itens apagados de pen drives o Finder esvazia. Arrastar do Fotos ou do Mail não entra no Desfazer.
-
 - **Acesso Total ao Disco (opcional, só para a Lixeira):** o macOS protege a pasta da Lixeira: ver a Lixeira precisa dele, e restaurar, esvaziar ou desfazer uma exclusão podem precisar. O instalador abre Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco e mostra o app no Finder: ative o Retro98 Explorer (ou arraste-o para a lista). Sem isso, a janela da Lixeira oferece "Abrir no Finder".
-- Na próxima entrega (3C): modos lista e detalhes, ordenação, busca, ejetar, Abrir com e Propriedades.
+
+### Atalhos do Explorer
+
+| Ação | Teclas |
+|---|---|
+| Voltar, Avançar, Acima | ⌘[ · ⌘] · ⌘↑ ou Backspace |
+| Abrir | duplo clique, ⌘O ou ⌘↓ |
+| Área de Trabalho, Meu Computador, Meus Documentos, Downloads | ⇧⌘D · ⇧⌘C · ⇧⌘O · ⌥⌘L |
+| Ícones grandes, ícones pequenos, lista, detalhes | ⌘1 · ⌘2 · ⌘3 · ⌘4 |
+| Mostrar arquivos ocultos | ⇧⌘. |
+| Procurar | ⌘F (Esc fecha) |
+| Propriedades | ⌘I ou ⌥↩︎ |
+| Ejetar | ⌘E |
+| Copiar, recortar, colar | ⌘C · ⌘X · ⌘V |
+| Mover o que foi copiado | ⌥⌘V |
+| Desfazer, refazer | ⌘Z · ⇧⌘Z |
+| Nova pasta | ⇧⌘N |
+| Renomear | Enter ou F2 |
+| Mandar para a Lixeira | ⌘⌫ ou Del |
+| Excluir permanentemente | ⌥⌘⌫ ou ⇧Del |
+| Esvaziar Lixeira | ⇧⌘⌫ |
+| Atualizar, nova janela, fechar, selecionar tudo | ⌘R · ⌘N · ⌘W · ⌘A |
+
+### Explorer no lugar do Finder (opcional)
+
+Quando outro app pede "Mostrar no Finder" (os downloads do Safari, por exemplo), o macOS pode abrir o Retro98 Explorer, com o arquivo já selecionado.
+
+- **Ligar:** o instalador pergunta, quando você escolhe a barra de tarefas; a resposta padrão é Não.
+- **Desligar:** rode `./install.sh` de novo e responda Não, ou desinstale. O Finder volta a ser usado antes de o Explorer sair do disco.
+- **Limites:** apps que já estavam abertos podem precisar ser reabertos para perceber a troca. Abrir uma pasta com dois cliques em outros apps continua indo para o Finder. Um interruptor no Painel de Controle chega na Fase 5.
 
 ## O que a Fase 1 muda
 

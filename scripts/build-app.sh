@@ -16,8 +16,8 @@ MODE="${5:?$usage}"
 SCHEME="${6:-}"
 ICON="${7:-}"
 APPLE_EVENTS_USAGE="${8:-}"
-VERSION="0.5.0"
-BUILD="5"
+VERSION="0.6.0"
+BUILD="6"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then

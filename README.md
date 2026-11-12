@@ -18,7 +18,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 2C | Desktop icons | replaced by the Explorer's Desktop (the macOS desktop and widgets stay as they are) |
 | 3A | Explorer: browse files | ✅ available |
 | 3B | Explorer: copy, move, rename, delete | ✅ available |
-| 3C | Explorer: views, search, Open With, Properties | planned |
+| 3C | Explorer: views, search, Open With, Properties | ✅ available |
 | 4 | Prompt (terminal) | planned |
 | 5 | Control Panel | planned |
 | 6 | Notepad | planned |
@@ -70,16 +70,24 @@ The first time you use Shut Down…, macOS asks whether Retro98 Shell may contro
 
 These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain; you can also remove Retro98 Shell from the Accessibility list.
 
-## Explorer (Phases 3A and 3B)
+## Explorer (Phase 3)
 
 Retro98 Explorer is a 98-style file manager installed with the taskbar (`~/Applications/Retro98/Retro98 Explorer.app`). It's a separate app: Finder keeps working as always.
 
 - Open it from the quick launch button next to Start, from Start › Programs › Retro98 › Retro98 Explorer, or with a link: `open retro98-explorer://desktop` (also `retro98-explorer://my-computer` and `retro98-explorer://folder?path=/Applications`).
-- It opens on the **Desktop**: My Computer, My Documents, Recycle Bin and the files in your Desktop folder, as large icons. Your macOS desktop and widgets are not touched.
+- It opens on the **Desktop**: My Computer, My Documents, Recycle Bin and the files in your Desktop folder. Your macOS desktop and widgets are not touched.
 - On screen: folder tree on the left, toolbar, address bar and status bar (objects, selection size, free space). In the address bar, type a path (`~/Downloads`) or a place name ("My Computer"); its arrow lists the folders above the current one.
 - My Computer lists your disks, USB drives and network volumes, and updates when you plug one in or eject it. Open folders refresh by themselves when their files change.
 - Double-click, ⌘O or ⌘↓ opens: folders open in place, files and apps open in their usual macOS app. The space bar previews the selection with Quick Look.
-- Navigation shortcuts: ⌘[ Back · ⌘] Forward · ⌘↑ or Backspace Up · ⌘↓ or ⌘O Open · ⇧⌘D Desktop · ⇧⌘C My Computer · ⇧⌘O My Documents · ⌥⌘L Downloads · ⌘R Refresh · ⌘N New window · ⌘W Close · ⌘A Select all.
+
+### Viewing and searching (3C)
+
+- **Views:** large icons, small icons, list and details (⌘1 to ⌘4, the View menu or the Views button). The list scrolls sideways. In Details, the Name, Size, Type and Modified columns sort with a click, and a second click reverses; View › Arrange by… does the same in the other views. The view and the order apply to every window and are remembered.
+- **Hidden files:** View › Show Hidden Files (⇧⌘.). They show faded, as in 98.
+- **Search** (⌘F): opens the "Search for" bar under the address. Typing filters the folder right away; with **Include subfolders**, the search goes into subfolders in the background (up to 5,000 results) and Details gains an "In Folder" column. **Stop** interrupts and Esc closes. **Start › Find…** opens a window already searching your home folder.
+- **Properties** (⌘I or ⌥↩︎): type, location, size (computed in the background for folders), what a folder contains and the dates. For disks and USB drives, used and free space.
+- **Open With:** right-click › Open With, with the default app first and "Other…" to pick any app. Also in File › Open With….
+- **Eject** (⌘E): in My Computer, for USB drives and network volumes. If the disk is in use, the reason shows up.
 
 ### Working with files (3B)
 
@@ -92,9 +100,37 @@ Retro98 Explorer is a 98-style file manager installed with the taskbar (`~/Appli
 - **Undo** (⌘Z, or the Undo button) covers the whole app: it undoes paste, move, rename, new folder, delete and restore; ⇧⌘Z redoes. Undoing a copy sends the copy to the Trash, as in Finder.
 - Right-click opens the context menu for an item or the window background.
 - Limits: "Restore" only knows what the Explorer itself sent to the Trash (the rest goes back with Finder's "Put Back"; macOS doesn't offer that to other apps). The Recycle Bin window shows and empties only your disk's Trash; Finder empties items deleted from USB drives. Dragging from Photos or Mail isn't undoable.
-
 - **Full Disk Access (optional, only for the Recycle Bin):** macOS protects the Trash folder: seeing it needs this, and restoring, emptying or undoing a delete may need it. The installer opens System Settings › Privacy & Security › Full Disk Access and shows the app in Finder: turn on Retro98 Explorer (or drag it into the list). Without it, the Recycle Bin window offers "Open in Finder".
-- Coming next (3C): list and details views, sorting, search, eject, Open With and Properties.
+
+### Explorer shortcuts
+
+| Action | Keys |
+|---|---|
+| Back, Forward, Up | ⌘[ · ⌘] · ⌘↑ or Backspace |
+| Open | double-click, ⌘O or ⌘↓ |
+| Desktop, My Computer, My Documents, Downloads | ⇧⌘D · ⇧⌘C · ⇧⌘O · ⌥⌘L |
+| Large icons, small icons, list, details | ⌘1 · ⌘2 · ⌘3 · ⌘4 |
+| Show hidden files | ⇧⌘. |
+| Search | ⌘F (Esc closes) |
+| Properties | ⌘I or ⌥↩︎ |
+| Eject | ⌘E |
+| Copy, cut, paste | ⌘C · ⌘X · ⌘V |
+| Move what was copied | ⌥⌘V |
+| Undo, redo | ⌘Z · ⇧⌘Z |
+| New folder | ⇧⌘N |
+| Rename | Enter or F2 |
+| Send to the Recycle Bin | ⌘⌫ or Del |
+| Delete permanently | ⌥⌘⌫ or ⇧Del |
+| Empty Recycle Bin | ⇧⌘⌫ |
+| Refresh, new window, close, select all | ⌘R · ⌘N · ⌘W · ⌘A |
+
+### Explorer instead of Finder (optional)
+
+When another app asks to "Show in Finder" (Safari's downloads, for example), macOS can open Retro98 Explorer instead, with the file already selected.
+
+- **Turn on:** the installer asks when you choose the taskbar; the default answer is No.
+- **Turn off:** run `./install.sh` again and answer No, or uninstall. Finder is put back before the Explorer leaves the disk.
+- **Limits:** apps that were already open may need to be reopened to notice the change. Opening a folder with a double-click in other apps still goes to Finder. A switch in the Control Panel comes in Phase 5.
 
 ## What Phase 1 changes
 
