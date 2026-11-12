@@ -35,6 +35,7 @@ extension ExplorerWindowController: NSMenuItemValidation {
         case #selector(restoreFromTrash(_:)): return isInTrash && files && selected.allSatisfy { operations.canRestore($0.url) }
         case #selector(emptyTrash(_:)): return TrashState.isFull(trash: environment.trash) == true
         case #selector(openTrashInFinder(_:)): return isInTrash
+        case #selector(showSearch(_:)): return searchRoot != nil
         default: return true
         }
     }

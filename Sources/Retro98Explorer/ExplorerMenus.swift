@@ -28,7 +28,8 @@ enum ExplorerMenus {
             (ExplorerText.menuFile(l), [
                 command(ExplorerText.open(l), "o", .command, #selector(ExplorerWindowController.openSelection(_:))),
                 command(ExplorerText.newWindow(l), "n", .command, #selector(AppDelegate.newWindow(_:))),
-                command(ExplorerText.newFolder(l), "n", [.command, .shift], #selector(ExplorerWindowController.newFolder(_:))), nil,
+                command(ExplorerText.newFolder(l), "n", [.command, .shift], #selector(ExplorerWindowController.newFolder(_:))),
+                command(ExplorerText.searchMenu(l), "f", .command, #selector(ExplorerWindowController.showSearch(_:))), nil,
                 command(ExplorerText.rename(l), "", [], #selector(ExplorerWindowController.renameSelection(_:))),
                 command(ExplorerText.delete(l), backspace, .command, #selector(ExplorerWindowController.moveToTrash(_:))),
                 command(ExplorerText.deletePermanently(l), backspace, [.command, .option],

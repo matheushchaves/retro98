@@ -32,3 +32,14 @@ private let safari = URL(filePath: "/Applications/Safari.app")
     #expect(folder?.children?.first?.action == .open(URL(filePath: "/T.app")))
     #expect(items[1]?.children == [StartMenuNode(title: "Relatório.pdf", iconURL: doc.url, action: .open(doc.url), children: nil)])
 }
+
+@Test func findEntryAppearsOnlyWithTheExplorer() throws {
+    let find = URL(string: "retro98-explorer://search")!
+    let items = StartMenuItems.build(programs: [], documents: [], languages: ["pt-BR"], findURL: find)
+    #expect(items.map { $0?.title } == ["Programas", "Documentos", "Configurações", "Localizar…", "Ajuda", "Executar…", nil, "Desligar…"])
+    let entry = try #require(items[3])
+    #expect(entry.action == .open(find))
+    #expect(entry.symbol == .find)
+    #expect(StartMenuItems.build(programs: [], documents: [], languages: ["en"], findURL: find)[3]?.title == "Find…")
+    #expect(!StartMenuItems.build(programs: [], documents: [], languages: ["pt-BR"]).contains { $0?.title == "Localizar…" })
+}

@@ -9,6 +9,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     static let shellBundleID = "io.github.matheushchaves.retro98.shell"
     static let menuHeight: CGFloat = 22, toolbarHeight: CGFloat = 42, addressHeight: CGFloat = 27, statusHeight: CGFloat = 24
     static let treeWidth: CGFloat = 210
+    /// Where the panes start, under the menu bar, toolbar and address (the search bar goes here when open).
+    static let panesTop: CGFloat = menuHeight + 2 + toolbarHeight + 2 + addressHeight
     static let spaceKey: UInt16 = 49, backspaceKey: UInt16 = 51, downArrowKey: UInt16 = 125, forwardDeleteKey: UInt16 = 117
 
     let model: ExplorerModel
@@ -18,7 +20,12 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     let languages: [String]
     let environment: ExplorerEnvironment
     private let toolbar = RetroToolbar()
-    private let statusBar = RetroStatusBar()
+    let statusBar = RetroStatusBar()
+    let splitView = RetroSplitView(frame: .zero)
+    private(set) lazy var searchBar = SearchBar(languages: languages)
+    var searchTask: Task<Void, Never>?
+    var searchControl: OperationControl?
+    var searchGeneration = 0
     let grid: RetroIconGrid
     /// The Details header above the scrolling grid.
     let gridPane: GridPane
@@ -44,7 +51,8 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     /// The app's file undo history, as seen from this window (off while it edits text).
     private lazy var windowUndoManager = operations.makeUndoManager { [weak self] in self?.isEditingText ?? false }
 
-    init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil, operations: ExplorerOperations? = nil) {
+    init(start: Location, languages: [String], environment: ExplorerEnvironment? = nil, operations: ExplorerOperations? = nil,
+         searching: Bool = false) {
         self.languages = languages
         let environment = environment ?? operations?.environment ?? .live(languages: languages)
         self.environment = environment
@@ -71,6 +79,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
                                                                     queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.operationsChanged() }
         }
+        if searching { openSearchBar(includeSubfolders: true) }
     }
 
     func show() {
@@ -104,7 +113,10 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         address.onSubmit = { [weak self] text in self?.submitAddress(text) }
         address.dropDownItems = { [weak self] in self?.ancestorItems() ?? [] }
 
-        let split = RetroSplitView(frame: CGRect(x: 0, y: y, width: width, height: height - y - Self.statusHeight))
+        content.addSubview(searchBar)
+        wireSearchBar()
+        let split = splitView
+        split.frame = CGRect(x: 0, y: y, width: width, height: height - y - Self.statusHeight)
         split.autoresizingMask = [.width, .height]
         tree.dataSource = treeSource
         tree.onSelect = { [weak self] id in self?.treeSelected(id) }
@@ -161,6 +173,10 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         showMessage(model.error)
         updateColumns()
         updateCommands()
+        if navigated, isSearchBarVisible, model.search == nil {
+            cancelSearchWork()
+            layoutSearchBar(visible: false)
+        }
         if navigated {
             window.setTitle(model.title, icon: smallIcon(for: location))
             grid.scroll(.zero)
@@ -225,7 +241,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         let size = selected.compactMap(\.size).reduce(0, +)
         let freeSpace = model.freeSpace
         statusBar.fields = [
-            (StatusText.objects(count: model.entries.count, selected: selected.count, languages: languages), 300),
+            (searchStatus ?? StatusText.objects(count: model.entries.count, selected: selected.count, languages: languages), 300),
             (size > 0 ? StatusText.bytes(size, locale: .current) : "", 140),
             (freeSpace.map { StatusText.free($0, locale: .current, languages: languages) } ?? "", nil),
         ]
@@ -279,6 +295,9 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         case (Self.downArrowKey, [.command]):
             guard let index = grid.selection.first else { return true }
             openEntry(at: index)
+        case (Self.escapeKey, []):
+            guard isSearchBarVisible else { return false }
+            closeSearch()
         case (Self.forwardDeleteKey, []):
             moveToTrash(nil)
         case (Self.forwardDeleteKey, [.shift]):
@@ -344,6 +363,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     }
 
     func windowWillClose(_ notification: Notification) {
+        cancelSearchWork()
         watcher?.stop()
         observers.forEach(NSWorkspace.shared.notificationCenter.removeObserver)
         operationsObserver.map(NotificationCenter.default.removeObserver)

@@ -23,8 +23,10 @@ final class StartMenuController {
 
     /// `point` is the menu's bottom-left corner (top of the taskbar).
     func open(at point: CGPoint, ignoresClick: @escaping (NSEvent) -> Bool, onClose: @escaping () -> Void) {
+        let explorerInstalled = QuickLaunch.isAvailable { NSWorkspace.shared.urlForApplication(toOpen: $0) != nil }
         let nodes = StartMenuItems.build(
-            programs: programs, documents: documents.recent(limit: StartMenuModel.recentDocumentsLimit), languages: languages
+            programs: programs, documents: documents.recent(limit: StartMenuModel.recentDocumentsLimit), languages: languages,
+            findURL: explorerInstalled ? QuickLaunch.findURL : nil
         )
         let menu = RetroMenu(items: nodes.map { item($0, large: true) }, style: .startMenu)
         menu.ignoresClick = ignoresClick
@@ -93,6 +95,7 @@ final class StartMenuController {
         case .shutDown: Icons.shutDown
         case .folder: Icons.folder
         case .systemSettings: Icons.systemSettings
+        case .find: large ? FileIcons.explorerApp : FileIcons.explorerAppSmall
         }
     }
 }

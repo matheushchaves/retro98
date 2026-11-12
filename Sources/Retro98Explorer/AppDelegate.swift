@@ -22,7 +22,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        urls.compactMap(ExplorerURL.location(from:)).forEach { openWindow(at: $0) }
+        for request in urls.compactMap(ExplorerURL.request(from:)) {
+            switch request {
+            case .open(let location): openWindow(at: location)
+            case .search(let location): openWindow(at: location ?? .folder(FileManager.default.homeDirectoryForCurrentUser), searching: true)
+            }
+        }
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -44,8 +49,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return .terminateLater
     }
 
-    func openWindow(at location: Location) {
-        let controller = ExplorerWindowController(start: location, languages: languages, operations: operations)
+    func openWindow(at location: Location, searching: Bool = false) {
+        let controller = ExplorerWindowController(start: location, languages: languages, operations: operations, searching: searching)
         controller.onClose = { [weak self, weak controller] in
             self?.controllers.removeAll { $0 === controller }
         }

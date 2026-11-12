@@ -145,6 +145,16 @@ public enum ExplorerText {
     public static func otherApp(_ l: [String]) -> String { text("Other…", "Outro…", l) }
     public static func eject(_ l: [String]) -> String { text("Eject", "Ejetar", l) }
 
+    public static func searchMenu(_ l: [String]) -> String { text("Search…", "Procurar…", l) }
+    public static func searchFor(_ l: [String]) -> String { text("Search for:", "Procurar:", l) }
+    public static func includeSubfolders(_ l: [String]) -> String { text("Include subfolders", "Incluir subpastas", l) }
+    public static func stop(_ l: [String]) -> String { text("Stop", "Parar", l) }
+    public static func searching(_ l: [String]) -> String { text("Searching...", "Procurando...", l) }
+    public static func found(_ count: Int, _ l: [String]) -> String { text("\(count) object(s) found", "\(count) objeto(s) encontrado(s)", l) }
+    public static func tooManyResults(_ l: [String]) -> String {
+        text("More than 5,000 results; refine your search.", "Mais de 5.000 resultados; refine a busca.", l)
+    }
+
     public static func nameCantContainSeparators(_ l: [String]) -> String {
         text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
     }

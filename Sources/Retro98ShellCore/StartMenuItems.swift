@@ -8,7 +8,7 @@ public enum StartMenuAction: Equatable, Sendable {
 
 /// Built-in icon a node asks for; nodes without one use the icon of `iconURL`.
 public enum StartMenuSymbol: Equatable, Sendable {
-    case programs, documents, settings, help, run, shutDown, folder, systemSettings
+    case programs, documents, settings, find, help, run, shutDown, folder, systemSettings
 }
 
 /// One Start menu entry. A node with neither action nor children is shown disabled.
@@ -33,10 +33,15 @@ public struct StartMenuNode: Equatable, Sendable {
 
 public enum StartMenuItems {
     /// Top-level Start menu in `StartMenuModel.topLevel` order; nil marks a separator.
-    public static func build(programs: [ProgramNode], documents: [RecentDocument], languages: [String]) -> [StartMenuNode?] {
-        StartMenuModel.topLevel.map { entry in
+    /// "Find…" opens `findURL` (the Explorer's search) and is left out without it.
+    public static func build(programs: [ProgramNode], documents: [RecentDocument], languages: [String],
+                             findURL: URL? = nil) -> [StartMenuNode?] {
+        StartMenuModel.topLevel.compactMap { entry -> StartMenuNode?? in
             let title = StartMenuModel.title(entry, languages: languages)
             switch entry {
+            case .find:
+                guard let findURL else { return .none }
+                return StartMenuNode(title: title, iconURL: nil, action: .open(findURL), children: nil, symbol: .find)
             case .programs:
                 return StartMenuNode(title: title, iconURL: nil, action: nil,
                                      children: programs.map(node(for:)), symbol: .programs)
@@ -58,7 +63,7 @@ public enum StartMenuItems {
             case .shutDown:
                 return StartMenuNode(title: title, iconURL: nil, action: .shutDown, children: nil, symbol: .shutDown)
             case .separator:
-                return nil
+                return .some(nil)
             }
         }
     }

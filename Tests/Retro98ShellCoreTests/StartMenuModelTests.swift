@@ -54,7 +54,8 @@ import Testing
 }
 
 @Test func topLevelOrderAndTitles() {
-    #expect(StartMenuModel.topLevel == [.programs, .documents, .settings, .help, .run, .separator, .shutDown])
+    #expect(StartMenuModel.topLevel == [.programs, .documents, .settings, .find, .help, .run, .separator, .shutDown])
+    #expect(StartMenuModel.title(.find, languages: ["pt-BR"]) == "Localizar…")
     #expect(StartMenuModel.title(.programs, languages: ["pt-BR"]) == "Programas")
     #expect(StartMenuModel.title(.run, languages: ["pt-BR"]) == "Executar…")
     #expect(StartMenuModel.title(.shutDown, languages: ["en"]) == "Shut Down…")
