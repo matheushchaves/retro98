@@ -5,13 +5,22 @@ public protocol RetroIconGridDataSource: AnyObject {
     func numberOfItems(in grid: RetroIconGrid) -> Int
     func grid(_ grid: RetroIconGrid, titleAt index: Int) -> String
     func grid(_ grid: RetroIconGrid, iconAt index: Int) -> PixelIcon
-    /// Ghosted icon (a cut item waiting to be pasted). Default: false.
+    /// The 16 pt icon for small icons, list and details. Default: the large icon scaled down.
+    func grid(_ grid: RetroIconGrid, smallIconAt index: Int) -> PixelIcon
+    /// The texts of the Details columns after the name. Default: none.
+    func grid(_ grid: RetroIconGrid, detailsAt index: Int) -> [String]
+    /// Ghosted icon (a cut item waiting to be pasted, or a hidden file). Default: false.
     func grid(_ grid: RetroIconGrid, isDimmedAt index: Int) -> Bool
     /// What a drag of this item carries; nil means it can't be dragged. Default: nil.
     func grid(_ grid: RetroIconGrid, pasteboardWriterAt index: Int) -> NSPasteboardWriting?
 }
 
 extension RetroIconGridDataSource {
+    public func grid(_ grid: RetroIconGrid, smallIconAt index: Int) -> PixelIcon {
+        let large = self.grid(grid, iconAt: index)
+        return PixelIcon(width: 16, height: 16) { PixelIcon.drawUpright(large.image(), in: CGRect(x: 0, y: 0, width: 16, height: 16), context: $0) }
+    }
+    public func grid(_ grid: RetroIconGrid, detailsAt index: Int) -> [String] { [] }
     public func grid(_ grid: RetroIconGrid, isDimmedAt index: Int) -> Bool { false }
     public func grid(_ grid: RetroIconGrid, pasteboardWriterAt index: Int) -> NSPasteboardWriting? { nil }
 }
@@ -31,10 +40,10 @@ public enum IconGridClick {
     }
 }
 
-/// Large icons on white, as a scroll view's document. Only visible cells are drawn.
-/// Click selects, ⌘-click toggles, drag on the background draws a selection rectangle and drag on an
-/// item drags it, double-click opens, Enter or F2 renames, arrows move, ⌘A selects all, right-click
-/// shows the context menu.
+/// Files and folders as a scroll view's document, in large icons, small icons, a list or details.
+/// Only visible cells are drawn. Click selects, ⌘-click toggles, drag on the background draws a
+/// selection rectangle and drag on an item drags it, double-click opens, Enter or F2 renames,
+/// arrows move, ⌘A selects all, right-click shows the context menu.
 @MainActor
 public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     static let labelWidth = 84
@@ -57,6 +66,17 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     public var onEndEditing: ((Int, String?) -> Void)?
     /// Setting it makes the grid accept dropped files.
     public weak var dropDelegate: RetroIconGridDropDelegate? { didSet { registerForDrops() } }
+    /// The view mode; changing it keeps the selection.
+    public var style: IconGridStyle = .largeIcons {
+        didSet {
+            guard style != oldValue else { return }
+            fitToClipView()
+            if let editingIndex { placeEditor(at: editingIndex) }
+            needsDisplay = true
+        }
+    }
+    /// The Details columns: the name first, then the ones `detailsAt` fills.
+    public var columns: [GridColumn] = [] { didSet { needsDisplay = true } }
     public internal(set) var editingIndex: Int?
     public internal(set) var dropTargetIndex: Int?
     public internal(set) var editor: NSTextField?
@@ -64,7 +84,9 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     private var rubberBand: CGRect?
 
     var count: Int { dataSource?.numberOfItems(in: self) ?? 0 }
-    var columns: Int { IconGridLayout.columns(forWidth: bounds.width) }
+    var geometry: IconGridGeometry {
+        IconGridGeometry(style: style, visibleSize: superview?.bounds.size ?? bounds.size, count: count)
+    }
 
     public func reloadData() {
         selection = selection.filteredIndexSet { $0 < count }
@@ -80,17 +102,24 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
         onSelectionChange?(selection)
     }
 
-    /// Width follows the clip view; height grows with the content (at least the visible height).
+    /// Fills the clip view; grows with the content (down, or sideways for the list).
     public func fitToClipView() {
-        guard let clip = superview else { return }
-        let height = max(IconGridLayout.contentHeight(count: count, columns: IconGridLayout.columns(forWidth: clip.bounds.width)),
-                         clip.bounds.height)
-        setFrameSize(CGSize(width: clip.bounds.width, height: height))
+        guard superview != nil else { return }
+        setFrameSize(geometry.contentSize)
     }
 
     override public func resize(withOldSuperviewSize oldSize: NSSize) {
         fitToClipView()
         if let editingIndex { placeEditor(at: editingIndex) }
+    }
+
+    /// Items whose cells meet `rect` (the selection rectangle).
+    func items(touching rect: CGRect) -> IndexSet {
+        let geometry = geometry
+        return IndexSet(geometry.indices(in: rect).filter { index in
+            let cell = geometry.frame(of: index)
+            return (style == .largeIcons ? cell.insetBy(dx: 12, dy: 4) : cell).intersects(rect)
+        })
     }
 
     // MARK: Drawing
@@ -99,34 +128,81 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
         let clip = context.boundingBoxOfClipPath
         Bevel.fill(clip, color: .white, context: context)
         guard let dataSource else { return }
-        let isKey = window?.isKeyWindow ?? false
-        for index in IconGridLayout.indices(in: clip, columns: columns, count: count) {
-            let cell = IconGridLayout.frame(of: index, columns: columns)
+        let geometry = geometry
+        let widths = GridColumn.widths(columns, totalWidth: size.width)
+        for index in geometry.indices(in: clip) {
             let selected = selection.contains(index) || index == dropTargetIndex
-            let icon = dataSource.grid(self, iconAt: index)
-            let iconOrigin = CGPoint(x: (cell.midX - CGFloat(icon.width) / 2).rounded(.down), y: cell.minY + Self.iconTop)
-            if selected {
-                icon.drawSelected(at: iconOrigin, context: context)
-            } else if dataSource.grid(self, isDimmedAt: index) {
-                icon.drawDimmed(at: iconOrigin, context: context)
+            let dimmed = dataSource.grid(self, isDimmedAt: index)
+            if style == .largeIcons {
+                drawLargeItem(index, cell: geometry.frame(of: index), selected: selected, dimmed: dimmed, context: context)
             } else {
-                icon.draw(at: iconOrigin, context: context)
+                drawLineItem(index, geometry: geometry, widths: widths, selected: selected, dimmed: dimmed, context: context)
             }
-            guard index != editingIndex else { continue }
-            let lines = RetroText.label(dataSource.grid(self, titleAt: index), maxWidth: Self.labelWidth, maxLines: 2)
-            let widest = CGFloat(lines.map { PixelText.width(of: $0, font: .regular) }.max() ?? 0)
-            let labelRect = CGRect(x: (cell.midX - widest / 2).rounded(.down) - 2, y: cell.minY + Self.labelTop,
-                                   width: widest + 4, height: CGFloat(lines.count * PixelText.lineHeight))
-            if selected { Bevel.fill(labelRect, color: Palette.selection, context: context) }
-            for (line, text) in lines.enumerated() {
-                let width = CGFloat(PixelText.width(of: text, font: .regular))
-                PixelText.draw(text, font: .regular, color: selected ? .white : .black,
-                               at: CGPoint(x: (cell.midX - width / 2).rounded(.down), y: labelRect.minY + CGFloat(line * PixelText.lineHeight)),
-                               context: context)
-            }
-            if isKey, index == focus { drawDottedRect(labelRect, context: context) }
         }
         if let rubberBand { drawDottedRect(rubberBand, context: context) }
+    }
+
+    private var hasFocusRing: Bool { window?.isKeyWindow ?? false }
+
+    private func drawIcon(_ icon: PixelIcon, at origin: CGPoint, selected: Bool, dimmed: Bool, context: CGContext) {
+        if selected {
+            icon.drawSelected(at: origin, context: context)
+        } else if dimmed {
+            icon.drawDimmed(at: origin, context: context)
+        } else {
+            icon.draw(at: origin, context: context)
+        }
+    }
+
+    private func drawLargeItem(_ index: Int, cell: CGRect, selected: Bool, dimmed: Bool, context: CGContext) {
+        guard let dataSource else { return }
+        let icon = dataSource.grid(self, iconAt: index)
+        let iconOrigin = CGPoint(x: (cell.midX - CGFloat(icon.width) / 2).rounded(.down), y: cell.minY + Self.iconTop)
+        drawIcon(icon, at: iconOrigin, selected: selected, dimmed: dimmed, context: context)
+        guard index != editingIndex else { return }
+        let lines = RetroText.label(dataSource.grid(self, titleAt: index), maxWidth: Self.labelWidth, maxLines: 2)
+        let widest = CGFloat(lines.map { PixelText.width(of: $0, font: .regular) }.max() ?? 0)
+        let labelRect = CGRect(x: (cell.midX - widest / 2).rounded(.down) - 2, y: cell.minY + Self.labelTop,
+                               width: widest + 4, height: CGFloat(lines.count * PixelText.lineHeight))
+        if selected { Bevel.fill(labelRect, color: Palette.selection, context: context) }
+        for (line, text) in lines.enumerated() {
+            let width = CGFloat(PixelText.width(of: text, font: .regular))
+            PixelText.draw(text, font: .regular, color: selected ? .white : .black,
+                           at: CGPoint(x: (cell.midX - width / 2).rounded(.down), y: labelRect.minY + CGFloat(line * PixelText.lineHeight)),
+                           context: context)
+        }
+        if hasFocusRing, index == focus { drawDottedRect(labelRect, context: context) }
+    }
+
+    /// Small icons, list and details: a 16 pt icon and a one-line name (plus columns in details).
+    private func drawLineItem(_ index: Int, geometry: IconGridGeometry, widths: [CGFloat], selected: Bool, dimmed: Bool,
+                              context: CGContext) {
+        guard let dataSource else { return }
+        let cell = geometry.frame(of: index)
+        drawIcon(dataSource.grid(self, smallIconAt: index), at: geometry.iconFrame(of: index).origin, selected: selected,
+                 dimmed: dimmed, context: context)
+        let labelX = geometry.labelX(of: index)
+        let nameWidth = style == .details ? (widths.first ?? cell.width) : cell.width
+        let textY = cell.minY + ((cell.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down)
+        if index != editingIndex {
+            let name = RetroText.fit(dataSource.grid(self, titleAt: index), maxWidth: Int(max(nameWidth - 26, 0)))
+            let labelRect = CGRect(x: labelX - 2, y: textY, width: CGFloat(PixelText.width(of: name, font: .regular)) + 4,
+                                   height: CGFloat(PixelText.lineHeight))
+            if selected { Bevel.fill(labelRect, color: Palette.selection, context: context) }
+            PixelText.draw(name, font: .regular, color: selected ? .white : .black, at: CGPoint(x: labelX, y: textY), context: context)
+            if hasFocusRing, index == focus { drawDottedRect(labelRect, context: context) }
+        }
+        guard style == .details else { return }
+        var x = widths.first ?? 0
+        for (column, text) in dataSource.grid(self, detailsAt: index).enumerated() where column + 1 < widths.count {
+            let width = widths[column + 1]
+            let fitted = RetroText.fit(text, maxWidth: Int(max(width - 12, 0)))
+            let textWidth = CGFloat(PixelText.width(of: fitted, font: .regular))
+            let alignsRight = columns.indices.contains(column + 1) && columns[column + 1].alignsRight
+            PixelText.draw(fitted, font: .regular, color: .black,
+                           at: CGPoint(x: alignsRight ? x + width - 6 - textWidth : x + 6, y: textY), context: context)
+            x += width
+        }
     }
 
     private func drawDottedRect(_ rect: CGRect, context: CGContext) {
@@ -147,7 +223,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     override public var acceptsFirstResponder: Bool { true }
 
     func index(at event: NSEvent) -> Int? {
-        IconGridLayout.index(at: convert(event.locationInWindow, from: nil), columns: columns, count: count)
+        geometry.index(at: convert(event.locationInWindow, from: nil))
     }
 
     override public func mouseDown(with event: NSEvent) {
@@ -158,7 +234,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
         let extend = event.modifierFlags.contains(.command)
-        if let index = IconGridLayout.index(at: point, columns: columns, count: count) {
+        if let index = geometry.index(at: point) {
             if event.clickCount == 2 { onOpen?(index); return }
             let click = IconGridClick.mouseDown(on: index, selection: selection, extend: extend)
             setSelection(click.selection)
@@ -193,12 +269,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
             let rect = CGRect(x: min(start.x, point.x), y: min(start.y, point.y),
                               width: abs(point.x - start.x), height: abs(point.y - start.y))
             rubberBand = next.type == .leftMouseUp ? nil : rect
-            var picked = base
-            for index in IconGridLayout.indices(in: rect, columns: columns, count: count)
-            where IconGridLayout.frame(of: index, columns: columns).insetBy(dx: 12, dy: 4).intersects(rect) {
-                picked.insert(index)
-            }
-            setSelection(picked)
+            setSelection(base.union(items(touching: rect)))
             if next.type == .leftMouseUp { break }
         }
         rubberBand = nil
@@ -209,13 +280,12 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
 
     override public func keyDown(with event: NSEvent) {
         if onKey?(event) == true { return }
-        let current = focus ?? -1
-        let target: Int?
+        let direction: MoveDirection
         switch event.keyCode {
-        case 123: target = current - 1
-        case 124: target = current + 1
-        case 125: target = current < 0 ? 0 : current + columns
-        case 126: target = current - columns
+        case 123: direction = .left
+        case 124: direction = .right
+        case 125: direction = .down
+        case 126: direction = .up
         case _ where Self.returnKeys.contains(event.keyCode) || event.keyCode == Self.f2Key:
             if let focus, selection == [focus] { onRename?(focus) }
             return
@@ -223,10 +293,9 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
             super.keyDown(with: event)
             return
         }
-        guard let target, count > 0 else { return }
-        let clamped = min(max(target, 0), count - 1)
-        setSelection([clamped])
-        scrollToVisible(IconGridLayout.frame(of: clamped, columns: columns))
+        guard let target = geometry.move(from: focus, direction) else { return }
+        setSelection([target])
+        scrollToVisible(geometry.frame(of: target))
     }
 
     override public func selectAll(_ sender: Any?) {

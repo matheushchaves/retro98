@@ -7,16 +7,23 @@ public struct RetroMenuItem: Sendable {
         case separator
     }
 
+    /// A check (on/off option) or a bullet (one choice of several), drawn where an icon would go.
+    public enum Mark: Equatable, Sendable {
+        case none, check, bullet
+    }
+
     public let title: String
     public let icon: PixelIcon?
     public let kind: Kind
     public let isEnabled: Bool
+    public let mark: Mark
 
-    public init(title: String, icon: PixelIcon? = nil, kind: Kind, isEnabled: Bool = true) {
+    public init(title: String, icon: PixelIcon? = nil, kind: Kind, isEnabled: Bool = true, mark: Mark = .none) {
         self.title = title
         self.icon = icon
         self.kind = kind
         self.isEnabled = isEnabled
+        self.mark = mark
     }
 
     public static let separator = RetroMenuItem(title: "", kind: .separator)
@@ -108,6 +115,26 @@ public enum RetroMenuNavigation {
 /// A cascading 98-style menu shown in its own borderless panel.
 @MainActor
 public final class RetroMenu {
+    nonisolated static let checkRows = ["......X", ".....XX", "X...XXX", "XX.XXX.", "XXXXX..", ".XXX...", "..X...."]
+    nonisolated static let bulletRows = [".XX.", "XXXX", "XXXX", ".XX."]
+
+    /// The check or bullet, centered in `rect`.
+    nonisolated static func drawMark(_ mark: RetroMenuItem.Mark, in rect: CGRect, color: PixelColor, context: CGContext) {
+        let rows: [String]
+        switch mark {
+        case .none: return
+        case .check: rows = checkRows
+        case .bullet: rows = bulletRows
+        }
+        let width = CGFloat(rows[0].count), height = CGFloat(rows.count)
+        let origin = CGPoint(x: (rect.midX - width / 2).rounded(.down), y: (rect.midY - height / 2).rounded(.down))
+        for (y, row) in rows.enumerated() {
+            for (x, character) in row.enumerated() where character == "X" {
+                Bevel.fill(CGRect(x: origin.x + CGFloat(x), y: origin.y + CGFloat(y), width: 1, height: 1), color: color, context: context)
+            }
+        }
+    }
+
     static let inset: CGFloat = 3
     static let bannerWidth: CGFloat = 21
     static let hoverDelay: TimeInterval = 0.4
@@ -392,9 +419,13 @@ private final class MenuView: PixelView {
         let isHighlighted = index == highlighted
         if isHighlighted { Bevel.fill(frame, color: Palette.selection, context: context) }
         let iconSize = CGFloat(style.iconSize)
+        let iconOrigin = CGPoint(x: frame.minX + 3, y: frame.minY + ((frame.height - iconSize) / 2).rounded(.down))
         if let icon = item.icon {
-            icon.draw(at: CGPoint(x: frame.minX + 3, y: frame.minY + ((frame.height - iconSize) / 2).rounded(.down)),
-                      context: context)
+            icon.draw(at: iconOrigin, context: context)
+        } else if item.mark != .none {
+            let color: PixelColor = !item.isEnabled ? Palette.shadow : (isHighlighted ? Palette.selectionText : .black)
+            RetroMenu.drawMark(item.mark, in: CGRect(origin: iconOrigin, size: CGSize(width: iconSize, height: iconSize)),
+                               color: color, context: context)
         }
         let textOrigin = CGPoint(x: frame.minX + 3 + iconSize + Self.iconGap,
                                  y: frame.minY + ((frame.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down))

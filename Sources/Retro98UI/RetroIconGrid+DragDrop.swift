@@ -43,12 +43,11 @@ extension RetroIconGrid: NSDraggingSource {
 
     private func beginDrag(with event: NSEvent) {
         guard let dataSource else { return }
+        let geometry = geometry
         let items = selection.sorted().compactMap { index -> NSDraggingItem? in
             guard let writer = dataSource.grid(self, pasteboardWriterAt: index) else { return nil }
-            let icon = dataSource.grid(self, iconAt: index)
-            let cell = IconGridLayout.frame(of: index, columns: columns)
-            let frame = CGRect(x: (cell.midX - CGFloat(icon.width) / 2).rounded(.down), y: cell.minY + Self.iconTop,
-                               width: CGFloat(icon.width), height: CGFloat(icon.height))
+            let icon = style == .largeIcons ? dataSource.grid(self, iconAt: index) : dataSource.grid(self, smallIconAt: index)
+            let frame = geometry.iconFrame(of: index)
             let item = NSDraggingItem(pasteboardWriter: writer)
             item.setDraggingFrame(frame, contents: NSImage(cgImage: icon.image(), size: frame.size))
             return item
@@ -70,7 +69,7 @@ extension RetroIconGrid: NSDraggingSource {
     }
 
     private func dropIndex(_ info: NSDraggingInfo) -> Int? {
-        IconGridLayout.index(at: convert(info.draggingLocation, from: nil), columns: columns, count: count)
+        geometry.index(at: convert(info.draggingLocation, from: nil))
     }
 
     private func updateDrop(_ info: NSDraggingInfo) -> NSDragOperation {
@@ -97,6 +96,11 @@ extension RetroIconGrid: NSDraggingSource {
         var origin = visible.origin
         if point.y < visible.minY + Self.autoscrollMargin { origin.y -= Self.autoscrollStep }
         if point.y > visible.maxY - Self.autoscrollMargin { origin.y += Self.autoscrollStep }
+        if style == .list {
+            if point.x < visible.minX + Self.autoscrollMargin { origin.x -= Self.autoscrollStep }
+            if point.x > visible.maxX - Self.autoscrollMargin { origin.x += Self.autoscrollStep }
+            origin.x = min(max(origin.x, 0), max(bounds.width - visible.width, 0))
+        }
         origin.y = min(max(origin.y, 0), max(bounds.height - visible.height, 0))
         if origin != visible.origin { clip.scroll(to: origin) }
     }

@@ -26,7 +26,7 @@ extension RetroIconGrid {
         editingIndex = index
         addSubview(field)
         placeEditor(at: index)
-        scrollToVisible(IconGridLayout.frame(of: index, columns: columns))
+        scrollToVisible(geometry.frame(of: index))
         window?.makeFirstResponder(field)
         (field.currentEditor() as? NSTextView)?.setSelectedRange(range)
         needsDisplay = true
@@ -58,13 +58,20 @@ extension RetroIconGrid {
         needsDisplay = true
     }
 
+    /// Over the label: centered under a large icon, or starting at the one-line label in the other modes.
     func placeEditor(at index: Int) {
         guard let field = editor else { return }
-        let cell = IconGridLayout.frame(of: index, columns: columns)
+        let geometry = geometry
+        let cell = geometry.frame(of: index)
         let textWidth = CGFloat(PixelText.width(of: field.stringValue, font: .regular)) + 8
         let width = min(max(Self.editorMinWidth, textWidth), Self.editorMaxWidth)
-        field.frame = CGRect(x: (cell.midX - width / 2).rounded(.down), y: cell.minY + Self.labelTop - 2,
-                             width: width, height: CGFloat(PixelText.lineHeight + 4))
+        let height = CGFloat(PixelText.lineHeight + 4)
+        if style == .largeIcons {
+            field.frame = CGRect(x: (cell.midX - width / 2).rounded(.down), y: cell.minY + Self.labelTop - 2, width: width, height: height)
+        } else {
+            field.frame = CGRect(x: geometry.labelX(of: index) - 2, y: cell.minY + ((cell.height - height) / 2).rounded(.down),
+                                 width: width, height: height)
+        }
     }
 
     // MARK: NSTextFieldDelegate
