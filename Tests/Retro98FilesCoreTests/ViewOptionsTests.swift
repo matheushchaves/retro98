@@ -130,3 +130,12 @@ private func entry(_ path: String, _ kind: FileKind, size: Int64? = nil) -> File
     #expect(Date().timeIntervalSince(start) < 1)
     #expect(sorted.count == 10_000)
 }
+
+@MainActor @Test func desktopShowsHiddenFilesWhenAsked() throws {
+    let tree = try TempTree(["Desktop/.oculto.txt", "Desktop/normal.txt", ".Trash"])
+    let environment = ExplorerEnvironment(home: tree.root, languages: pt, showHidden: false, volumes: { [] }, trash: tree.url(".Trash"))
+    let model = ExplorerModel(start: .desktop, environment: environment)
+    #expect(!model.entries.contains { $0.name == ".oculto.txt" })
+    model.setShowHidden(true)
+    #expect(model.entries.contains { $0.name == ".oculto.txt" })
+}

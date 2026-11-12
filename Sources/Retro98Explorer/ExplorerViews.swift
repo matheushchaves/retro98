@@ -44,6 +44,28 @@ final class GridPane: NSView {
         addSubview(header)
         addSubview(scroll)
         layoutPane()
+        // The header lays its columns on the grid's width and scrolls sideways with it.
+        scroll.contentView.postsBoundsChangedNotifications = true
+        scroll.documentView?.postsFrameChangedNotifications = true
+        let center = NotificationCenter.default
+        observers = [
+            center.addObserver(forName: NSView.boundsDidChangeNotification, object: scroll.contentView, queue: nil) { [weak self] _ in
+                MainActor.assumeIsolated { self?.followGrid() }
+            },
+            center.addObserver(forName: NSView.frameDidChangeNotification, object: scroll.documentView, queue: nil) { [weak self] _ in
+                MainActor.assumeIsolated { self?.followGrid() }
+            },
+        ]
+        followGrid()
+    }
+
+    private var observers: [NSObjectProtocol] = []
+
+    isolated deinit { observers.forEach(NotificationCenter.default.removeObserver) }
+
+    func followGrid() {
+        header.contentWidth = scroll.documentView?.frame.width
+        header.scrollOffset = scroll.contentView.bounds.minX
     }
 
     @available(*, unavailable)

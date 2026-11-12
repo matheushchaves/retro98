@@ -76,7 +76,12 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
         }
     }
     /// The Details columns: the name first, then the ones `detailsAt` fills.
-    public var columns: [GridColumn] = [] { didSet { needsDisplay = true } }
+    public var columns: [GridColumn] = [] {
+        didSet {
+            fitToClipView()
+            needsDisplay = true
+        }
+    }
     public internal(set) var editingIndex: Int?
     public internal(set) var dropTargetIndex: Int?
     public internal(set) var editor: NSTextField?
@@ -85,7 +90,42 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
 
     var count: Int { dataSource?.numberOfItems(in: self) ?? 0 }
     var geometry: IconGridGeometry {
-        IconGridGeometry(style: style, visibleSize: superview?.bounds.size ?? bounds.size, count: count)
+        IconGridGeometry(style: style, visibleSize: superview?.bounds.size ?? bounds.size, count: count,
+                         minimumWidth: style == .details ? GridColumn.minimumTotal(columns) : 0)
+    }
+
+    public func itemFrame(_ index: Int) -> CGRect { geometry.frame(of: index) }
+
+    public func scrollToItem(_ index: Int) {
+        guard index < count else { return }
+        scrollToVisible(geometry.frame(of: index))
+    }
+
+    /// The item under `point`: anywhere in a large icon's cell, but only on the icon or the name in the other
+    /// modes, so the rest of a row stays background (to deselect, draw a selection rectangle, or get the menu).
+    public func itemIndex(at point: CGPoint) -> Int? {
+        let geometry = geometry
+        guard let index = geometry.index(at: point) else { return nil }
+        guard style != .largeIcons else { return index }
+        return hitRect(of: index, geometry: geometry).contains(point) ? index : nil
+    }
+
+    /// Icon plus name (the one-line modes).
+    private func hitRect(of index: Int, geometry: IconGridGeometry) -> CGRect {
+        let label = lineLabel(index, geometry: geometry, widths: GridColumn.widths(columns, totalWidth: bounds.width))
+        let cell = geometry.frame(of: index)
+        return geometry.iconFrame(of: index).union(CGRect(x: label.rect.minX, y: cell.minY, width: label.rect.width, height: cell.height))
+    }
+
+    /// The fitted name and its highlight rectangle in small icons, list and details.
+    private func lineLabel(_ index: Int, geometry: IconGridGeometry, widths: [CGFloat]) -> (text: String, rect: CGRect) {
+        let cell = geometry.frame(of: index)
+        let nameWidth = style == .details ? (widths.first ?? cell.width) : cell.width
+        let name = RetroText.fit(dataSource?.grid(self, titleAt: index) ?? "", maxWidth: Int(max(nameWidth - 26, 0)))
+        let textY = cell.minY + ((cell.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down)
+        let rect = CGRect(x: geometry.labelX(of: index) - 2, y: textY, width: CGFloat(PixelText.width(of: name, font: .regular)) + 4,
+                          height: CGFloat(PixelText.lineHeight))
+        return (name, rect)
     }
 
     public func reloadData() {
@@ -117,8 +157,8 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     func items(touching rect: CGRect) -> IndexSet {
         let geometry = geometry
         return IndexSet(geometry.indices(in: rect).filter { index in
-            let cell = geometry.frame(of: index)
-            return (style == .largeIcons ? cell.insetBy(dx: 12, dy: 4) : cell).intersects(rect)
+            let area = style == .largeIcons ? geometry.frame(of: index).insetBy(dx: 12, dy: 4) : hitRect(of: index, geometry: geometry)
+            return area.intersects(rect)
         })
     }
 
@@ -178,19 +218,15 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     private func drawLineItem(_ index: Int, geometry: IconGridGeometry, widths: [CGFloat], selected: Bool, dimmed: Bool,
                               context: CGContext) {
         guard let dataSource else { return }
-        let cell = geometry.frame(of: index)
         drawIcon(dataSource.grid(self, smallIconAt: index), at: geometry.iconFrame(of: index).origin, selected: selected,
                  dimmed: dimmed, context: context)
-        let labelX = geometry.labelX(of: index)
-        let nameWidth = style == .details ? (widths.first ?? cell.width) : cell.width
-        let textY = cell.minY + ((cell.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down)
+        let label = lineLabel(index, geometry: geometry, widths: widths)
+        let textY = label.rect.minY
         if index != editingIndex {
-            let name = RetroText.fit(dataSource.grid(self, titleAt: index), maxWidth: Int(max(nameWidth - 26, 0)))
-            let labelRect = CGRect(x: labelX - 2, y: textY, width: CGFloat(PixelText.width(of: name, font: .regular)) + 4,
-                                   height: CGFloat(PixelText.lineHeight))
-            if selected { Bevel.fill(labelRect, color: Palette.selection, context: context) }
-            PixelText.draw(name, font: .regular, color: selected ? .white : .black, at: CGPoint(x: labelX, y: textY), context: context)
-            if hasFocusRing, index == focus { drawDottedRect(labelRect, context: context) }
+            if selected { Bevel.fill(label.rect, color: Palette.selection, context: context) }
+            PixelText.draw(label.text, font: .regular, color: selected ? .white : .black, at: CGPoint(x: label.rect.minX + 2, y: textY),
+                           context: context)
+            if hasFocusRing, index == focus { drawDottedRect(label.rect, context: context) }
         }
         guard style == .details else { return }
         var x = widths.first ?? 0
@@ -223,7 +259,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
     override public var acceptsFirstResponder: Bool { true }
 
     func index(at event: NSEvent) -> Int? {
-        geometry.index(at: convert(event.locationInWindow, from: nil))
+        itemIndex(at: convert(event.locationInWindow, from: nil))
     }
 
     override public func mouseDown(with event: NSEvent) {
@@ -234,7 +270,7 @@ public final class RetroIconGrid: PixelView, NSTextFieldDelegate {
         window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
         let extend = event.modifierFlags.contains(.command)
-        if let index = geometry.index(at: point) {
+        if let index = itemIndex(at: point) {
             if event.clickCount == 2 { onOpen?(index); return }
             let click = IconGridClick.mouseDown(on: index, selection: selection, extend: extend)
             setSelection(click.selection)

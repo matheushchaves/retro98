@@ -156,3 +156,55 @@ private let detailColumns = [GridColumn(title: "Nome", width: 0), GridColumn(tit
     #expect(blackPixels(.bullet) > 0)
     #expect(blackPixels(.none) == 0)
 }
+
+// MARK: Final review fixes
+
+/// Details is as wide as its columns, so narrow windows scroll sideways instead of cutting columns off.
+@Test func detailsContentFitsTheColumns() {
+    let geometry = IconGridGeometry(style: .details, visibleSize: CGSize(width: 400, height: 300), count: 5, minimumWidth: 520)
+    #expect(geometry.contentSize.width == 520)
+    #expect(geometry.frame(of: 0).width == 520)
+    let wide = IconGridGeometry(style: .details, visibleSize: CGSize(width: 700, height: 300), count: 5, minimumWidth: 520)
+    #expect(wide.contentSize.width == 700)
+}
+
+@MainActor @Test func headerFollowsTheGridWidthAndScroll() {
+    let header = RetroColumnHeader(frame: CGRect(x: 0, y: 0, width: 400, height: 20))
+    header.columns = detailColumns
+    header.contentWidth = 520
+    #expect(header.column(at: 165) == 1)
+    header.scrollOffset = 100
+    #expect(header.column(at: 10) == 0)
+    #expect(header.column(at: 70) == 1)
+}
+
+/// Only the icon and the name are an item in small icons, list and details; the rest is background.
+@MainActor @Test func backgroundOfARowIsEmptySpace() throws {
+    let (grid, source, window) = makeGrid()
+    defer { withExtendedLifetime((source, window)) {} }
+    grid.style = .details
+    let row = IconGridGeometry(style: .details, visibleSize: try #require(grid.superview).bounds.size, count: 12).frame(of: 1)
+    #expect(grid.itemIndex(at: CGPoint(x: 26, y: row.midY)) == 1)
+    #expect(grid.itemIndex(at: CGPoint(x: 400, y: row.midY)) == nil)
+    grid.style = .smallIcons
+    let cell = IconGridGeometry(style: .smallIcons, visibleSize: try #require(grid.superview).bounds.size, count: 12).frame(of: 1)
+    #expect(grid.itemIndex(at: CGPoint(x: cell.maxX - 3, y: cell.midY)) == nil)
+    #expect(grid.itemIndex(at: CGPoint(x: cell.minX + 8, y: cell.midY)) == 1)
+}
+
+@MainActor @Test func scrollToItemShowsIt() {
+    let source = ManySource(), grid = RetroIconGrid()
+    grid.dataSource = source
+    let scroll = RetroScroller.makeScrollView(document: grid)
+    scroll.frame = CGRect(x: 0, y: 0, width: 300, height: 200)
+    grid.reloadData()
+    grid.scrollToItem(250)
+    #expect(grid.visibleRect.intersects(grid.itemFrame(250)))
+    withExtendedLifetime(source) {}
+}
+
+@MainActor private final class ManySource: RetroIconGridDataSource {
+    func numberOfItems(in grid: RetroIconGrid) -> Int { 300 }
+    func grid(_ grid: RetroIconGrid, titleAt index: Int) -> String { "f\(index)" }
+    func grid(_ grid: RetroIconGrid, iconAt index: Int) -> PixelIcon { FileIcons.icon(.document, size: 32) }
+}

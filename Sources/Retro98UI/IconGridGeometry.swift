@@ -22,6 +22,11 @@ public struct GridColumn: Equatable, Sendable {
         self.alignsRight = alignsRight
     }
 
+    /// The narrowest Details can get before it scrolls sideways.
+    public static func minimumTotal(_ columns: [GridColumn]) -> CGFloat {
+        columns.isEmpty ? 0 : nameMinimum + columns.dropFirst().map(\.width).reduce(0, +)
+    }
+
     public static func widths(_ columns: [GridColumn], totalWidth: CGFloat) -> [CGFloat] {
         guard !columns.isEmpty else { return [] }
         let others = columns.dropFirst().map(\.width)
@@ -40,12 +45,17 @@ public struct IconGridGeometry: Equatable, Sendable {
     public let style: IconGridStyle
     public let visibleSize: CGSize
     public let count: Int
+    /// Details: the columns' total, so a narrow window scrolls sideways instead of cutting them off.
+    public let minimumWidth: CGFloat
 
-    public init(style: IconGridStyle, visibleSize: CGSize, count: Int) {
+    public init(style: IconGridStyle, visibleSize: CGSize, count: Int, minimumWidth: CGFloat = 0) {
         self.style = style
         self.visibleSize = visibleSize
         self.count = count
+        self.minimumWidth = minimumWidth
     }
+
+    private var detailsWidth: CGFloat { max(visibleSize.width, minimumWidth) }
 
     /// Items per row (large and small icons).
     var columns: Int {
@@ -71,7 +81,7 @@ public struct IconGridGeometry: Equatable, Sendable {
             let columnCount = (count + rows - 1) / rows
             return CGSize(width: max(Self.inset * 2 + CGFloat(columnCount) * Self.listCell.width, visibleSize.width), height: visibleSize.height)
         case .details:
-            return CGSize(width: visibleSize.width, height: max(CGFloat(count) * Self.rowHeight, visibleSize.height))
+            return CGSize(width: detailsWidth, height: max(CGFloat(count) * Self.rowHeight, visibleSize.height))
         }
     }
 
@@ -88,7 +98,7 @@ public struct IconGridGeometry: Equatable, Sendable {
                           y: Self.inset + CGFloat(index % rows) * Self.listCell.height,
                           width: Self.listCell.width, height: Self.listCell.height)
         case .details:
-            return CGRect(x: 0, y: CGFloat(index) * Self.rowHeight, width: visibleSize.width, height: Self.rowHeight)
+            return CGRect(x: 0, y: CGFloat(index) * Self.rowHeight, width: detailsWidth, height: Self.rowHeight)
         }
     }
 

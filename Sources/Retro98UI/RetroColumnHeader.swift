@@ -10,10 +10,15 @@ public final class RetroColumnHeader: PixelView {
     public var sortedColumn: Int? { didSet { needsDisplay = true } }
     public var ascending = true { didSet { needsDisplay = true } }
     public var onClick: ((Int) -> Void)?
+    /// The grid's width (columns are laid out on it, not on the header's own width, which includes the scroller).
+    public var contentWidth: CGFloat? { didSet { needsDisplay = true } }
+    /// How far the grid has scrolled sideways.
+    public var scrollOffset: CGFloat = 0 { didSet { needsDisplay = true } }
 
-    private var widths: [CGFloat] { GridColumn.widths(columns, totalWidth: bounds.width) }
+    private var widths: [CGFloat] { GridColumn.widths(columns, totalWidth: contentWidth ?? bounds.width) }
 
     func column(at x: CGFloat) -> Int? {
+        let x = x + scrollOffset
         var start: CGFloat = 0
         for (index, width) in widths.enumerated() {
             if x >= start && x < start + width { return index }
@@ -29,7 +34,7 @@ public final class RetroColumnHeader: PixelView {
 
     override public func drawPixels(in context: CGContext, size: CGSize) {
         Bevel.fillFace(CGRect(origin: .zero, size: size), context: context)
-        var x: CGFloat = 0
+        var x: CGFloat = -scrollOffset
         for (index, width) in widths.enumerated() {
             let rect = CGRect(x: x, y: 0, width: width, height: size.height)
             Bevel.draw(.raised, in: rect, context: context)

@@ -89,9 +89,12 @@ extension ExplorerWindowController {
         case .details: .details
         }
         gridPane.showsHeader = mode == .details
-        gridPane.scroll.hasHorizontalScroller = mode == .list
-        if mode != .list { gridPane.scroll.contentView.scroll(to: CGPoint(x: 0, y: gridPane.scroll.contentView.bounds.minY)) }
+        gridPane.scroll.hasHorizontalScroller = mode == .list || mode == .details
+        if mode == .largeIcons || mode == .smallIcons {
+            gridPane.scroll.contentView.scroll(to: CGPoint(x: 0, y: gridPane.scroll.contentView.bounds.minY))
+        }
         updateColumns()
+        gridPane.followGrid()
     }
 
     /// Name, (In Folder while searching subfolders), Size, Type, Modified — with the key each one sorts by.

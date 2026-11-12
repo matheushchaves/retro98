@@ -32,6 +32,8 @@ final class PropertiesWindow {
     private let view: PropertiesView
     private let languages: [String]
     private let locale: Locale
+    /// Open windows keep themselves alive until closed: the Explorer window that opened one may close first.
+    private var keepAlive: PropertiesWindow?
 
     init(entries: [FileEntry], icon: PixelIcon, volume: VolumeInfo?, languages: [String], locale: Locale) {
         self.languages = languages
@@ -47,7 +49,8 @@ final class PropertiesWindow {
                     .row(label: ExplorerText.labelFreeSpace(languages), value: space.free),
                     .row(label: ExplorerText.labelCapacity(languages), value: space.capacity)]
         } else {
-            rows = Self.itemRows(properties, measured: properties.needsMeasuring.isEmpty, languages: languages, locale: locale)
+            rows = Self.itemRows(properties, measured: properties.needsMeasuring.isEmpty && properties.packages.isEmpty, languages: languages,
+                                 locale: locale)
         }
         self.usage = usage
         view = PropertiesView(icon: icon, name: properties.name)
@@ -55,8 +58,11 @@ final class PropertiesWindow {
         window.level = .normal
         layout()
         window.onCancel = { [weak self] in self?.close() }
+        keepAlive = self
         measureFolders()
     }
+
+    isolated deinit { control.cancel() }
 
     /// The value next to `label` ("Tamanho:"), or nil when there is no such row.
     func text(of label: String) -> String? {
@@ -81,6 +87,7 @@ final class PropertiesWindow {
         window.orderOut(nil)
         onClose?()
         onClose = nil
+        keepAlive = nil
     }
 
     // MARK: Rows
@@ -91,7 +98,8 @@ final class PropertiesWindow {
         if let location = properties.location { rows.append(.row(label: ExplorerText.labelLocation(l), value: location)) }
         rows.append(.row(label: ExplorerText.labelSize(l),
                          value: measured ? PropertiesText.size(properties.tally.bytes, locale: locale, languages: l) : calculating))
-        if !properties.needsMeasuring.isEmpty || properties.title != ExplorerText.propertiesTitle(properties.name, l) {
+        let isPackageAlone = properties.needsMeasuring.isEmpty && properties.packages.count == 1 && properties.tally.files == 1
+        if !isPackageAlone, !properties.needsMeasuring.isEmpty || properties.title != ExplorerText.propertiesTitle(properties.name, l) {
             rows.append(.row(label: ExplorerText.labelContains(l),
                              value: measured ? PropertiesText.contains(files: properties.tally.files, folders: properties.tally.folders,
                                                                       languages: l) : calculating))
@@ -105,9 +113,10 @@ final class PropertiesWindow {
         return rows
     }
 
+    /// Folders add their contents; apps and other packages add only their size (they stay one item).
     private func measureFolders() {
-        guard usage == nil, !properties.needsMeasuring.isEmpty else { return }
-        let folders = properties.needsMeasuring, control = control, base = properties.tally
+        guard usage == nil, !properties.needsMeasuring.isEmpty || !properties.packages.isEmpty else { return }
+        let folders = properties.needsMeasuring, packages = properties.packages, control = control, base = properties.tally
         measuring = Task { [weak self] in
             await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
                 DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -119,6 +128,11 @@ final class PropertiesWindow {
                             shown.add(partial)
                             DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.update(shown, finished: false) } }
                         })
+                    }
+                    for package in packages where !control.isCancelled {
+                        let inside = PropertiesReader.measure(package, control: control, onProgress: { _ in })
+                        total.bytes += inside.bytes
+                        total.skippedUnreadable = total.skippedUnreadable || inside.skippedUnreadable
                     }
                     let final = total
                     DispatchQueue.main.async { [weak self] in
@@ -250,6 +264,12 @@ extension ExplorerWindowController {
         properties.onClose = { [weak self, weak properties] in self?.propertiesWindows.removeAll { $0 === properties } }
         propertiesWindows.append(properties)
         properties.show()
+    }
+
+    /// Removable disks, and network shares (which macOS doesn't flag as ejectable but unmounts all the same).
+    func canEject(_ entry: FileEntry) -> Bool {
+        guard let volume = volumeInfo(for: entry) else { return false }
+        return volume.isEjectable || volume.kind == .network
     }
 
     func volumeInfo(for entry: FileEntry) -> VolumeInfo? {

@@ -113,9 +113,18 @@ public final class ExplorerModel {
 
     public func addResults(_ batch: [FileEntry]) {
         guard search?.includeSubfolders == true else { return }
-        results += batch
+        let known = Set(results.map(\.url.standardizedFileURL.path))
+        results += batch.filter { !known.contains($0.url.standardizedFileURL.path) }
         entries = FileSorting.sorted(results, by: sort, languages: environment.languages)
         onChange?()
+    }
+
+    /// Items that appeared or got a new name (after an operation): those that match a running subfolder
+    /// search, below its folder, join the results.
+    public func addMatching(_ urls: [URL]) {
+        guard let search, search.includeSubfolders else { return }
+        let matches = urls.filter { FileSearch.matches($0.lastPathComponent, search.text) && FileOperations.contains(search.root, $0) }
+        addResults(matches.map { FolderListing.entry(for: $0, in: $0.deletingLastPathComponent()) })
     }
 
     public func finishSearch(_ end: SearchEnd) {
@@ -190,8 +199,10 @@ public final class ExplorerModel {
         load(readingVolumes: false)
     }
 
+    /// The place left with whatever was being searched in it.
     private func recoverIfVanished() {
         guard case .folder(let url) = history.current, !FileManager.default.fileExists(atPath: url.path) else { return }
+        clearSearch()
         history.replaceCurrent(with: NavigationHistory.recover(history.current, exists: { FileManager.default.fileExists(atPath: $0.path) },
                                                                volumes: volumes.map(\.url)))
     }
@@ -210,7 +221,7 @@ public final class ExplorerModel {
         case .desktop:
             entries = DesktopLocation.entries(desktop: environment.home.appending(path: "Desktop"),
                                               documents: environment.home.appending(path: "Documents"),
-                                              trash: environment.trash, languages: languages)
+                                              trash: environment.trash, languages: languages, showHidden: showHidden)
         case .myComputer:
             entries = volumes.map { volume in
                 FileEntry(url: volume.url, name: volume.name, kind: .volume(volume.kind), size: volume.totalBytes,
@@ -228,6 +239,8 @@ public final class ExplorerModel {
         listed = FileSorting.sorted(entries, by: sort, languages: languages)
         // A reload during a search refreshes the filter; matches from subfolders stay as they are.
         if let search {
+            // Matches that were moved, renamed or deleted since (by this app or another) drop out.
+            if search.includeSubfolders { results = results.filter { FileOperations.exists($0.url) } }
             entries = search.includeSubfolders
                 ? FileSorting.sorted(results, by: sort, languages: languages)
                 : FileSearch.filter(listed, text: search.text)

@@ -31,6 +31,8 @@ public struct ItemProperties: Equatable, Sendable {
     public let location: String?
     public var tally: FolderTally
     public let needsMeasuring: [URL]
+    /// Apps and other packages: measured for their size only (each counts as one item).
+    public let packages: [URL]
     public let created: Date?
     public let modified: Date?
     public let accessed: Date?
@@ -44,6 +46,7 @@ public enum PropertiesReader {
     public static func summary(of entries: [FileEntry], languages l: [String]) -> ItemProperties {
         let folders = entries.filter { $0.kind == .folder }.map(\.url)
         let files = entries.filter { $0.kind != .folder }
+        let packages = files.filter { (try? $0.url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true }.map(\.url)
         var tally = FolderTally(bytes: files.reduce(0) { $0 + size(of: $1) })
         let parents = Set(entries.map { $0.url.deletingLastPathComponent().standardizedFileURL.path })
         let location = parents.count == 1 ? parents.first.map { ($0 as NSString).abbreviatingWithTildeInPath } : nil
@@ -53,12 +56,13 @@ public enum PropertiesReader {
             tally.folders = folders.count
             let count = ExplorerText.itemCount(entries.count, l)
             return ItemProperties(title: count, name: count, typeName: types.count == 1 ? types.first ?? "" : ExplorerText.multipleTypes(l),
-                                  location: location, tally: tally, needsMeasuring: folders, created: nil, modified: nil, accessed: nil)
+                                  location: location, tally: tally, needsMeasuring: folders, packages: packages, created: nil, modified: nil,
+                                  accessed: nil)
         }
         if entry.kind != .folder { tally.files = 1 }
         let dates = try? entry.url.resourceValues(forKeys: [.creationDateKey, .contentModificationDateKey, .contentAccessDateKey])
         return ItemProperties(title: ExplorerText.propertiesTitle(entry.name, l), name: entry.name, typeName: types.first ?? "",
-                              location: location, tally: tally, needsMeasuring: folders, created: dates?.creationDate,
+                              location: location, tally: tally, needsMeasuring: folders, packages: packages, created: dates?.creationDate,
                               modified: dates?.contentModificationDate, accessed: dates?.contentAccessDate)
     }
 

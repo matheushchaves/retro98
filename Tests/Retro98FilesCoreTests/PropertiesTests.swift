@@ -110,3 +110,15 @@ private func write(_ url: URL, bytes: Int) throws {
     #expect(prompt.message == "Não foi possível ejetar 'PEN': Em uso.")
     #expect(prompt.buttons == ["OK"])
 }
+
+/// Apps and other packages are folders on disk: their size is measured, but they count as one item.
+@Test func summaryMeasuresPackagesForSize() throws {
+    let tree = try TempTree(["A/Calc.app/Contents"])
+    try write(tree.url("A/Calc.app/Contents/binario"), bytes: 5000)
+    let app = try #require(try FolderListing.entries(of: tree.url("A"), showHidden: false).first)
+    #expect(app.kind == .application)
+    let summary = PropertiesReader.summary(of: [app], languages: pt)
+    #expect(summary.packages.map(\.path) == [tree.url("A/Calc.app").path])
+    #expect(summary.needsMeasuring.isEmpty)
+    #expect(summary.tally.files == 1)
+}

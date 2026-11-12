@@ -39,7 +39,7 @@ extension ExplorerWindowController: NSMenuItemValidation {
         case #selector(showProperties(_:)):
             let hasDisk = selected.contains { if case .volume = $0.kind { true } else { false } }
             return !selected.isEmpty && !selected.contains { $0.kind == .myComputer } && (!hasDisk || selected.count == 1)
-        case #selector(ejectSelection(_:)): return !selected.isEmpty && selected.allSatisfy { volumeInfo(for: $0)?.isEjectable == true }
+        case #selector(ejectSelection(_:)): return !selected.isEmpty && selected.allSatisfy(canEject)
         case #selector(openWith(_:)): return files && selected.allSatisfy { $0.kind != .folder }
         default: return true
         }
@@ -58,11 +58,14 @@ extension ExplorerWindowController: NSMenuItemValidation {
     func select(_ urls: [URL]) {
         let paths = Set(urls.map(\.standardizedFileURL.path))
         grid.setSelection(IndexSet(model.entries.indices.filter { paths.contains(model.entries[$0].url.standardizedFileURL.path) }))
+        if let first = grid.selection.first { grid.scrollToItem(first) }
     }
 
     /// After an operation: list the folder again and select what landed in it.
     func showResults(_ urls: [URL]) {
         model.reload()
+        // While searching subfolders, a renamed, pasted or new item that matches joins the results.
+        model.addMatching(urls)
         let paths = Set(urls.map(\.standardizedFileURL.path))
         grid.setSelection(IndexSet(model.entries.indices.filter { paths.contains(model.entries[$0].url.standardizedFileURL.path) }))
     }
@@ -214,7 +217,7 @@ extension ExplorerWindowController: NSMenuItemValidation {
         guard entry.isFileItem else {
             var items = [open]
             if case .recycleBin = entry.kind { items += [.separator, command(ExplorerText.emptyTrash(l), #selector(emptyTrash(_:)))] }
-            if volumeInfo(for: entry)?.isEjectable == true { items += [.separator, command(ExplorerText.eject(l), #selector(ejectSelection(_:)))] }
+            if canEject(entry) { items += [.separator, command(ExplorerText.eject(l), #selector(ejectSelection(_:)))] }
             if entry.kind != .myComputer { items += [.separator, properties] }
             return items
         }

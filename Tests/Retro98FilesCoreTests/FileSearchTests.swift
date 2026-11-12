@@ -116,3 +116,40 @@ private func search(_ root: URL, _ text: String, hidden: Bool = false, limit: In
     #expect(model.search == nil)
     #expect(model.entries.map(\.name) == ["rel2.txt"])
 }
+
+@MainActor private func searchModel(_ tree: TempTree, at path: String) -> ExplorerModel {
+    ExplorerModel(start: .folder(tree.url(path)), environment: ExplorerEnvironment(
+        home: tree.root, languages: ["pt-BR"], showHidden: false, volumes: { [] }, trash: tree.url(".Trash")))
+}
+
+@MainActor @Test func reloadDuringASearchDropsVanishedResults() throws {
+    let tree = try TempTree(["A/rel.txt", "A/Sub/rel2.txt", ".Trash"])
+    let model = searchModel(tree, at: "A")
+    model.beginSearch(SearchQuery(text: "rel", root: tree.url("A"), includeSubfolders: true, showHidden: false))
+    model.addResults([FolderListing.entry(for: tree.url("A/rel.txt"), in: tree.url("A")),
+                      FolderListing.entry(for: tree.url("A/Sub/rel2.txt"), in: tree.url("A/Sub"))])
+    try FileManager.default.removeItem(at: tree.url("A/Sub/rel2.txt"))
+    model.reload()
+    #expect(model.entries.map(\.name) == ["rel.txt"])
+}
+
+@MainActor @Test func addResultsSkipsDuplicates() throws {
+    let tree = try TempTree(["A/rel.txt", ".Trash"])
+    let model = searchModel(tree, at: "A")
+    model.beginSearch(SearchQuery(text: "rel", root: tree.url("A"), includeSubfolders: true, showHidden: false))
+    let entry = FolderListing.entry(for: tree.url("A/rel.txt"), in: tree.url("A"))
+    model.addResults([entry])
+    model.addResults([entry])
+    #expect(model.entries.count == 1)
+}
+
+@MainActor @Test func recoveringFromAVanishedFolderEndsTheSearch() throws {
+    let tree = try TempTree(["A/B/rel.txt", "A/outro.txt", ".Trash"])
+    let model = searchModel(tree, at: "A/B")
+    model.beginSearch(SearchQuery(text: "rel", root: tree.url("A/B"), includeSubfolders: false, showHidden: false))
+    try FileManager.default.removeItem(at: tree.url("A/B"))
+    model.reload()
+    #expect(model.history.current == .folder(tree.url("A")))
+    #expect(model.search == nil)
+    #expect(model.entries.map(\.name) == ["outro.txt"])
+}

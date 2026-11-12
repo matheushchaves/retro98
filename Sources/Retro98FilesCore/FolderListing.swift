@@ -111,7 +111,7 @@ public enum Volumes {
 public enum DesktopLocation {
     /// My Computer, My Documents and the Recycle Bin, then the files of the Desktop folder
     /// (only the fixed items when the Desktop can't be read).
-    public static func entries(desktop: URL, documents: URL, trash: URL, languages: [String],
+    public static func entries(desktop: URL, documents: URL, trash: URL, languages: [String], showHidden: Bool = false,
                                fileManager: FileManager = .default) -> [FileEntry] {
         let fixed = [
             FileEntry(url: URL(filePath: "/"), name: ExplorerText.myComputer(languages), kind: .myComputer,
@@ -121,7 +121,7 @@ public enum DesktopLocation {
             FileEntry(url: trash, name: ExplorerText.recycleBin(languages), kind: .recycleBin(isFull: TrashState.isFull(trash: trash)),
                       size: nil, modified: nil, location: .trash),
         ]
-        let files = (try? FolderListing.entries(of: desktop, showHidden: false, fileManager: fileManager)) ?? []
+        let files = (try? FolderListing.entries(of: desktop, showHidden: showHidden, fileManager: fileManager)) ?? []
         return fixed + files
     }
 }

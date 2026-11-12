@@ -69,7 +69,7 @@ extension RetroIconGrid: NSDraggingSource {
     }
 
     private func dropIndex(_ info: NSDraggingInfo) -> Int? {
-        geometry.index(at: convert(info.draggingLocation, from: nil))
+        itemIndex(at: convert(info.draggingLocation, from: nil))
     }
 
     private func updateDrop(_ info: NSDraggingInfo) -> NSDragOperation {

@@ -88,7 +88,12 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     func show() {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
-        window.makeFirstResponder(grid)
+        focusInitialResponder()
+    }
+
+    /// The search field when the window opened to search (Start › Find…), the icons otherwise.
+    func focusInitialResponder() {
+        window.makeFirstResponder(isSearchBarVisible ? searchBar.field : grid)
     }
 
     func go(toHomeFolder name: String) {
