@@ -41,8 +41,14 @@ public final class RetroProgressDialog {
         remainingLine.text = remaining
     }
 
+    /// Centered in front, without taking the keyboard from the window the person is working in.
     public func show() {
-        window.showCentered()
+        if let screen = NSScreen.main {
+            let visible = screen.visibleFrame
+            window.setFrameOrigin(CGPoint(x: (visible.midX - window.frame.width / 2).rounded(),
+                                          y: (visible.midY - window.frame.height / 2).rounded()))
+        }
+        window.orderFront(nil)
         animation.start()
     }
 

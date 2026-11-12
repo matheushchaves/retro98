@@ -75,6 +75,19 @@ public enum ExplorerText {
         name.map { redo(l) + " " + actionName($0, l) } ?? redo(l)
     }
 
+    public static func copying(_ l: [String]) -> String { text("Copying...", "Copiando...", l) }
+    public static func moving(_ l: [String]) -> String { text("Moving...", "Movendo...", l) }
+    public static func deleting(_ l: [String]) -> String { text("Deleting...", "Excluindo...", l) }
+    public static func cancel(_ l: [String]) -> String { text("Cancel", "Cancelar", l) }
+    public static func fromTo(_ source: String, _ destination: String, _ l: [String]) -> String {
+        text("From '\(source)' to '\(destination)'", "De '\(source)' para '\(destination)'", l)
+    }
+    public static func from(_ source: String, _ l: [String]) -> String { text("From '\(source)'", "De '\(source)'", l) }
+    public static func trashAccessHint(_ l: [String]) -> String {
+        text("To take items out of the Recycle Bin, give Retro98 Explorer Full Disk Access, or use \"Put Back\" in the Finder's Trash.",
+             "Para tirar itens da Lixeira, dê Acesso Total ao Disco ao Retro98 Explorer, ou use \"Devolver\" na Lixeira do Finder.", l)
+    }
+
     public static func nameCantContainSeparators(_ l: [String]) -> String {
         text("A name can't contain '/' or ':'.", "O nome não pode conter '/' nem ':'.", l)
     }
