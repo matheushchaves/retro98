@@ -58,6 +58,8 @@ public struct MacSystemRefresher: SystemRefresher {
                 post("AppleAquaColorVariantChanged")
             case .notifyScrollBarChange:
                 post("AppleShowScrollBarsSettingChanged")
+            case .notifyMenuBarChange:
+                post("AppleInterfaceMenuBarHidingChangedNotification")
             case .syncAppearance:
                 break // handled before writes by switchAppearance(toDark:)
             }

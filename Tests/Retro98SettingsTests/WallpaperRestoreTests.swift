@@ -4,7 +4,7 @@ import Testing
 @testable import Retro98Settings
 
 private let support = URL(filePath: "/Users/test/Library/Application Support/Retro98")
-private let paths = Retro98Paths(supportDirectory: support, wallpaperIndex: indexURL)
+private let paths = Retro98Paths(supportDirectory: support, wallpaperIndex: indexURL, soundsDirectory: URL(filePath: "/home/Library/Sounds"))
 
 /// Commands, file writes and pictures shown, in the order they happened.
 private final class Steps: CommandRunner, FileStore {

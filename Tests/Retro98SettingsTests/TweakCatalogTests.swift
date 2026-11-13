@@ -11,7 +11,8 @@ private func target(_ id: TweakID, _ domain: PreferenceDomain, _ name: String) -
 }
 
 @Test func listsEveryTweakOnceInOrder() {
-    #expect(catalog.map(\.id) == TweakID.allCases.filter { $0 != .dockUnderTaskbar && $0 != .explorerFileViewer })
+    let notPhase1: Set<TweakID> = [.dockUnderTaskbar, .explorerFileViewer, .hiddenMenuBar, .alertSound]
+    #expect(catalog.map(\.id) == TweakID.allCases.filter { !notPhase1.contains($0) })
     #expect(catalog.allSatisfy { $0.group == .base })
 }
 

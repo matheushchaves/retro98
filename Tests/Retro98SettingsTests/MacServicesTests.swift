@@ -97,3 +97,10 @@ private final class RecordingRunner: CommandRunner {
     #expect(throws: (any Error).self) { try setter.setPicture(folder.appending(path: "sumiu.png")) }
     #expect(shown.count == 1)
 }
+
+@Test func menuBarChangeIsBroadcast() {
+    var posted: [String] = []
+    let refresher = MacSystemRefresher(runner: RecordingRunner(), post: { posted.append($0) })
+    refresher.perform([.notifyMenuBarChange])
+    #expect(posted == ["AppleInterfaceMenuBarHidingChangedNotification"])
+}

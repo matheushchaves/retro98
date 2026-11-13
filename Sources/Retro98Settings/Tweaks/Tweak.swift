@@ -2,17 +2,18 @@ public enum TweakID: String, Codable, CaseIterable, Sendable {
     case wallpaper, lightAppearance, colors, contrast, pointer, scrollBars, windowAnimations, titleBarDoubleClick, finderExplorer
     case dockUnderTaskbar
     case explorerFileViewer
+    case hiddenMenuBar, alertSound
 }
 
-/// Which installable piece a tweak belongs to: the base tweaks, the Shell (taskbar), or the optional
-/// Explorer-as-file-viewer.
+/// Which installable piece a tweak belongs to: the base tweaks, the Shell (taskbar), the optional
+/// Explorer-as-file-viewer, or extras that only the Control Panel turns on.
 public enum TweakGroup: String, Codable, Sendable {
-    case base, shell, fileViewer
+    case base, shell, fileViewer, extra
 }
 
 /// Side effects needed after preferences change so running apps pick them up.
 public enum RefreshEffect: Hashable, Sendable {
-    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartDock
+    case restartFinder, notifyColorChange, notifyScrollBarChange, syncAppearance, restartDock, notifyMenuBarChange
 }
 
 /// Work that is not a plain preference write.

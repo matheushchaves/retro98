@@ -139,8 +139,37 @@ public enum TweakCatalog {
 
     static let explorerBundleID = "io.github.matheushchaves.retro98.explorer"
 
-    public static func all(osMajorVersion: Int, homeDirectory: URL, wallpaper: WallpaperChoice = .standard) -> [Tweak] {
-        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory, wallpaper: wallpaper) + shell() + fileViewer()
+    /// Opt-in tweaks the Control Panel turns on; a plain apply never touches them. Neither key is documented
+    /// by Apple: System Settings writes them for "Automatically hide and show the menu bar: Always" and for
+    /// the alert sound (a file in ~/Library/Sounds).
+    public static func extra(alertSoundPath: String) -> [Tweak] {
+        [
+            Tweak(
+                id: .hiddenMenuBar,
+                title: LocalizedText(en: "macOS menu bar hidden", ptBR: "Barra de menus do macOS escondida"),
+                changes: [
+                    change(.global, "_HIHideMenuBar", .bool(true)),
+                    change(.global, "AppleMenuBarVisibleInFullscreen", .bool(false)),
+                ],
+                effects: [.notifyMenuBarChange],
+                group: .extra
+            ),
+            Tweak(
+                id: .alertSound,
+                title: LocalizedText(en: "Retro98 alert sound for macOS", ptBR: "Som de alerta do Retro98 no macOS"),
+                changes: [change(.global, "com.apple.sound.beep.sound", .string(alertSoundPath))],
+                group: .extra
+            ),
+        ]
+    }
+
+    /// `alertSoundPath` nil means `~/Library/Sounds/Retro98.aiff` under `homeDirectory`.
+    public static func all(
+        osMajorVersion: Int, homeDirectory: URL, wallpaper: WallpaperChoice = .standard, alertSoundPath: String? = nil
+    ) -> [Tweak] {
+        let soundPath = alertSoundPath ?? homeDirectory.appending(path: Retro98Paths.soundsSubpath).appending(path: Retro98Paths.alertSoundName).path
+        return phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory, wallpaper: wallpaper) + shell() + fileViewer()
+            + extra(alertSoundPath: soundPath)
     }
 
     private static func special(for wallpaper: WallpaperChoice) -> SpecialAction {
