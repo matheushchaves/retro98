@@ -157,7 +157,7 @@ Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) turns
 - **Sounds:** Retro98's own sounds (taskbar startup, errors, warnings, emptying the Recycle Bin), made by the project, each with a Play button. You can turn them off, and you can make Retro98's alert the macOS alert sound: it goes to `~/Library/Sounds/Retro98.aiff` and shows as "Retro98" in System Settings › Sound.
 - **Components:** the taskbar and Start menu, Explorer instead of Finder for "Show in Finder", and a hidden macOS menu bar (it shows when you move the pointer to the top). A piece that isn't installed is grayed out, with how to install it.
 - **Shortcuts to macOS:** Network, Printers, Keyboard, Date/Time, Users and System Settings open the matching panel.
-- **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. To remove them too, run `./uninstall.sh`.
+- **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. `./install.sh --yes` then keeps macOS normal; run `./install.sh` and answer Yes to bring the retro look back, or run `./uninstall.sh` to remove the apps too.
 
 What you change here sticks: `./install.sh --yes` keeps the tweaks you turned off off, brings back the color or picture you chose, and keeps a taskbar you turned off off (the pieces file says `shelloff`) while still updating the apps. Turn things back on in the Control Panel itself.
 

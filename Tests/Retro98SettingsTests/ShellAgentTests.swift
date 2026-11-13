@@ -11,11 +11,17 @@ private final class Recorder: CommandRunner {
     var events: [String] = []
     var commands: [[String]] = []
     var bootstrapStatus: Int32 = 0
+    /// `launchctl print` succeeds only for a loaded service.
+    var loaded = true
 
     func run(_ executable: String, _ arguments: [String]) -> Int32 {
+        guard arguments.first != "print" else { return loaded ? 0 : 113 }
         commands.append([executable] + arguments)
         events.append(arguments.first ?? executable)
-        return arguments.first == "bootstrap" ? bootstrapStatus : 0
+        switch arguments.first {
+        case "bootstrap": return bootstrapStatus
+        default: return 0
+        }
     }
 }
 
@@ -45,9 +51,24 @@ private func agent(_ recorder: Recorder, files: InMemoryFileStore = InMemoryFile
     #expect(try files.read(paths.launchAgentPlist) != nil)
     #expect(shell.isOn)
     #expect(recorder.commands == [
+        ["/bin/launchctl", "bootout", "gui/501/\(label)"],
         ["/bin/launchctl", "enable", "gui/501/\(label)"],
         ["/bin/launchctl", "bootstrap", "gui/501", paths.launchAgentPlist.path],
     ])
+    // A copy opened outside launchd would make a second taskbar: it stops before the agent starts.
+    #expect(recorder.events == ["bootout", "stopCopies", "enable", "bootstrap"])
+}
+
+@Test func givenUpShellIsOff() throws {
+    let recorder = Recorder()
+    let files = InMemoryFileStore()
+    let shell = agent(recorder, files: files)
+    try shell.turnOn()
+    // Crash recovery disables and boots out the agent but leaves its plist.
+    recorder.loaded = false
+    #expect(!shell.isOn)
+    recorder.loaded = true
+    #expect(shell.isOn)
 }
 
 @Test func turnOffStopsCopiesAndRemovesAgent() throws {

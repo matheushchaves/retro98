@@ -53,6 +53,15 @@ struct Messages {
         )
     }
 
+    /// Base tweaks a plain apply left alone because the person turned them off in the Control Panel.
+    func skippedByControlPanel(_ titles: [String]) -> String {
+        let list = titles.joined(separator: ", ")
+        return text(
+            en: "Left off because they're turned off in Control Panel: \(list). Turn them on there (Appearance, Display, Mouse).",
+            ptBR: "Ficaram desligados porque estão desligados no Painel de Controle: \(list). Ligue-os lá (Aparência, Vídeo, Mouse)."
+        )
+    }
+
     func unreadableBackup(_ path: String) -> String {
         text(
             en: "The backup at \(path) is unreadable. Nothing was changed. Don't delete that file; please open a GitHub issue.",

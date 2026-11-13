@@ -35,10 +35,6 @@ public struct Choices: Equatable, Sendable {
     public func turning(_ id: TweakID, on: Bool) -> Choices {
         Choices(wallpaper: wallpaper, turnedOff: on ? turnedOff.subtracting([id]) : turnedOff.union([id]), soundsOn: soundsOn)
     }
-
-    public func turningOff(_ ids: Set<TweakID>) -> Choices {
-        Choices(wallpaper: wallpaper, turnedOff: turnedOff.union(ids), soundsOn: soundsOn)
-    }
 }
 
 /// `choices.plist` in the support folder. A missing or unreadable file, or a missing key, means the
@@ -99,5 +95,10 @@ public enum TweakSelection {
     /// The base tweaks, minus the ones turned off in the Control Panel.
     public static func defaultApply(catalog: [Tweak], choices: Choices) -> Set<TweakID> {
         Set(catalog.filter { $0.group == .base }.map(\.id)).subtracting(choices.turnedOff)
+    }
+
+    /// The base tweaks a plain apply leaves alone because they're off in the Control Panel, in catalog order.
+    public static func skippedByChoice(catalog: [Tweak], choices: Choices) -> [TweakID] {
+        catalog.filter { $0.group == .base && choices.turnedOff.contains($0.id) }.map(\.id)
     }
 }

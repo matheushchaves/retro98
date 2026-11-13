@@ -157,7 +157,7 @@ O Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) lig
 - **Sons:** os sons do próprio Retro98 (início da barra, erro, aviso, esvaziar a Lixeira), criados pelo projeto, cada um com um botão Tocar. Dá para desligá-los e para usar o alerta do Retro98 como som de alerta do macOS: ele vai para `~/Library/Sounds/Retro98.aiff` e aparece como "Retro98" em Ajustes do Sistema › Som.
 - **Componentes:** a barra de tarefas e o menu Iniciar, o Explorer no lugar do Finder em "Mostrar no Finder" e a barra de menus do macOS escondida (ela aparece ao levar o ponteiro ao topo). Uma peça não instalada aparece em cinza, com o jeito de instalar.
 - **Atalhos do macOS:** Rede, Impressoras, Teclado, Data/Hora, Usuários e Ajustes do Sistema abrem o painel correspondente.
-- **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Para removê-los também, rode `./uninstall.sh`.
+- **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Depois disso, `./install.sh --yes` mantém o macOS normal; rode `./install.sh` e responda Sim para o visual retrô voltar, ou `./uninstall.sh` para remover os apps também.
 
 O que você muda aqui fica: `./install.sh --yes` mantém desligados os ajustes que você desligou, volta a cor ou a imagem escolhida e deixa desligada a barra de tarefas que você desligou (o arquivo de peças diz `shelloff`), mas continua atualizando os apps. Para ligar de novo, use o próprio Painel de Controle.
 

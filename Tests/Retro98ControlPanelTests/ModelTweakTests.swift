@@ -54,6 +54,10 @@ let cursorCustomized = PreferenceKey(domain: .app("com.apple.universalaccess"), 
     #expect(report.icon == .error)
     #expect(report.message.contains("Não foi possível mudar: Ponteiro branco com contorno preto."))
     #expect(report.message.contains("Acesso Total ao Disco ao Retro98 Control Panel"))
+    // macOS doesn't list the app by itself: the message says how to add it.
+    #expect(report.message.contains("botão + e escolha Retro98 Control Panel em ~/Applications/Retro98"))
+    let english = try #require(ControlPanelText.problems(problems, model: model, languages: ["en"]))
+    #expect(english.message.contains("the + button and pick Retro98 Control Panel in ~/Applications/Retro98"))
 }
 
 @MainActor @Test func unreadableBackupChangesNothing() throws {

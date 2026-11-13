@@ -64,3 +64,13 @@ import Testing
     #expect(prompter.shown.last?.message == "Pronto: o macOS voltou ao normal. Para remover os apps do Retro98, rode ./uninstall.sh.")
     #expect(controller.dialogs.isEmpty)
 }
+
+@MainActor @Test func closingTheWindowClosesItsDialogs() {
+    let controller = ControlPanelWindowController(services: TestServices(), prompter: ScriptedPrompter())
+    controller.presentsDialogs = false
+    controller.openDialog(.display)
+    controller.openDialog(.sounds)
+    #expect(controller.dialogs.count == 2)
+    controller.windowWillClose(Notification(name: NSWindow.willCloseNotification, object: controller.window))
+    #expect(controller.dialogs.isEmpty)
+}

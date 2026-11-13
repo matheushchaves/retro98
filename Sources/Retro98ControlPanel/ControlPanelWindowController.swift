@@ -213,7 +213,9 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
 
     // MARK: NSWindowDelegate
 
+    /// The applet dialogs go with the window: they can't apply anything once the controller is gone.
     func windowWillClose(_ notification: Notification) {
+        dialogs.values.forEach { $0.close() }
         onClose?()
     }
 }

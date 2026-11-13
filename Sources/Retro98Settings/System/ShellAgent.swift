@@ -40,7 +40,11 @@ public struct ShellAgent: ShellSwitch {
     }
 
     public var isInstalled: Bool { exists(paths.shellApp) }
-    public var isOn: Bool { ((try? files.read(paths.launchAgentPlist)) ?? nil) != nil }
+    /// On means the agent is installed and loaded: crash recovery boots it out (and disables it) but leaves the plist.
+    public var isOn: Bool {
+        guard ((try? files.read(paths.launchAgentPlist)) ?? nil) != nil else { return false }
+        return runner.run("/bin/launchctl", ["print", service]) == 0
+    }
 
     /// Same keys as the heredoc in install.sh; keep the two in step.
     public static func plist(executable: String) throws -> Data {
@@ -55,11 +59,14 @@ public struct ShellAgent: ShellSwitch {
         return try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
     }
 
-    /// Enables first: a Shell that gave up after crashing disabled itself.
+    /// Like install.sh: any copy already running (a stale agent, or one opened outside launchd) stops first, so
+    /// there is never a second taskbar; then enables, since a Shell that gave up after crashing disabled itself.
     public func turnOn() throws {
         guard isInstalled else { throw ShellAgentError.notInstalled }
         let executable = paths.shellApp.appending(path: "Contents/MacOS/Retro98Shell").path
         try files.write(try Self.plist(executable: executable), to: paths.launchAgentPlist)
+        _ = runner.run("/bin/launchctl", ["bootout", service])
+        stopCopies()
         _ = runner.run("/bin/launchctl", ["enable", service])
         let status = runner.run("/bin/launchctl", ["bootstrap", "gui/\(uid)", paths.launchAgentPlist.path])
         // The plist stays: the next login starts the taskbar anyway.

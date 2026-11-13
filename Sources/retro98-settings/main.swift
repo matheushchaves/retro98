@@ -76,9 +76,11 @@ do {
     case .apply(let only):
         // Without --only, apply the base tweaks the person hasn't turned off in the Control Panel;
         // Shell tweaks are applied by the installer.
-        let defaults = TweakSelection.defaultApply(catalog: catalog, choices: ChoicesFile(url: paths.choicesFile, files: LocalFileStore()).load())
-        let report = try engine.apply(only ?? defaults)
+        let choices = ChoicesFile(url: paths.choicesFile, files: LocalFileStore()).load()
+        let report = try engine.apply(only ?? TweakSelection.defaultApply(catalog: catalog, choices: choices))
         printReport(report, restoring: false)
+        let skipped = only == nil ? TweakSelection.skippedByChoice(catalog: catalog, choices: choices) : []
+        if !skipped.isEmpty { print(messages.skippedByControlPanel(skipped.map(title(of:)))) }
         exit(exitStatus(for: report))
     case .restore(let only):
         let report = try engine.restore(only)

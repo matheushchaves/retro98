@@ -126,10 +126,24 @@ private let fileViewerKey = PreferenceKey(domain: .global, name: "NSFileViewer")
 
     #expect(services.store.snapshot == machineLike)
     #expect(services.fakeShell.turnOffCalls == 1)
-    #expect(services.pieces.load().line == "base shelloff prompt")
+    // "base" leaves the pieces (so --yes keeps macOS normal and an interactive "Yes" brings them back);
+    // the tweaks the person turned off one by one stay as they were.
+    #expect(services.pieces.load().line == "shelloff prompt")
     #expect(!services.alertSoundExists)
-    #expect(services.choices.load().turnedOff == base)
+    #expect(services.choices.load().turnedOff.isEmpty)
     #expect(try model.managed().isEmpty)
+}
+
+@MainActor @Test func backToNormalStopsALooseTaskbar() throws {
+    let services = TestServices()
+    try services.pieces.save(Pieces(line: "base shell prompt"))
+    services.fakeShell.isOn = false   // gave up after crashing, or opened outside launchd
+    let model = ControlPanelModel(services: services)
+
+    #expect(model.backToNormal().isEmpty)
+
+    #expect(services.fakeShell.turnOffCalls == 1)
+    #expect(services.pieces.load().line == "shelloff prompt")
 }
 
 @MainActor @Test func backToNormalWithUnreadableBackupChangesNothing() throws {
@@ -157,7 +171,7 @@ private let fileViewerKey = PreferenceKey(domain: .global, name: "NSFileViewer")
 
     #expect(services.store.snapshot == machineLike)
     #expect(services.fakeShell.turnOffCalls == 0)
-    #expect(services.pieces.load().line == "base prompt")
+    #expect(services.pieces.load().line == "prompt")
 }
 
 /// A few of the person's own values, so restoring has something to put back.

@@ -74,9 +74,11 @@ extension ControlPanelText {
         if deniedAccessibility {
             parts.append(text(l,
                 "O macOS não deixou mudar os ajustes de acessibilidade. Dê Acesso Total ao Disco ao Retro98 Control Panel em "
-                    + "Ajustes do Sistema › Privacidade e Segurança e tente de novo.",
+                    + "Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco (use o botão + e escolha Retro98 Control Panel "
+                    + "em ~/Applications/Retro98) e tente de novo.",
                 "macOS didn't allow changing the accessibility settings. Give Retro98 Control Panel Full Disk Access in "
-                    + "System Settings › Privacy & Security and try again."))
+                    + "System Settings › Privacy & Security › Full Disk Access (use the + button and pick Retro98 Control Panel in "
+                    + "~/Applications/Retro98) and try again."))
         }
         for problem in problems {
             switch problem {

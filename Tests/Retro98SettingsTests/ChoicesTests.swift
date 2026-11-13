@@ -44,6 +44,13 @@ private let choicesURL = URL(filePath: "/home/Library/Application Support/Retro9
     #expect(!selected.contains(.explorerFileViewer))
 }
 
+@Test func skippedByChoiceListsTurnedOffBaseTweaksInOrder() {
+    let catalog = TweakCatalog.all(osMajorVersion: 27, homeDirectory: URL(filePath: "/Users/test"))
+    let choices = Choices.standard.turning(.pointer, on: false).turning(.colors, on: false)
+    #expect(TweakSelection.skippedByChoice(catalog: catalog, choices: choices) == [.colors, .pointer])
+    #expect(TweakSelection.skippedByChoice(catalog: catalog, choices: .standard).isEmpty)
+}
+
 @Test func catalogUsesChosenWallpaper() {
     let home = URL(filePath: "/Users/test")
     let color = TweakCatalog.phase1(osMajorVersion: 27, homeDirectory: home, wallpaper: .color(hex: "#800000"))

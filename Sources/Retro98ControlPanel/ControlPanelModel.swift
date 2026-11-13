@@ -162,8 +162,9 @@ final class ControlPanelModel {
         return problems + save(pieces, as: on ? pieces.adding("fileviewer") : pieces.removing("fileviewer"))
     }
 
-    /// Turns every piece off and restores everything in the backup; the apps stay installed. An unreadable
-    /// backup stops it before anything changes.
+    /// Turns every piece off and restores everything in the backup; the apps stay installed. "base" leaves the
+    /// pieces, so `./install.sh --yes` keeps macOS normal while an interactive "Yes" to the base tweaks brings
+    /// them back. An unreadable backup stops it before anything changes.
     func backToNormal() -> [Problem] {
         let engine = services.makeEngine()
         do {
@@ -172,10 +173,11 @@ final class ControlPanelModel {
             return [unreadableBackup]
         }
         let pieces = services.pieces.load()
-        var changed = pieces.removing("fileviewer")
-        if services.shell.isOn {
+        var changed = pieces.removing("fileviewer").removing("base")
+        // Also stops a taskbar that isn't the agent's (opened by hand, or left after crash recovery); harmless twice.
+        if services.shell.isInstalled {
             services.shell.turnOff()
-            changed = changed.replacing("shell", with: "shelloff")
+            if changed.contains("shell") { changed = changed.replacing("shell", with: "shelloff") }
         }
         var problems: [Problem] = []
         do {
@@ -186,8 +188,7 @@ final class ControlPanelModel {
             problems.append(.fileFailed(String(describing: error)))
         }
         services.removeAlertSound()
-        let base = Set(services.catalog().filter { $0.group == .base }.map(\.id))
-        return problems + save(services.choices.load().turningOff(base)) + save(pieces, as: changed)
+        return problems + save(pieces, as: changed)
     }
 
     // MARK: Shared
