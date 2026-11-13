@@ -1,5 +1,6 @@
 import AppKit
 import Quartz
+import Retro98Dialogs
 import Retro98FilesCore
 import Retro98UI
 
@@ -400,7 +401,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
     func grid(_ grid: RetroIconGrid, smallIconAt index: Int) -> PixelIcon { smallIcon(for: model.entries[index]) }
 
     private func smallIcon(for entry: FileEntry) -> PixelIcon {
-        guard entry.kind == .application else { return FileIcons.icon(ExplorerIcons.kind(for: entry.kind), size: 16) }
+        guard entry.kind == .application else { return FileIcons.icon(entry.kind.iconKind, size: 16) }
         if let cached = smallIconCache[entry.url] { return cached }
         let image = PixelIcon.appIcon(for: entry.url, size: 16)
         let icon = PixelIcon(width: 16, height: 16) { PixelIcon.drawUpright(image, in: CGRect(x: 0, y: 0, width: 16, height: 16), context: $0) }
@@ -416,7 +417,7 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
             iconCache[entry.url] = icon
             return icon
         }
-        return FileIcons.icon(ExplorerIcons.kind(for: entry.kind), size: 32)
+        return FileIcons.icon(entry.kind.iconKind, size: 32)
     }
 
     private func smallIcon(for location: Location) -> PixelIcon {
@@ -425,26 +426,6 @@ final class ExplorerWindowController: NSObject, NSWindowDelegate, RetroIconGridD
         case .myComputer: FileIcons.icon(.myComputer, size: 16)
         case .trash: FileIcons.icon(.recycleBinEmpty, size: 16)
         case .folder: FileIcons.icon(.folder, size: 16)
-        }
-    }
-}
-
-enum ExplorerIcons {
-    static func kind(for kind: FileKind) -> FileIconKind {
-        switch kind {
-        case .folder, .application: .folder
-        case .image: .image
-        case .audio: .audio
-        case .video: .video
-        case .archive: .archive
-        case .text: .text
-        case .document: .document
-        case .volume(.internal): .hardDisk
-        case .volume(.removable): .removableDisk
-        case .volume(.network): .networkDisk
-        case .myComputer: .myComputer
-        case .myDocuments: .myDocuments
-        case .recycleBin(let isFull): isFull == true ? .recycleBinFull : .recycleBinEmpty
         }
     }
 }

@@ -1,4 +1,5 @@
 import AppKit
+import Retro98Dialogs
 import Retro98FilesCore
 import Retro98UI
 
@@ -103,7 +104,7 @@ final class ExplorerTree: RetroTreeDataSource {
             guard case .folder(let url) = location(for: id) else { return FileIcons.icon(.folder, size: 16) }
             if url.path == documents.path { return FileIcons.icon(.myDocuments, size: 16) }
             if let volume = volumes.first(where: { $0.url.path == url.path }) {
-                return FileIcons.icon(ExplorerIcons.kind(for: .volume(volume.kind)), size: 16)
+                return FileIcons.icon(FileKind.volume(volume.kind).iconKind, size: 16)
             }
             return FileIcons.icon(.folder, size: 16)
         }

@@ -94,7 +94,8 @@ public final class RetroButton: PixelView {
 
         let font: PixelFont = isBold ? .bold : .regular
         let textWidth = CGFloat(PixelText.width(of: title, font: font))
-        let iconWidth = icon.map { CGFloat($0.width) + Self.iconGap } ?? 0
+        // An icon alone (no title) sits in the middle.
+        let iconWidth = icon.map { CGFloat($0.width) + (title.isEmpty ? 0 : Self.iconGap) } ?? 0
         let shift: CGFloat = isPressed ? 1 : 0
         let contentX = ((size.width - textWidth - iconWidth) / 2).rounded(.down) + shift
         if let icon {
