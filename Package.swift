@@ -44,8 +44,8 @@ let package = Package(
         ),
         .executableTarget(name: "Retro98ControlPanel", dependencies: ["Retro98UI", "Retro98Settings"]),
         .testTarget(name: "Retro98ControlPanelTests", dependencies: ["Retro98ControlPanel", "Retro98Settings", "Retro98UI"]),
-        .executableTarget(name: "Retro98Notepad", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings"]),
-        .testTarget(name: "Retro98NotepadTests", dependencies: ["Retro98Notepad", "Retro98UI"]),
+        .executableTarget(name: "Retro98Notepad", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings", "Retro98Dialogs"]),
+        .testTarget(name: "Retro98NotepadTests", dependencies: ["Retro98Notepad", "Retro98UI", "Retro98Dialogs"]),
         .testTarget(
             name: "Retro98PromptTests",
             dependencies: ["Retro98Prompt", "Retro98UI", .product(name: "SwiftTerm", package: "SwiftTerm")]
