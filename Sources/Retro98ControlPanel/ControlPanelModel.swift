@@ -12,6 +12,17 @@ enum Problem: Equatable {
     case fileFailed(String)
 }
 
+/// Whether a piece can be switched, and how it is now.
+enum Availability: Equatable {
+    case on, off, notInstalled
+}
+
+struct ComponentsState: Equatable {
+    let taskbar: Availability
+    let fileViewer: Availability
+    let hiddenMenuBar: Bool
+}
+
 /// The Control Panel's logic: turns tweaks and pieces on and off through the tweak engine and remembers the
 /// person's choices, so `./install.sh --yes` keeps them.
 @MainActor
@@ -84,6 +95,101 @@ final class ControlPanelModel {
         return problems
     }
 
+    // MARK: Sounds
+
+    func soundsOn() -> Bool {
+        services.choices.load().soundsOn
+    }
+
+    func setSounds(on: Bool) -> [Problem] {
+        save(services.choices.load().with(soundsOn: on))
+    }
+
+    /// The sound file is written before macOS is pointed at it, and removed once macOS no longer is.
+    func setAlertSound(on: Bool) -> [Problem] {
+        if on {
+            do {
+                try services.writeAlertSound()
+            } catch {
+                return [.fileFailed(String(describing: error))]
+            }
+            let problems = setTweaks(on: [.alertSound], off: [])
+            if problems.contains(where: Self.isFailure) { services.removeAlertSound() }
+            return problems
+        }
+        let problems = setTweaks(on: [], off: [.alertSound])
+        if !problems.contains(where: Self.isFailure) { services.removeAlertSound() }
+        return problems
+    }
+
+    // MARK: Components
+
+    func components() throws -> ComponentsState {
+        let managed = try managed()
+        let shell = services.shell
+        return ComponentsState(
+            taskbar: shell.isInstalled ? (shell.isOn ? .on : .off) : .notInstalled,
+            fileViewer: services.explorerInstalled ? (managed.contains(.explorerFileViewer) ? .on : .off) : .notInstalled,
+            hiddenMenuBar: managed.contains(.hiddenMenuBar)
+        )
+    }
+
+    /// On: hides the Dock under the taskbar, then starts it ("shell" in the pieces). Off: stops the taskbar,
+    /// then gives the Dock back ("shelloff", so reinstalling keeps it off).
+    func setTaskbar(on: Bool) -> [Problem] {
+        let shell = services.shell
+        guard shell.isInstalled else { return [.shellNotInstalled] }
+        let pieces = services.pieces.load()
+        if on {
+            let problems = setTweaks(on: [.dockUnderTaskbar], off: [])
+            guard !problems.contains(where: Self.isFailure) else { return problems }
+            do {
+                try shell.turnOn()
+            } catch {
+                // No taskbar: the Dock must not stay hidden.
+                return setTweaks(on: [], off: [.dockUnderTaskbar]) + [.shellFailed(String(describing: error))]
+            }
+            return problems + save(pieces, as: pieces.replacing("shelloff", with: "shell"))
+        }
+        shell.turnOff()
+        return setTweaks(on: [], off: [.dockUnderTaskbar]) + save(pieces, as: pieces.replacing("shell", with: "shelloff"))
+    }
+
+    func setFileViewer(on: Bool) -> [Problem] {
+        let problems = on ? setTweaks(on: [.explorerFileViewer], off: []) : setTweaks(on: [], off: [.explorerFileViewer])
+        guard !problems.contains(where: Self.isFailure) else { return problems }
+        let pieces = services.pieces.load()
+        return problems + save(pieces, as: on ? pieces.adding("fileviewer") : pieces.removing("fileviewer"))
+    }
+
+    /// Turns every piece off and restores everything in the backup; the apps stay installed. An unreadable
+    /// backup stops it before anything changes.
+    func backToNormal() -> [Problem] {
+        let engine = services.makeEngine()
+        do {
+            _ = try engine.managed()
+        } catch {
+            return [unreadableBackup]
+        }
+        let pieces = services.pieces.load()
+        var changed = pieces.removing("fileviewer")
+        if services.shell.isOn {
+            services.shell.turnOff()
+            changed = changed.replacing("shell", with: "shelloff")
+        }
+        var problems: [Problem] = []
+        do {
+            problems += Self.problems(in: try engine.restore())
+        } catch is BackupError {
+            problems.append(unreadableBackup)
+        } catch {
+            problems.append(.fileFailed(String(describing: error)))
+        }
+        services.removeAlertSound()
+        let base = Set(services.catalog().filter { $0.group == .base }.map(\.id))
+        return problems + save(services.choices.load().turningOff(base)) + save(pieces, as: changed)
+    }
+
     // MARK: Shared
 
     nonisolated static func problems(in report: EngineReport) -> [Problem] {
@@ -93,6 +199,17 @@ final class ControlPanelModel {
     nonisolated static func isFailure(_ problem: Problem) -> Bool {
         if case .warning = problem { return false }
         return true
+    }
+
+    /// Writes the pieces only when they changed: an install without a pieces file keeps not having one.
+    func save(_ old: Pieces, as new: Pieces) -> [Problem] {
+        guard new != old else { return [] }
+        do {
+            try services.pieces.save(new)
+            return []
+        } catch {
+            return [.fileFailed(String(describing: error))]
+        }
     }
 
     func save(_ choices: Choices) -> [Problem] {

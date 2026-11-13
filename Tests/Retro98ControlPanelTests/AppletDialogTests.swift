@@ -85,3 +85,55 @@ private let appearanceIDs: [TweakID] = [.lightAppearance, .colors, .contrast, .s
     applet.dialog.performOK()
     #expect(services.wallpaper.hexes.isEmpty && services.wallpaper.pictures.isEmpty)
 }
+
+@MainActor @Test func soundsAppletPreviewsEachSound() throws {
+    let services = TestServices()
+    try services.choices.save(Choices.standard.with(soundsOn: false))
+    let applet = SoundsApplet(model: ControlPanelModel(services: services), services: services, prompter: ScriptedPrompter())
+    #expect(applet.rows.map(\.kind) == [.startup, .error, .warning, .emptyTrash, .alert])
+    #expect(applet.rows.map(\.title) == ["Início do Retro98", "Erro", "Aviso", "Esvaziar a Lixeira", "Alerta"])
+    #expect(!applet.soundsBox.isOn)
+    applet.rows[1].play.performClick()
+    #expect(services.previewed == [.error])
+}
+
+@MainActor @Test func soundsAppletAppliesBothSwitches() throws {
+    let services = TestServices()
+    let model = ControlPanelModel(services: services)
+    let applet = SoundsApplet(model: model, services: services, prompter: ScriptedPrompter())
+    #expect(applet.soundsBox.isOn && !applet.alertBox.isOn)
+    applet.soundsBox.performClick()
+    applet.alertBox.performClick()
+    applet.dialog.performOK()
+    #expect(services.choices.load().soundsOn == false)
+    #expect(try model.managed().contains(.alertSound))
+}
+
+@MainActor @Test func componentsDisablesMissingPieces() {
+    let services = TestServices()
+    services.fakeShell.isInstalled = false
+    services.explorerInstalled = false
+    let applet = ComponentsApplet(model: ControlPanelModel(services: services), services: services, prompter: ScriptedPrompter())
+    #expect(applet.taskbarBox.title == "Barra de tarefas e menu Iniciar")
+    #expect(!applet.taskbarBox.isEnabled && !applet.taskbarNote.isHidden)
+    #expect(!applet.fileViewerBox.isEnabled && !applet.fileViewerNote.isHidden)
+    #expect(applet.menuBarBox.isEnabled)
+    #expect(applet.taskbarNote.lines.joined(separator: " ") == "Não instalado: rode ./install.sh para instalar.")
+
+    let installed = TestServices()
+    let shown = ComponentsApplet(model: ControlPanelModel(services: installed), services: installed, prompter: ScriptedPrompter())
+    #expect(shown.taskbarBox.isEnabled && shown.taskbarNote.isHidden)
+}
+
+@MainActor @Test func componentsAppletTurnsTheTaskbarOn() throws {
+    let services = TestServices()
+    try services.pieces.save(Pieces(line: "base shelloff prompt"))
+    let model = ControlPanelModel(services: services)
+    let applet = ComponentsApplet(model: model, services: services, prompter: ScriptedPrompter())
+    #expect(!applet.taskbarBox.isOn)
+    applet.taskbarBox.performClick()
+    applet.menuBarBox.performClick()
+    applet.dialog.performOK()
+    #expect(services.fakeShell.turnOnCalls == 1)
+    #expect(try model.managed().contains(.hiddenMenuBar))
+}

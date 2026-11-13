@@ -42,3 +42,25 @@ import Testing
     #expect(items.contains { $0.keyEquivalent == "," && $0.action == #selector(AppDelegate.showWindow(_:)) })
     #expect(items.contains { $0.action == #selector(NSApplication.terminate(_:)) })
 }
+
+@MainActor @Test func backToNormalAsksFirst() throws {
+    let services = TestServices()
+    services.fakeShell.isOn = true
+    let prompter = ScriptedPrompter()
+    let controller = ControlPanelWindowController(services: services, prompter: prompter)
+    controller.presentsDialogs = false
+    controller.openDialog(.display)
+    #expect(controller.dialogs.count == 1)
+
+    prompter.answers = [1]
+    controller.backToNormal(nil)
+    #expect(services.fakeShell.turnOffCalls == 0)
+    #expect(prompter.shown.first?.icon == .question)
+    #expect(prompter.shown.first?.buttons == ["Voltar ao normal", "Cancelar"])
+
+    prompter.answers = [0, 0]
+    controller.backToNormal(nil)
+    #expect(services.fakeShell.turnOffCalls == 1)
+    #expect(prompter.shown.last?.message == "Pronto: o macOS voltou ao normal. Para remover os apps do Retro98, rode ./uninstall.sh.")
+    #expect(controller.dialogs.isEmpty)
+}

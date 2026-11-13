@@ -3,8 +3,8 @@ import AppKit
 /// A classic check box: a sunken white 13×13 square with a check, and its label; click or space toggles.
 @MainActor
 public final class RetroCheckBox: PixelView {
-    static let boxSize: CGFloat = 13
-    static let labelGap: CGFloat = 6
+    public static let boxSize: CGFloat = 13
+    public static let labelGap: CGFloat = 6
     static let check = PixelIcon(rows: [
         "......K",
         ".....KK",

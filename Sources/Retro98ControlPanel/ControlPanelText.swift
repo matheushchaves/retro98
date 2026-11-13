@@ -108,3 +108,39 @@ extension ControlPanelText {
         return (parts.joined(separator: " "), icon, deniedAccessibility)
     }
 }
+
+// MARK: Sounds, Components and back to normal
+
+extension ControlPanelText {
+    static func playSounds(_ l: [String]) -> String { text(l, "Tocar os sons do Retro98", "Play Retro98 sounds") }
+    static func play(_ l: [String]) -> String { text(l, "Tocar", "Play") }
+    static func macOSSound(_ l: [String]) -> String { text(l, "Som do macOS…", "macOS Sound…") }
+
+    static func soundName(_ kind: RetroSoundKind, _ l: [String]) -> String {
+        switch kind {
+        case .startup: text(l, "Início do Retro98", "Retro98 startup")
+        case .error: text(l, "Erro", "Error")
+        case .warning: text(l, "Aviso", "Warning")
+        case .emptyTrash: text(l, "Esvaziar a Lixeira", "Empty Recycle Bin")
+        case .alert: text(l, "Alerta", "Alert")
+        }
+    }
+
+    static func taskbar(_ l: [String]) -> String { text(l, "Barra de tarefas e menu Iniciar", "Taskbar and Start menu") }
+    static func notInstalled(_ l: [String]) -> String {
+        text(l, "Não instalado: rode ./install.sh para instalar.", "Not installed: run ./install.sh to install it.")
+    }
+
+    static func backToNormalQuestion(_ l: [String]) -> String {
+        text(l,
+             "Isto desliga a barra de tarefas, devolve o Dock e restaura todos os ajustes que o Retro98 mudou. "
+                + "Os apps do Retro98 continuam instalados.",
+             "This turns off the taskbar, gives back the Dock and restores every setting Retro98 changed. "
+                + "Retro98's apps stay installed.")
+    }
+    static func backToNormalConfirm(_ l: [String]) -> String { text(l, "Voltar ao normal", "Back to normal") }
+    static func backToNormalDone(_ l: [String]) -> String {
+        text(l, "Pronto: o macOS voltou ao normal. Para remover os apps do Retro98, rode ./uninstall.sh.",
+             "Done: macOS is back to normal. To remove Retro98's apps, run ./uninstall.sh.")
+    }
+}

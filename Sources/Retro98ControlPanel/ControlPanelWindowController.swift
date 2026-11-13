@@ -167,7 +167,13 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
         case .mouse:
             let list = TweakListApplet.mouse(model: model, services: services, prompter: prompter)
             (object, dialog) = (list, list.dialog)
-        default:
+        case .sounds:
+            let sounds = SoundsApplet(model: model, services: services, prompter: prompter)
+            (object, dialog) = (sounds, sounds.dialog)
+        case .components:
+            let components = ComponentsApplet(model: model, services: services, prompter: prompter)
+            (object, dialog) = (components, components.dialog)
+        case .network, .printers, .keyboard, .dateTime, .users, .systemSettings:
             return nil
         }
         appletObjects[applet] = object
@@ -183,8 +189,21 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
         grid.selection.first.map(openItem(at:))
     }
 
-    /// Filled in with the applets.
-    @objc func backToNormal(_ sender: Any?) {}
+    /// Asks first; then turns everything off, closes the open dialogs and says how to remove the apps.
+    @objc func backToNormal(_ sender: Any?) {
+        let l = languages
+        let title = ControlPanelText.windowTitle(l)
+        let answer = prompter.show(title: title, message: ControlPanelText.backToNormalQuestion(l), icon: .question,
+                                   buttons: [ControlPanelText.backToNormalConfirm(l), ControlPanelText.cancel(l)])
+        guard answer == 0 else { return }
+        let problems = model.backToNormal()
+        dialogs.values.forEach { $0.close() }
+        if problems.isEmpty {
+            _ = prompter.show(title: title, message: ControlPanelText.backToNormalDone(l), icon: .info, buttons: ["OK"])
+        } else {
+            presentProblems(problems, model: model, services: services, prompter: prompter)
+        }
+    }
 
     // MARK: RetroIconGridDataSource
 
