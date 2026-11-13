@@ -71,6 +71,15 @@ public struct VolumeInfo: Equatable, Sendable {
     public let totalBytes: Int64?
     public let freeBytes: Int64?
     public let isEjectable: Bool
+
+    public init(url: URL, name: String, kind: VolumeKind, totalBytes: Int64?, freeBytes: Int64?, isEjectable: Bool) {
+        self.url = url
+        self.name = name
+        self.kind = kind
+        self.totalBytes = totalBytes
+        self.freeBytes = freeBytes
+        self.isEjectable = isEjectable
+    }
 }
 
 public enum Volumes {
