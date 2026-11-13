@@ -1,12 +1,6 @@
 import Testing
 @testable import Retro98UI
 
-private func opaqueRatio(_ icon: PixelIcon) -> Double {
-    let image = render(icon)
-    let opaque = (0..<image.height).flatMap { y in (0..<image.width).map { x in image.alpha(x: x, y: y) } }.filter { $0 > 0 }.count
-    return Double(opaque) / Double(icon.width * icon.height)
-}
-
 @Test func everyKindHasBothSizes() {
     for kind in FileIconKind.allCases {
         for size in [16, 32] {

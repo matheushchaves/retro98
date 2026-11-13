@@ -17,6 +17,8 @@ public final class RetroCheckBox: PixelView {
 
     public let title: String
     public var isOn: Bool { didSet { needsDisplay = true } }
+    /// A disabled box ignores clicks and the keyboard, and draws its label gray.
+    public var isEnabled = true { didSet { needsDisplay = true } }
     private let onChange: (Bool) -> Void
 
     public init(title: String, isOn: Bool, onChange: @escaping (Bool) -> Void) {
@@ -34,11 +36,12 @@ public final class RetroCheckBox: PixelView {
     }
 
     public func performClick() {
+        guard isEnabled else { return }
         isOn.toggle()
         onChange(isOn)
     }
 
-    override public var acceptsFirstResponder: Bool { true }
+    override public var acceptsFirstResponder: Bool { isEnabled }
 
     override public func becomeFirstResponder() -> Bool {
         needsDisplay = true
@@ -67,7 +70,7 @@ public final class RetroCheckBox: PixelView {
         if isOn { Self.check.draw(at: CGPoint(x: box.minX + 3, y: box.minY + 3), context: context) }
         let labelX = Self.boxSize + Self.labelGap
         let labelY = ((size.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down)
-        PixelText.draw(title, font: .regular, color: .black, at: CGPoint(x: labelX, y: labelY), context: context)
+        PixelText.draw(title, font: .regular, color: isEnabled ? .black : Palette.shadow, at: CGPoint(x: labelX, y: labelY), context: context)
         if window?.firstResponder === self {
             let width = CGFloat(PixelText.width(of: title, font: .regular))
             let rect = CGRect(x: labelX - 1, y: labelY, width: width + 2, height: CGFloat(PixelText.lineHeight))

@@ -16,3 +16,10 @@ func render(_ icon: PixelIcon) -> PixelImage {
         view.drawPixels(in: $0, size: view.bounds.size)
     }
 }
+
+/// Share of an icon's pixels that are drawn (not transparent).
+func opaqueRatio(_ icon: PixelIcon) -> Double {
+    let image = render(icon)
+    let opaque = (0..<image.height).flatMap { y in (0..<image.width).map { x in image.alpha(x: x, y: y) } }.filter { $0 > 0 }.count
+    return Double(opaque) / Double(icon.width * icon.height)
+}

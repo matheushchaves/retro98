@@ -144,6 +144,28 @@ private let detailColumns = [GridColumn(title: "Nome", width: 0), GridColumn(tit
     #expect(changes == [true, false])
 }
 
+@MainActor @Test func disabledCheckBoxIgnoresClicksAndDrawsGray() {
+    var changes: [Bool] = []
+    let box = RetroCheckBox(title: "Barra de tarefas", isOn: false) { changes.append($0) }
+    box.isEnabled = false
+    box.performClick()
+    #expect(!box.isOn)
+    #expect(changes.isEmpty)
+    #expect(!box.acceptsFirstResponder)
+    let pixels = renderView(box)
+    let labelX = Int(RetroCheckBox.boxSize + RetroCheckBox.labelGap)
+    var gray = 0, black = 0
+    for y in 0..<pixels.height {
+        for x in labelX..<pixels.width {
+            let color = pixels.color(x: x, y: y)
+            if color == Palette.shadow { gray += 1 }
+            if color == .black { black += 1 }
+        }
+    }
+    #expect(gray > 0)
+    #expect(black == 0)
+}
+
 @MainActor @Test func menuMarksDraw() {
     func blackPixels(_ mark: RetroMenuItem.Mark) -> Int {
         let image = PixelCanvas.render(width: 16, height: 16) { context in

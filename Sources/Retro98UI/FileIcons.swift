@@ -214,8 +214,8 @@ public enum FileIcons {
     }
 }
 
-/// Drawing on a 16-unit grid scaled to the icon size; box outlines are always 1 pixel.
-private struct Sketch {
+/// Drawing on a 16-unit grid scaled to the icon size; box outlines are always 1 pixel. Shared with ControlPanelIcons.
+struct Sketch {
     let context: CGContext
     let scale: CGFloat
 

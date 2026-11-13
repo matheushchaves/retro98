@@ -2,7 +2,7 @@ import AppKit
 import Retro98UI
 
 /// Build-time helpers for the app bundles.
-///   retro98-tools iconset <explorer|shell|prompt> <output.iconset>
+///   retro98-tools iconset <explorer|shell|prompt|controlpanel> <output.iconset>
 /// Writes every standard iconset PNG (16 to 1024, @1x and @2x), enlarging the pixel art without smoothing.
 
 let iconsetSizes: [(name: String, pixels: Int)] = [
@@ -17,6 +17,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
     case "explorer": pixels >= 32 ? FileIcons.explorerApp : FileIcons.explorerAppSmall
     case "shell": Icons.startLogo
     case "prompt": pixels >= 32 ? FileIcons.promptApp : FileIcons.promptAppSmall
+    case "controlpanel": pixels >= 32 ? ControlPanelIcons.app : ControlPanelIcons.appSmall
     default: nil
     }
 }
@@ -33,7 +34,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
 
 @MainActor func writeIconset(icon: String, to folder: URL) -> Int32 {
     guard art(for: icon, pixels: 16) != nil else {
-        FileHandle.standardError.write(Data("retro98-tools: unknown icon '\(icon)' (explorer, shell or prompt)\n".utf8))
+        FileHandle.standardError.write(Data("retro98-tools: unknown icon '\(icon)' (explorer, shell, prompt or controlpanel)\n".utf8))
         return 2
     }
     do {
@@ -54,7 +55,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
 
 let arguments = CommandLine.arguments.dropFirst()
 guard arguments.count == 3, arguments.first == "iconset" else {
-    FileHandle.standardError.write(Data("usage: retro98-tools iconset <explorer|shell> <output.iconset>\n".utf8))
+    FileHandle.standardError.write(Data("usage: retro98-tools iconset <explorer|shell|prompt|controlpanel> <output.iconset>\n".utf8))
     exit(2)
 }
 let status = MainActor.assumeIsolated {
