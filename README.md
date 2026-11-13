@@ -68,7 +68,7 @@ The first time you use Shut Down…, macOS asks whether Retro98 Shell may contro
 - Right-click a button for Restore, Minimize and Close.
 - Maximized, "Fill" and tiled windows stop at the top of the taskbar instead of going under it.
 
-These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain; you can also remove Retro98 Shell from the Accessibility list.
+These need **Accessibility** permission. The first time, Retro98 Shell explains and opens System Settings › Privacy & Security › Accessibility: turn on Retro98 Shell. You only do this once: the installer signs the Shell with a local certificate (kept in its own keychain, `~/Library/Keychains/retro98-signing.keychain-db`), so macOS remembers the permission across updates. Uninstalling removes that keychain and clears Retro98's permissions in Privacy & Security, so installing again after an uninstall asks once more. If the taskbar shows no windows while Retro98 Shell is already on in that list, remove it with − and add it again with + (it's in `~/Applications/Retro98`).
 
 ## Explorer (Phase 3)
 

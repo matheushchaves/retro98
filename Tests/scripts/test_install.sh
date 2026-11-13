@@ -27,6 +27,9 @@ export RETRO98_LSREGISTER="$WORK/stub-lsregister"
 # Never create the real signing keychain from tests.
 export RETRO98_SIGNING=adhoc
 export RETRO98_SIGNING_KEYCHAIN="$WORK/never-created.keychain-db"
+# Never touch the real permissions or the Shell's real preferences.
+export RETRO98_TCCUTIL=/usr/bin/false
+export RETRO98_DEFAULTS=/usr/bin/false
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0

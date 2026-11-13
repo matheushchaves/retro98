@@ -45,6 +45,8 @@ final class AccessibilityGate {
         defaults.set(build, forKey: AccessibilityPrompt.lastPromptedKey)
         _ = RetroMessageBox.run(title: "Retro98 Shell", message: AccessibilityPrompt.message(languages: languages),
                                 icon: .info, buttons: ["OK"])
+        // macOS's own request lists the Shell, so after an uninstall the person only flips its switch.
+        _ = AXIsProcessTrustedWithOptions(AccessibilityPrompt.requestOptions as CFDictionary)
         NSWorkspace.shared.open(AccessibilityPrompt.settingsURL)
     }
 

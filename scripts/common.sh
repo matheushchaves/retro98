@@ -99,3 +99,24 @@ stop_shell() {
     stop_shell_processes
     rm -f "$LAUNCH_AGENT_PLIST"
 }
+
+# Overridable so tests never touch the real permissions or the Shell's real preferences.
+TCCUTIL="${RETRO98_TCCUTIL:-/usr/bin/tccutil}"
+DEFAULTS_TOOL="${RETRO98_DEFAULTS:-/usr/bin/defaults}"
+
+# Makes macOS forget what it allowed Retro98's apps (Accessibility, Full Disk Access, Automation) and the
+# Shell's "already asked" mark. Their permissions are tied to the signing certificate the uninstaller
+# deletes, so a later install would otherwise show switches that are on but no longer work. tccutil only
+# finds registered apps: run this before unregistering them. Returns 1 if a reset failed.
+forget_permissions() {
+    local pair id app failed=0
+    for pair in "$SHELL_LABEL|$SHELL_APP" "$EXPLORER_ID|$EXPLORER_APP" "$PROMPT_ID|$PROMPT_APP" \
+        "$CONTROL_PANEL_ID|$CONTROL_PANEL_APP"; do
+        id="${pair%%|*}" app="${pair#*|}"
+        [[ -d "$app" ]] || continue
+        "$LSREGISTER" -f "$app" > /dev/null 2>&1 || true   # launchd starts the Shell, so it may never have been registered
+        "$TCCUTIL" reset All "$id" > /dev/null 2>&1 || failed=1
+    done
+    "$DEFAULTS_TOOL" delete "$SHELL_LABEL" > /dev/null 2>&1 || true
+    return $failed
+}

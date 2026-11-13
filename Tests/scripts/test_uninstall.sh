@@ -24,6 +24,12 @@ export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-default"
 export RETRO98_SOUNDS_DIR="$WORK/sounds-default"
 # Never touch the real signing keychain either.
 export RETRO98_SIGNING_KEYCHAIN="$WORK/default-signing.keychain-db"
+# Nor the real permissions (tccutil) or the Shell's real preferences (defaults).
+printf '#!/usr/bin/env bash\necho "tccutil $*" >> "${LAUNCHCTL_LOG:-/dev/null}"\nexit "${TCCUTIL_EXIT:-0}"\n' > "$WORK/stub-tccutil"
+printf '#!/usr/bin/env bash\necho "defaults $*" >> "${LAUNCHCTL_LOG:-/dev/null}"\nexit 0\n' > "$WORK/stub-defaults"
+chmod +x "$WORK/stub-tccutil" "$WORK/stub-defaults"
+export RETRO98_TCCUTIL="$WORK/stub-tccutil"
+export RETRO98_DEFAULTS="$WORK/stub-defaults"
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0
@@ -115,6 +121,21 @@ run_shell_case() {
         [[ "$file_state" == "$expected_app" ]] || problems+=" $(basename "$file")=$file_state"
     done
     if [[ "$expected_app" == "absent" && -d "$apps" ]]; then problems+=" apps-folder-left"; fi
+    if [[ "$expected_app" == "absent" ]]; then
+        local id last_reset first_unregister
+        for id in "$LABEL" io.github.matheushchaves.retro98.explorer io.github.matheushchaves.retro98.prompt \
+            io.github.matheushchaves.retro98.controlpanel; do
+            grep -qx "tccutil reset All $id" "$calls" || problems+=" permissions-kept:$id"
+        done
+        # tccutil can't find an unregistered bundle ID: every reset must come before any unregistering.
+        last_reset="$(grep -n "^tccutil reset" "$calls" | tail -1 | cut -d: -f1)"
+        first_unregister="$(grep -n "^lsregister -u" "$calls" | head -1 | cut -d: -f1)"
+        [[ -n "$last_reset" && -n "$first_unregister" && "$last_reset" -lt "$first_unregister" ]] || problems+=" reset-after-unregister"
+        grep -qx "lsregister -u $apps/Retro98 Shell.app" "$calls" || problems+=" shell-not-unregistered"
+        grep -qx "defaults delete $LABEL" "$calls" || problems+=" prompt-mark-kept"
+    elif grep -q "^tccutil" "$calls"; then
+        problems+=" permissions-cleared-on-failure"
+    fi
     if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
 
     if [[ -z "$problems" ]]; then
@@ -127,6 +148,25 @@ run_shell_case() {
 
 run_shell_case explorer-removed 0 0 absent
 run_shell_case shell-kept-on-failure 2 2 present
+
+# The closing note says whether macOS forgot Retro98's permissions or they must be removed by hand.
+permissions_note_case() {   # <name> <tccutil exit> <expected note>
+    local name="$1" tccutil_exit="$2" pattern="$3"
+    local support="$WORK/support-$name" apps="$WORK/apps-$name"
+    mkdir -p "$support" "$apps/Retro98 Shell.app/Contents"
+    echo "<plist/>" > "$support/backup.plist"
+    TCCUTIL_EXIT="$tccutil_exit" STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
+        RETRO98_APPS_DIR="$apps" bash "$ROOT/uninstall.sh" > "$WORK/$name.log" 2>&1
+    local actual_exit=$?
+    if [[ $actual_exit -eq 0 ]] && grep -qE "$pattern" "$WORK/$name.log"; then
+        echo "PASS $name"
+    else
+        echo "FAIL $name (exit $actual_exit: $(tail -2 "$WORK/$name.log" | tr '\n' ' '))"
+        failures=$((failures + 1))
+    fi
+}
+permissions_note_case permissions-cleared-note 0 "também foram apagadas|were cleared too"
+permissions_note_case permissions-left-note 1 "Não consegui apagar|Couldn't clear"
 
 # Copies opened outside launchd (System Settings' "Quit & Reopen", Finder, the Start menu) survive
 # `launchctl bootout`: uninstall must stop them by their executable path, and only those.
@@ -174,7 +214,7 @@ security list-keychains -d user -s $(echo "$BEFORE_LIST" | tr -d '"')
 STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$SIGN_SUPPORT" RETRO98_SIGNING_KEYCHAIN="$SIGN_KEYCHAIN" \
     bash "$ROOT/uninstall.sh" > "$WORK/signing-out.log" 2>&1
 if [[ ! -e "$SIGN_KEYCHAIN" && "$(security list-keychains -d user)" == "$BEFORE_LIST" ]] \
-    && grep -qE "Acessibilidade|Accessibility" "$WORK/signing-out.log"; then
+    && grep -qE "Privacidade e Segurança|Privacy & Security" "$WORK/signing-out.log"; then
     echo "PASS signing-removed"
 else
     echo "FAIL signing-removed"

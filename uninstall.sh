@@ -28,8 +28,13 @@ if [[ $status -ne 0 ]]; then
 fi
 
 # Remove only Retro98's own files, never whole folders blindly.
+permissions_forgotten=1
+forget_permissions || permissions_forgotten=0
 remove_signing_identity
-rm -rf "$SHELL_APP"
+if [[ -d "$SHELL_APP" ]]; then
+    "$LSREGISTER" -u "$SHELL_APP" > /dev/null 2>&1 || true
+    rm -rf "$SHELL_APP"
+fi
 remove_explorer
 remove_prompt
 remove_control_panel
@@ -41,5 +46,10 @@ rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-* "$
 rmdir "$SUPPORT_DIR/bin" 2>/dev/null || true
 rmdir "$SUPPORT_DIR" 2>/dev/null || true
 say "Pronto: seu Mac voltou ao normal e o Retro98 foi removido." "Done: your Mac is back to normal and Retro98 was removed."
-say "Se quiser, remova o Retro98 Shell da lista em Ajustes do Sistema › Privacidade e Segurança › Acessibilidade (e o Retro98 Explorer de Acesso Total ao Disco)." \
-    "If you like, remove Retro98 Shell from System Settings › Privacy & Security › Accessibility (and Retro98 Explorer from Full Disk Access)."
+if [[ $permissions_forgotten -eq 1 ]]; then
+    say "As permissões do Retro98 em Privacidade e Segurança também foram apagadas." \
+        "Retro98's permissions in Privacy & Security were cleared too."
+else
+    say "Não consegui apagar todas as permissões do Retro98: remova os apps do Retro98 das listas em Ajustes do Sistema › Privacidade e Segurança (Acessibilidade, Acesso Total ao Disco e Automação)." \
+        "Couldn't clear all of Retro98's permissions: remove the Retro98 apps from the lists in System Settings › Privacy & Security (Accessibility, Full Disk Access and Automation)."
+fi

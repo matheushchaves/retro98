@@ -68,7 +68,7 @@ Na primeira vez que você usar Desligar…, o macOS pergunta se o Retro98 Shell 
 - Clique com o botão direito para Restaurar, Minimizar e Fechar.
 - Janelas maximizadas, em "Preencher" ou lado a lado param no topo da barra em vez de passar por baixo dela.
 
-Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro; você também pode tirar o Retro98 Shell da lista de Acessibilidade.
+Isso precisa da permissão de **Acessibilidade**. Na primeira vez, o Retro98 Shell explica e abre Ajustes do Sistema › Privacidade e Segurança › Acessibilidade: ative o Retro98 Shell. Você faz isso uma vez só: o instalador assina o Shell com um certificado local (guardado num chaveiro próprio, `~/Library/Keychains/retro98-signing.keychain-db`), então o macOS lembra a permissão entre atualizações. Desinstalar remove esse chaveiro e apaga as permissões do Retro98 em Privacidade e Segurança, então instalar de novo depois de desinstalar pede a permissão outra vez. Se a barra não mostra as janelas e o Retro98 Shell já aparece ativado nessa lista, remova-o com − e adicione de novo com + (ele fica em `~/Applications/Retro98`).
 
 ## Explorer (Fase 3)
 
