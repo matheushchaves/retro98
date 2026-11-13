@@ -114,6 +114,16 @@ public enum FileIcons {
         s.fill(6, 10, 3, 1, gray)
     }
 
+    public static let notepadApp = PixelIcon(width: 32, height: 32) { drawNotepad(Sketch(context: $0, scale: 2)) }
+    public static let notepadAppSmall = PixelIcon(width: 16, height: 16) { drawNotepad(Sketch(context: $0, scale: 1)) }
+
+    /// A spiral notepad: a white page with blue ruled lines and gray rings along the top.
+    private static func drawNotepad(_ s: Sketch) {
+        s.box(2, 1, 12, 14, fill: .white)
+        for y in [5, 7, 9, 11] { s.fill(4, y, 8, 1, blue) }
+        for x in [4, 7, 10] { s.fill(x, 0, 1, 3, dark) }
+    }
+
     // MARK: Sketches
 
     private static func sketch(_ kind: FileIconKind, _ s: Sketch) {

@@ -160,7 +160,7 @@ if [[ " $pieces " == *" prompt "* ]]; then
     # macOS asks on the Prompt's behalf when a program run in it (osascript, say) wants to control another app.
     "$RETRO98_ROOT/scripts/build-app.sh" Retro98Prompt "$PROMPT_ID" "Retro98 Prompt" "$PROMPT_APP" regular "" prompt \
         "Programs you run in Retro98 Prompt (scripts that use osascript, for example) can ask to control other apps." \
-        "$RETRO98_ROOT/Resources/Prompt"
+        "$RETRO98_ROOT/Resources/Fonts"
     # Registered so Spotlight and `open -a "Retro98 Prompt"` find it right away.
     "$LSREGISTER" -f "$PROMPT_APP" || status=$?
 else

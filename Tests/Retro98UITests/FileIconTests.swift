@@ -36,3 +36,10 @@ import Testing
     #expect(FileIcons.promptAppSmall.width == 16 && FileIcons.promptAppSmall.height == 16
         && opaqueRatio(FileIcons.promptAppSmall) > 1.0 / 8.0)
 }
+
+@Test func notepadIconIsAPageWithBlueLines() {
+    #expect(FileIcons.notepadApp.width == 32 && FileIcons.notepadApp.height == 32)
+    let small = allPixels(render(FileIcons.notepadAppSmall))
+    #expect(small.count == 256)
+    #expect(small.contains(.white) && small.contains(PixelColor(red: 0x00, green: 0x00, blue: 0xFF)))
+}

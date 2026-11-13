@@ -303,6 +303,11 @@ private final class MenuPanel: NSPanel {
     }
 
     override var canBecomeKey: Bool { true }
+    /// Drop-downs inside a modal dialog (open and save) must still take clicks and keys.
+    override var worksWhenModal: Bool {
+        get { true }
+        set {}
+    }
 }
 
 @MainActor

@@ -1,4 +1,5 @@
 import AppKit
+import Retro98UI
 import Retro98Settings
 
 /// Opens a Prompt window at launch, on ⌘N and when reopened with none; quitting while programs run asks once.
@@ -52,7 +53,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if let font = PromptFont.bundledURL { PromptFont.register(at: font) }
+        if let font = VGAFont.bundledURL { VGAFont.register(at: font) }
         if controllers.isEmpty { openWindow() }
     }
 

@@ -6,7 +6,7 @@ import Testing
 private let pt = ["pt-BR"]
 
 @MainActor private func makeApp(_ prompter: ScriptedPrompter = ScriptedPrompter()) -> AppDelegate {
-    PromptFont.register(at: vgaFontURL)
+    VGAFont.register(at: vgaFontURL)
     let home = FileManager.default.temporaryDirectory.appending(path: "retro98-prompt-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
     let app = AppDelegate(launch: { sh(["-i"], home: home) }, prompter: prompter)

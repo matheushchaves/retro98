@@ -1,4 +1,5 @@
 import AppKit
+import Retro98UI
 import SwiftTerm
 
 /// The classic console look: light gray on black, the 16-color console palette, a blinking underline cursor
@@ -27,7 +28,7 @@ enum PromptStyle {
 
     /// The font goes first: it resizes the terminal to the frame. The history size and cursor go last.
     @MainActor static func apply(to view: TerminalView) {
-        view.font = PromptFont.make()
+        view.font = VGAFont.make()
         view.nativeForegroundColor = foreground
         view.nativeBackgroundColor = background
         view.installColors(palette)

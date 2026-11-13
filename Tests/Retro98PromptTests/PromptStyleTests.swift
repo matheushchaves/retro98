@@ -1,10 +1,11 @@
 import AppKit
+import Retro98UI
 import SwiftTerm
 import Testing
 @testable import Retro98Prompt
 
 @MainActor private func styledTerminal() -> TerminalView {
-    PromptFont.register(at: vgaFontURL)
+    VGAFont.register(at: vgaFontURL)
     let view = TerminalView(frame: CGRect(x: 0, y: 0, width: 640, height: 400))
     PromptStyle.apply(to: view)
     return view

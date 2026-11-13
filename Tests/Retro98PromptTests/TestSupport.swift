@@ -1,10 +1,11 @@
 import AppKit
+import Retro98UI
 import SwiftTerm
 @testable import Retro98Prompt
 
 /// The repository root, from this file's location.
 let repoRoot = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-let vgaFontURL = repoRoot.appending(path: "Resources/Prompt/PxPlus_IBM_VGA_8x16.ttf")
+let vgaFontURL = repoRoot.appending(path: "Resources/Fonts/PxPlus_IBM_VGA_8x16.ttf")
 
 /// Draws the view at 2× and counts the distinct RGB colors in its top `rows` text rows (16 pt each).
 /// Crisp text has only the background and the colors in use; font smoothing adds dozens of shades.

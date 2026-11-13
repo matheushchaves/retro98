@@ -20,7 +20,7 @@ private let pt = ["pt-BR"]
 /// A window running `/bin/sh` with the given arguments; closed (and its process ended) by `finish`.
 @MainActor private func promptWindow(_ arguments: [String], prompter: ScriptedPrompter = ScriptedPrompter())
     -> (controller: PromptWindowController, closed: () -> Bool) {
-    PromptFont.register(at: vgaFontURL)
+    VGAFont.register(at: vgaFontURL)
     let home = FileManager.default.temporaryDirectory.appending(path: "retro98-prompt-\(UUID().uuidString)")
     try? FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)
     let controller = PromptWindowController(launch: sh(arguments, home: home), languages: pt, prompter: prompter)

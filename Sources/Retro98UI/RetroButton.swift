@@ -15,6 +15,8 @@ public final class RetroButton: PixelView {
     public var isBold: Bool { didSet { needsDisplay = true } }
     /// Pressed look, set while the mouse holds it or by an owner (e.g. Start while its menu is open).
     public var isPressed = false { didSet { needsDisplay = true } }
+    /// Off: the title turns gray and clicks, Space and performClick do nothing.
+    public var isEnabled = true { didSet { needsDisplay = true } }
     private let action: () -> Void
 
     public init(title: String, isDefault: Bool = false, icon: PixelIcon? = nil, bold: Bool = false, action: @escaping () -> Void) {
@@ -35,11 +37,14 @@ public final class RetroButton: PixelView {
         return CGSize(width: max(minimumWidth, textWidth + iconWidth + horizontalPadding), height: height)
     }
 
-    public func performClick() { action() }
+    public func performClick() {
+        guard isEnabled else { return }
+        action()
+    }
 
     // MARK: Input
 
-    override public var acceptsFirstResponder: Bool { true }
+    override public var acceptsFirstResponder: Bool { isEnabled }
 
     override public func becomeFirstResponder() -> Bool {
         needsDisplay = true
@@ -62,12 +67,12 @@ public final class RetroButton: PixelView {
     override public func mouseUp(with event: NSEvent) {
         let inside = bounds.contains(convert(event.locationInWindow, from: nil))
         isPressed = false
-        if inside { action() }
+        if inside { performClick() }
     }
 
     override public func keyDown(with event: NSEvent) {
         if event.charactersIgnoringModifiers == " " {
-            action()
+            performClick()
         } else {
             super.keyDown(with: event)
         }
@@ -97,7 +102,8 @@ public final class RetroButton: PixelView {
                       context: context)
         }
         let textY = ((size.height - CGFloat(PixelText.lineHeight)) / 2).rounded(.down) + shift
-        PixelText.draw(title, font: font, color: .black, at: CGPoint(x: contentX + iconWidth, y: textY), context: context)
+        PixelText.draw(title, font: font, color: isEnabled ? .black : Palette.shadow, at: CGPoint(x: contentX + iconWidth, y: textY),
+                       context: context)
 
         if window?.firstResponder === self {
             drawFocusRectangle(in: bevelRect.insetBy(dx: 3, dy: 3), context: context)
