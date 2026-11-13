@@ -87,7 +87,7 @@ public struct TweakEngine {
 
     private func apply(_ tweak: Tweak, backup: Backup) throws -> TweakOutcome {
         let previous = tweak.changes.map { (key: $0.key, value: store.value(for: $0.key)) }
-        let capturesIndex = tweak.special != nil
+        let capturesIndex = tweak.special?.isWallpaper == true
         let indexBefore = capturesIndex ? try files.read(wallpaperIndex) : nil
         let recorded = record(tweak, previous: previous, includeIndex: capturesIndex, indexBefore: indexBefore, into: backup)
         try backupFile.save(recorded)
@@ -135,9 +135,12 @@ public struct TweakEngine {
                 return .writeDenied([change.key])
             }
         }
-        if case .solidWallpaper(let hex) = tweak.special {
+        if let special = tweak.special {
             do {
-                try wallpaper.setSolidColor(hex: hex)
+                switch special {
+                case .solidWallpaper(let hex): try wallpaper.setSolidColor(hex: hex)
+                case .pictureWallpaper(let path): try wallpaper.setPicture(URL(filePath: path))
+                }
             } catch {
                 rollBack()
                 return .wallpaperFailed(String(describing: error))
@@ -202,6 +205,12 @@ public struct TweakEngine {
     }
 
     // MARK: Status
+
+    /// Tweaks Retro98 currently manages: the ones whose originals are in the backup. This is what "on"
+    /// means in the Control Panel, even when the person's own value already matched the retro one.
+    public func managed() throws -> Set<TweakID> {
+        try backupFile.load().tweakIDs
+    }
 
     public func status() throws -> [TweakStatus] {
         let backup = try backupFile.load()

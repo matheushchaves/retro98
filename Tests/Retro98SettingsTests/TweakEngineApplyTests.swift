@@ -167,3 +167,38 @@ import Testing
     #expect(report.succeeded == [.contrast])
     #expect(report.failed.isEmpty)
 }
+
+private let pictureCatalog = TweakCatalog.phase1(
+    osMajorVersion: 27, homeDirectory: URL(filePath: "/Users/test"),
+    wallpaper: .picture(path: "/s/wallpaper-picture-1.png", name: "praia.png")
+)
+
+@Test func appliesPictureWallpaper() throws {
+    let fixture = EngineFixture(catalog: pictureCatalog)
+    let report = try fixture.engine.apply([.wallpaper])
+
+    #expect(report.succeeded == [.wallpaper])
+    #expect(fixture.wallpaper.pictures == [URL(filePath: "/s/wallpaper-picture-1.png")])
+    #expect(fixture.wallpaper.hexes.isEmpty)
+    #expect(try fixture.backupFile.load().files == [FileBackupEntry(tweak: .wallpaper, path: indexURL.path, original: originalIndex)])
+}
+
+@Test func missingPictureFailsAndKeepsBackup() throws {
+    let fixture = EngineFixture(catalog: pictureCatalog)
+    fixture.wallpaper.error = FakeError()
+    let report = try fixture.engine.apply([.wallpaper])
+
+    #expect(report.succeeded.isEmpty)
+    #expect(report.failed.map(\.id) == [.wallpaper])
+    if case .wallpaperFailed = report.failed.first?.reason {} else { Issue.record("expected wallpaperFailed") }
+    #expect(try fixture.files.read(indexURL) == originalIndex)
+    #expect(try fixture.backupFile.load().files.isEmpty)
+}
+
+@Test func managedListsTweaksInBackup() throws {
+    let fixture = EngineFixture()
+    _ = try fixture.engine.apply([.pointer, .wallpaper])
+    #expect(try fixture.engine.managed() == [.pointer, .wallpaper])
+    _ = try fixture.engine.restore([.pointer])
+    #expect(try fixture.engine.managed() == [.wallpaper])
+}

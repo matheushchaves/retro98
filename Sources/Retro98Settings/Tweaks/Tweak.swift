@@ -18,6 +18,13 @@ public enum RefreshEffect: Hashable, Sendable {
 /// Work that is not a plain preference write.
 public enum SpecialAction: Equatable, Sendable {
     case solidWallpaper(hex: String)
+    case pictureWallpaper(path: String)
+
+    var isWallpaper: Bool {
+        switch self {
+        case .solidWallpaper, .pictureWallpaper: true
+        }
+    }
 }
 
 public struct LocalizedText: Equatable, Sendable {

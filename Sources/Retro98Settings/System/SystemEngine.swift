@@ -13,8 +13,9 @@ public struct SystemEngine {
         osMajorVersion: Int = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
     ) -> SystemEngine {
         let paths = Retro98Paths.standard(home: home, environment: environment)
-        let catalog = TweakCatalog.all(osMajorVersion: osMajorVersion, homeDirectory: home)
         let files = LocalFileStore()
+        let choices = ChoicesFile(url: paths.choicesFile, files: files).load()
+        let catalog = TweakCatalog.all(osMajorVersion: osMajorVersion, homeDirectory: home, wallpaper: choices.wallpaper)
         let engine = TweakEngine(
             catalog: catalog, store: CFPreferenceStore(), files: files,
             backupFile: BackupFile(url: paths.backupFile, files: files),

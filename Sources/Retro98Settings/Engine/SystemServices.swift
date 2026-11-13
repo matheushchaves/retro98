@@ -10,6 +10,8 @@ public enum WallpaperRestore: Equatable, Sendable {
 
 public protocol WallpaperSetter {
     func setSolidColor(hex: String) throws
+    /// Shows a picture filling every screen; throws when the file is gone.
+    func setPicture(_ url: URL) throws
     /// Puts back the wallpaper agent's store as it was before the first apply (nil: there was none).
     func restoreIndex(_ original: Data?, at index: URL) throws -> WallpaperRestore
 }

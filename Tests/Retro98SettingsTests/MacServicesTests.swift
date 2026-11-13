@@ -77,3 +77,23 @@ private final class RecordingRunner: CommandRunner {
     MacSystemRefresher(runner: runner, post: { _ in }).perform([.restartDock])
     #expect(runner.runs == [["/usr/bin/killall", "Dock"]])
 }
+
+@Test func setPictureFillsScreenAndRefusesMissingFile() throws {
+    let folder = FileManager.default.temporaryDirectory.appending(path: "retro98-setpicture-\(UUID().uuidString)")
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: folder) }
+    let picture = folder.appending(path: "wallpaper-picture-1.png")
+    try SolidColorImage.pngData(hex: "#336699").write(to: picture)
+    var shown: [(URL, MacWallpaperSetter.Fit)] = []
+    let paths = Retro98Paths.standard(home: folder, environment: [Retro98Paths.supportOverrideVariable: folder.path])
+    let setter = MacWallpaperSetter(paths: paths, files: InMemoryFileStore(), runner: RecordingRunner(),
+                                    setDesktopImage: { url, fit in shown.append((url, fit)) })
+
+    try setter.setPicture(picture)
+    #expect(shown.count == 1)
+    #expect(shown.first?.0 == picture)
+    #expect(shown.first?.1 == .fill)
+
+    #expect(throws: (any Error).self) { try setter.setPicture(folder.appending(path: "sumiu.png")) }
+    #expect(shown.count == 1)
+}

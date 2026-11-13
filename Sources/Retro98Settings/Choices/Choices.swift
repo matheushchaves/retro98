@@ -1,0 +1,103 @@
+import Foundation
+
+/// What the Retro98 wallpaper shows: a solid color or a picture copied into the support folder.
+public enum WallpaperChoice: Equatable, Sendable {
+    case color(hex: String)
+    case picture(path: String, name: String)
+
+    public static let standard = WallpaperChoice.color(hex: TweakCatalog.teal)
+}
+
+/// What the person chose in the Control Panel. `./install.sh --yes` keeps these: turned-off base tweaks
+/// stay off and the chosen wallpaper comes back.
+public struct Choices: Equatable, Sendable {
+    public let wallpaper: WallpaperChoice
+    /// Base tweaks turned off in the Control Panel.
+    public let turnedOff: Set<TweakID>
+    public let soundsOn: Bool
+
+    public static let standard = Choices(wallpaper: .standard, turnedOff: [], soundsOn: true)
+
+    public init(wallpaper: WallpaperChoice, turnedOff: Set<TweakID>, soundsOn: Bool) {
+        self.wallpaper = wallpaper
+        self.turnedOff = turnedOff
+        self.soundsOn = soundsOn
+    }
+
+    public func with(wallpaper: WallpaperChoice) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn)
+    }
+
+    public func with(soundsOn: Bool) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn)
+    }
+
+    public func turning(_ id: TweakID, on: Bool) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: on ? turnedOff.subtracting([id]) : turnedOff.union([id]), soundsOn: soundsOn)
+    }
+
+    public func turningOff(_ ids: Set<TweakID>) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff.union(ids), soundsOn: soundsOn)
+    }
+}
+
+/// `choices.plist` in the support folder. A missing or unreadable file, or a missing key, means the
+/// standard value, so a broken file never stops an install.
+public struct ChoicesFile {
+    private let url: URL
+    private let files: FileStore
+
+    public init(url: URL, files: FileStore) {
+        self.url = url
+        self.files = files
+    }
+
+    /// The person's own file, as the apps and the CLI see it.
+    public static func live() -> ChoicesFile {
+        let paths = Retro98Paths.standard(home: FileManager.default.homeDirectoryForCurrentUser,
+                                          environment: ProcessInfo.processInfo.environment)
+        return ChoicesFile(url: paths.choicesFile, files: LocalFileStore())
+    }
+
+    public func load() -> Choices {
+        guard let data = try? files.read(url),
+              let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+        else { return .standard }
+        let names = plist["turnedOff"] as? [String] ?? []
+        return Choices(
+            wallpaper: Self.wallpaper(from: plist["wallpaper"] as? [String: Any]) ?? .standard,
+            turnedOff: Set(names.compactMap(TweakID.init(rawValue:))),
+            soundsOn: plist["soundsOn"] as? Bool ?? Choices.standard.soundsOn
+        )
+    }
+
+    public func save(_ choices: Choices) throws {
+        let wallpaper: [String: String] = switch choices.wallpaper {
+        case .color(let hex): ["kind": "color", "hex": hex]
+        case .picture(let path, let name): ["kind": "picture", "path": path, "name": name]
+        }
+        let plist: [String: Any] = [
+            "wallpaper": wallpaper,
+            "turnedOff": choices.turnedOff.map(\.rawValue).sorted(),
+            "soundsOn": choices.soundsOn,
+        ]
+        try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
+    }
+
+    private static func wallpaper(from dictionary: [String: Any]?) -> WallpaperChoice? {
+        switch dictionary?["kind"] as? String {
+        case "color": (dictionary?["hex"] as? String).map { .color(hex: $0) }
+        case "picture":
+            (dictionary?["path"] as? String).map { .picture(path: $0, name: dictionary?["name"] as? String ?? "") }
+        default: nil
+        }
+    }
+}
+
+/// Which tweaks a plain `retro98-settings apply` (and so `./install.sh`) applies.
+public enum TweakSelection {
+    /// The base tweaks, minus the ones turned off in the Control Panel.
+    public static func defaultApply(catalog: [Tweak], choices: Choices) -> Set<TweakID> {
+        Set(catalog.filter { $0.group == .base }.map(\.id)).subtracting(choices.turnedOff)
+    }
+}

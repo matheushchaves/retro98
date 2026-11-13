@@ -10,7 +10,7 @@ public enum TweakCatalog {
     static let smallestDockTileSize = 16
     static let dockRevealDelaySeconds = 1000.0
 
-    public static func phase1(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
+    public static func phase1(osMajorVersion: Int, homeDirectory: URL, wallpaper: WallpaperChoice = .standard) -> [Tweak] {
         let universalAccess = PreferenceDomain.app("com.apple.universalaccess")
         let finder = PreferenceDomain.app("com.apple.finder")
         let homePath = homeDirectory.absoluteString.hasSuffix("/")
@@ -20,9 +20,9 @@ public enum TweakCatalog {
         return [
             Tweak(
                 id: .wallpaper,
-                title: LocalizedText(en: "Solid teal desktop", ptBR: "Fundo verde-água sólido"),
+                title: LocalizedText(en: "Retro98 wallpaper", ptBR: "Papel de parede do Retro98"),
                 changes: [],
-                special: .solidWallpaper(hex: teal)
+                special: special(for: wallpaper)
             ),
             Tweak(
                 id: .lightAppearance,
@@ -139,8 +139,15 @@ public enum TweakCatalog {
 
     static let explorerBundleID = "io.github.matheushchaves.retro98.explorer"
 
-    public static func all(osMajorVersion: Int, homeDirectory: URL) -> [Tweak] {
-        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory) + shell() + fileViewer()
+    public static func all(osMajorVersion: Int, homeDirectory: URL, wallpaper: WallpaperChoice = .standard) -> [Tweak] {
+        phase1(osMajorVersion: osMajorVersion, homeDirectory: homeDirectory, wallpaper: wallpaper) + shell() + fileViewer()
+    }
+
+    private static func special(for wallpaper: WallpaperChoice) -> SpecialAction {
+        switch wallpaper {
+        case .color(let hex): .solidWallpaper(hex: hex)
+        case .picture(let path, _): .pictureWallpaper(path: path)
+        }
     }
 
     private static func change(_ domain: PreferenceDomain, _ name: String, _ target: PreferenceValue?) -> PreferenceChange {

@@ -8,6 +8,7 @@ public struct Retro98Paths: Equatable, Sendable {
     public let wallpaperIndex: URL
 
     public var backupFile: URL { supportDirectory.appending(path: "backup.plist") }
+    public var choicesFile: URL { supportDirectory.appending(path: "choices.plist") }
 
     /// One file per color, so the wallpaper agent never shows a stale cached image.
     public func wallpaperImage(hex: String) -> URL {

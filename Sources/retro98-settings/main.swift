@@ -74,9 +74,10 @@ do {
         printStatus(try engine.status())
         exit(0)
     case .apply(let only):
-        // Without --only, apply the base tweaks; Shell tweaks are applied by the installer.
-        let baseTweaks = Set(catalog.filter { $0.group == .base }.map(\.id))
-        let report = try engine.apply(only ?? baseTweaks)
+        // Without --only, apply the base tweaks the person hasn't turned off in the Control Panel;
+        // Shell tweaks are applied by the installer.
+        let defaults = TweakSelection.defaultApply(catalog: catalog, choices: ChoicesFile(url: paths.choicesFile, files: LocalFileStore()).load())
+        let report = try engine.apply(only ?? defaults)
         printReport(report, restoring: false)
         exit(exitStatus(for: report))
     case .restore(let only):

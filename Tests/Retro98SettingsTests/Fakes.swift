@@ -10,6 +10,7 @@ struct FakeError: Error, Equatable {}
 
 final class FakeWallpaperSetter: WallpaperSetter {
     var hexes: [String] = []
+    var pictures: [URL] = []
     var error: Error?
     var beforeSet: (() -> Void)?
 
@@ -22,6 +23,12 @@ final class FakeWallpaperSetter: WallpaperSetter {
         beforeSet?()
         if let error { throw error }
         hexes.append(hex)
+    }
+
+    func setPicture(_ url: URL) throws {
+        beforeSet?()
+        if let error { throw error }
+        pictures.append(url)
     }
 
     func restoreIndex(_ original: Data?, at index: URL) throws -> WallpaperRestore {
@@ -123,7 +130,8 @@ final class EngineFixture {
     init(
         preferences: [PreferenceKey: PreferenceValue] = machineLikePreferences,
         indexContents: Data? = originalIndex,
-        deniedKeys: Set<PreferenceKey> = []
+        deniedKeys: Set<PreferenceKey> = [],
+        catalog: [Tweak] = phase1Catalog
     ) {
         store = InMemoryPreferenceStore(preferences, deniedKeys: deniedKeys)
         let log = self.log
@@ -133,7 +141,7 @@ final class EngineFixture {
         wallpaper.files = files
         refresher = RecordingRefresher(log: log)
         engine = TweakEngine(
-            catalog: phase1Catalog, store: observer, files: files, backupFile: backupFile,
+            catalog: catalog, store: observer, files: files, backupFile: backupFile,
             wallpaperIndex: indexURL, wallpaper: wallpaper, refresher: refresher
         )
     }

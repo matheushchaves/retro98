@@ -47,6 +47,11 @@ public struct MacWallpaperSetter: WallpaperSetter {
         try setDesktopImage(url, .stretch)
     }
 
+    public func setPicture(_ url: URL) throws {
+        guard FileManager.default.fileExists(atPath: url.path) else { throw CocoaError(.fileNoSuchFile, userInfo: [NSFilePathErrorKey: url.path]) }
+        try setDesktopImage(url, .fill)
+    }
+
     public func restoreIndex(_ original: Data?, at index: URL) throws -> WallpaperRestore {
         // Saved over an uninstall that left Retro98's color behind: writing it back would bring the color back.
         if let original, WallpaperIndex.showsRetro98Image(original, paths: paths) {
