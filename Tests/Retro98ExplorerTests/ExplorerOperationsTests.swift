@@ -2,6 +2,7 @@ import AppKit
 import Testing
 @testable import Retro98Explorer
 @testable import Retro98FilesCore
+import Retro98UI
 
 private let pt = ["pt-BR"]
 
@@ -33,6 +34,7 @@ extension ExplorerServices {
     let prompter = ScriptedPrompter()
     let pasteboard = NSPasteboard(name: NSPasteboard.Name("retro98-test-\(UUID().uuidString)"))
     let operations: ExplorerOperations
+    private(set) var sounds: [RetroSoundKind] = []
 
     init(_ paths: [String], refuseTrash: Bool = false, progressDelay: TimeInterval = .infinity,
          volumes: [VolumeInfo] = [], services: ExplorerServices = .fake()) throws {
@@ -41,8 +43,10 @@ extension ExplorerServices {
         if refuseTrash { refuse = { _ in throw CocoaError(.fileWriteNoPermission) } }
         let environment = ExplorerEnvironment(home: tree.root, languages: pt, showHidden: false, volumes: { volumes },
                                               trash: tree.url(".Trash"), moveToTrash: refuse)
+        var recorded: (RetroSoundKind) -> Void = { _ in }
         operations = ExplorerOperations(environment: environment, pasteboard: pasteboard, prompter: prompter,
-                                        progressDelay: progressDelay, services: services)
+                                        progressDelay: progressDelay, services: services, playSound: { recorded($0) })
+        recorded = { [unowned self] in self.sounds.append($0) }
     }
 
     func url(_ path: String) -> URL { tree.url(path) }
@@ -132,6 +136,19 @@ extension ExplorerServices {
     #expect(h.prompter.asked.last == Prompts.emptyTrash(count: 1, languages: pt))
     #expect(try FileManager.default.contentsOfDirectory(atPath: h.url(".Trash").path).isEmpty)
     #expect(!h.operations.undoStack.canUndo)
+}
+
+@MainActor @Test func emptyingTrashPlaysTheSound() async throws {
+    let h = try OperationsHarness(["A/a.txt"])
+    h.prompter.answers = [0]
+    await h.operations.trash([h.url("A/a.txt")])
+    h.prompter.answers = [1]
+    await h.operations.emptyTrash(count: 1)
+    #expect(h.sounds.isEmpty)
+    h.prompter.answers = [0]
+    await h.operations.emptyTrash(count: 1)
+    #expect(h.sounds == [.emptyTrash])
+    #expect(try FileManager.default.contentsOfDirectory(atPath: h.url(".Trash").path).isEmpty)
 }
 
 @MainActor @Test func restorePutsItemsBack() async throws {

@@ -11,6 +11,15 @@ public enum MessageBoxIcon: Sendable {
         case .question: Icons.question
         }
     }
+
+    /// The sound a box with this icon plays: only errors and warnings make noise.
+    public var sound: RetroSoundKind? {
+        switch self {
+        case .error: .error
+        case .warning: .warning
+        case .info, .question: nil
+        }
+    }
 }
 
 public struct MessageBoxLayout: Equatable, Sendable {
@@ -65,6 +74,7 @@ public enum RetroMessageBox {
         }
         window.onCancel = { NSApp.stopModal(withCode: .init(buttons.count - 1)) }
         window.showCentered()
+        if let sound = icon.sound { RetroSound.play(sound) }
         window.makeFirstResponder(window.defaultButton)
         let response = NSApp.runModal(for: window)
         window.orderOut(nil)

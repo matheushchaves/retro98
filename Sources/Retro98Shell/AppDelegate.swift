@@ -1,6 +1,7 @@
 import AppKit
 import Retro98Settings
 import Retro98ShellCore
+import Retro98UI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -15,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard Recovery.shouldStart(languages: languages) else { return }
         let taskbar = TaskbarController(languages: languages)
         taskbar.show()
+        RetroSound.play(.startup)
         let gate = AccessibilityGate(languages: languages) { [weak taskbar] trusted in
             taskbar?.setWindowButtons(enabled: trusted)
         }

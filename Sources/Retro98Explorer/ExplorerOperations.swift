@@ -35,10 +35,13 @@ final class ExplorerOperations {
     private var idleWaiters: [CheckedContinuation<Void, Never>] = []
     /// The pasteboard's change count right after a cut; any other copy makes the cut stale.
     private var cutChangeCount: Int?
+    private let playSound: (RetroSoundKind) -> Void
     private var cutItems: Set<String> = []
 
     init(environment: ExplorerEnvironment, pasteboard: NSPasteboard = .general, prompter: ExplorerPrompter = RetroPrompter(),
-         progressDelay: TimeInterval = 1, services: ExplorerServices = .live) {
+         progressDelay: TimeInterval = 1, services: ExplorerServices = .live,
+         playSound: @escaping (RetroSoundKind) -> Void = { RetroSound.play($0) }) {
+        self.playSound = playSound
         self.environment = environment
         self.services = services
         self.pasteboard = pasteboard
@@ -150,6 +153,7 @@ final class ExplorerOperations {
         let items = (try? FileManager.default.contentsOfDirectory(at: environment.trash, includingPropertiesForKeys: nil)) ?? []
         await removePermanently(items)
         undoStack.removeAll()
+        playSound(.emptyTrash)
     }
 
     func restore(_ urls: [URL]) async -> [URL] {
