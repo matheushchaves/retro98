@@ -53,6 +53,21 @@ remove_prompt() {
     fi
 }
 
+# Retro98 Control Panel: always installed, since it is where pieces are turned on and off.
+CONTROL_PANEL_ID="io.github.matheushchaves.retro98.controlpanel"
+CONTROL_PANEL_APP="$APPS_DIR/Retro98 Control Panel.app"
+# The alert sound the Control Panel can put in ~/Library/Sounds; overridable so tests never touch the real one.
+SOUNDS_DIR="${RETRO98_SOUNDS_DIR:-$HOME/Library/Sounds}"
+
+# Quits, unregisters and deletes the Control Panel bundle (no-op when it isn't installed).
+remove_control_panel() {
+    if [[ -d "$CONTROL_PANEL_APP" ]]; then
+        stop_executable "$CONTROL_PANEL_APP/Contents/MacOS/Retro98ControlPanel"
+        "$LSREGISTER" -u "$CONTROL_PANEL_APP" > /dev/null 2>&1 || true
+        rm -rf "$CONTROL_PANEL_APP"
+    fi
+}
+
 # Stops every process running the executable at $1, however it was started: politely first,
 # then for good after 5 seconds. Matches the full path, so other apps are never touched.
 stop_executable() {

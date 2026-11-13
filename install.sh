@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell) and the Prompt.
+# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell) and the Prompt,
+# plus the Control Panel, where they are turned on and off later.
 # Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
@@ -69,6 +70,27 @@ else
 fi
 pieces="$(echo $pieces)"
 
+# The Shell and the Explorer travel together (the taskbar's quick launch button opens the Explorer).
+build_shell_apps() {
+    # Build first: if it fails, nothing (the Dock included) has been changed yet.
+    say "Montando o Retro98 Shell..." "Building Retro98 Shell..."
+    "${RETRO98_BUILD_SHELL_APP:-$RETRO98_ROOT/scripts/build-shell-app.sh}" "$SHELL_APP"
+    say "Montando o Retro98 Explorer..." "Building Retro98 Explorer..."
+    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Explorer "$EXPLORER_ID" "Retro98 Explorer" "$EXPLORER_APP" regular \
+        "$EXPLORER_SCHEME" explorer
+    # Registered before the Shell starts, so its quick launch button finds the Explorer.
+    "$LSREGISTER" -f "$EXPLORER_APP" || status=$?
+}
+
+# "Show in Finder" opens the Explorer only when that piece was chosen.
+apply_fileviewer_choice() {
+    if [[ " $pieces " == *" fileviewer "* ]]; then
+        "$BIN" apply --only explorerFileViewer || status=$?
+    else
+        "$BIN" restore --only explorerFileViewer || status=$?
+    fi
+}
+
 if [[ -n "${RETRO98_SETTINGS_BIN:-}" ]]; then
     BIN="$RETRO98_SETTINGS_BIN"
 else
@@ -88,14 +110,7 @@ if [[ " $pieces " == *" base "* ]]; then
 fi
 
 if [[ " $pieces " == *" shell "* ]]; then
-    # Build first: if it fails, nothing (the Dock included) has been changed yet.
-    say "Montando o Retro98 Shell..." "Building Retro98 Shell..."
-    "${RETRO98_BUILD_SHELL_APP:-$RETRO98_ROOT/scripts/build-shell-app.sh}" "$SHELL_APP"
-    say "Montando o Retro98 Explorer..." "Building Retro98 Explorer..."
-    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Explorer "$EXPLORER_ID" "Retro98 Explorer" "$EXPLORER_APP" regular \
-        "$EXPLORER_SCHEME" explorer
-    # Registered before the Shell starts, so its quick launch button finds the Explorer.
-    "$LSREGISTER" -f "$EXPLORER_APP" || status=$?
+    build_shell_apps
     "$BIN" apply --only dockUnderTaskbar || status=$?
     mkdir -p "$LAUNCH_AGENTS_DIR"
     # Same keys as ShellAgent.plist in Retro98Settings (the Control Panel's switch); keep the two in step.
@@ -123,11 +138,13 @@ PLIST
         "For the Explorer to show, restore and empty the Recycle Bin, give only Retro98 Explorer Full Disk Access in System Settings › Privacy & Security › Full Disk Access (optional; everything else works without it, and Retro98 Shell doesn't need it)."
     open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" || true
     open -R "$EXPLORER_APP" || true
-    if [[ " $pieces " == *" fileviewer "* ]]; then
-        "$BIN" apply --only explorerFileViewer || status=$?
-    else
-        "$BIN" restore --only explorerFileViewer || status=$?
-    fi
+    apply_fileviewer_choice
+elif [[ " $pieces " == *" shelloff "* ]]; then
+    # Turned off in the Control Panel: keep both apps current, the taskbar off and the Dock normal.
+    build_shell_apps
+    stop_shell
+    "$BIN" restore --only dockUnderTaskbar || status=$?
+    apply_fileviewer_choice
 elif [[ -f "$LAUNCH_AGENT_PLIST" || -d "$SHELL_APP" || -d "$EXPLORER_APP" ]]; then
     # The taskbar was installed before and now wasn't chosen: turn it off and give the Dock back.
     stop_shell
@@ -149,6 +166,12 @@ if [[ " $pieces " == *" prompt "* ]]; then
 else
     remove_prompt
 fi
+
+say "Montando o Retro98 Control Panel..." "Building Retro98 Control Panel..."
+# The light/dark switch goes through System Events, which macOS asks about on the Control Panel's behalf.
+"$RETRO98_ROOT/scripts/build-app.sh" Retro98ControlPanel "$CONTROL_PANEL_ID" "Retro98 Control Panel" "$CONTROL_PANEL_APP" regular "" \
+    controlpanel "Retro98 Control Panel uses System Events to switch between light and dark mode right away."
+"$LSREGISTER" -f "$CONTROL_PANEL_APP" || status=$?
 
 say "Para ver o estado: \"$BIN\" status · Para desfazer tudo: ./uninstall.sh" \
     "To check: \"$BIN\" status · To undo everything: ./uninstall.sh"

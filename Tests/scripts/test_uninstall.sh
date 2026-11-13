@@ -20,6 +20,8 @@ export RETRO98_LSREGISTER="$WORK/stub-lsregister"
 export PATH="$FAKE_BIN:$PATH"
 export RETRO98_APPS_DIR="$WORK/apps-default"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents-default"
+# Never touch the real ~/Library/Sounds.
+export RETRO98_SOUNDS_DIR="$WORK/sounds-default"
 # Never touch the real signing keychain either.
 export RETRO98_SIGNING_KEYCHAIN="$WORK/default-signing.keychain-db"
 LABEL="io.github.matheushchaves.retro98.shell"
@@ -67,13 +69,19 @@ run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
 run_shell_case() {
     local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
+    local sounds="$WORK/sounds-$name"
     mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$apps/Retro98 Prompt.app/Contents" "$agents"
+    mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$sounds"
+    echo "aiff" > "$sounds/Retro98.aiff"
+    echo "<plist/>" > "$support/choices.plist"
+    echo "png" > "$support/wallpaper-picture-1.png"
     echo "finder" > "$apps/.DS_Store"   # Finder leaves one after the installer shows the folder
     echo "<plist/>" > "$support/backup.plist"
     echo "<plist/>" > "$agents/$LABEL.plist"
 
     LAUNCHCTL_LOG="$calls" STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
-        RETRO98_APPS_DIR="$apps" RETRO98_LAUNCH_AGENTS_DIR="$agents" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+        RETRO98_APPS_DIR="$apps" RETRO98_LAUNCH_AGENTS_DIR="$agents" RETRO98_SOUNDS_DIR="$sounds" \
+        bash "$ROOT/uninstall.sh" > /dev/null 2>&1
     local actual_exit=$?
 
     local app_state="absent"
@@ -95,6 +103,17 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Prompt.app" "$calls"; then
         problems+=" prompt-not-unregistered"
     fi
+    local panel_state="absent"
+    [[ -d "$apps/Retro98 Control Panel.app" ]] && panel_state="present"
+    [[ "$panel_state" == "$expected_app" ]] || problems+=" control-panel=$panel_state"
+    if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Control Panel.app" "$calls"; then
+        problems+=" control-panel-not-unregistered"
+    fi
+    for file in "$sounds/Retro98.aiff" "$support/choices.plist" "$support/wallpaper-picture-1.png"; do
+        local file_state="absent"
+        [[ -e "$file" ]] && file_state="present"
+        [[ "$file_state" == "$expected_app" ]] || problems+=" $(basename "$file")=$file_state"
+    done
     if [[ "$expected_app" == "absent" && -d "$apps" ]]; then problems+=" apps-folder-left"; fi
     if [[ "$expected_app" == "present" && ! -f "$support/backup.plist" ]]; then problems+=" backup-lost"; fi
 

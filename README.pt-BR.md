@@ -20,7 +20,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 3B | Explorer: copiar, mover, renomear, excluir | ✅ disponível |
 | 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | ✅ disponível |
 | 4 | Prompt (terminal) | ✅ disponível |
-| 5 | Painel de Controle | planejada |
+| 5 | Painel de Controle | ✅ disponível |
 | 6 | Bloco de Notas | planejada |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | planejada |
 | 8 | Navegador retrô (WebKit) | planejada |
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Prompt, entra junto, a menos que você a tenha recusado antes.
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Prompt, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
 
 ## Desinstalar
 
@@ -147,11 +147,25 @@ O Retro98 Prompt é um terminal completo numa janela no estilo 98 (`~/Applicatio
 | Copiar, colar, selecionar tudo | ⌘C · ⌘V · ⌘A |
 | Minimizar | ⌘M |
 
+## Painel de Controle (Fase 5)
+
+O Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) liga e desliga as peças do Retro98 sem usar o terminal. Abra em Iniciar › Configurações › Painel de Controle, pelo Spotlight ou com `open -a "Retro98 Control Panel"`; Ajustes… (⌘,) traz a janela de volta.
+
+- **Vídeo:** o papel de parede do macOS, uma de 16 cores sólidas ou uma imagem sua. A imagem é copiada para a pasta do Retro98, então mover o original depois não estraga nada.
+- **Aparência:** cada ajuste da Fase 1 com sua caixa de ligar e desligar. O papel de parede fica em Vídeo e o ponteiro em Mouse.
+- **Mouse:** o ponteiro branco com contorno preto.
+- **Sons:** os sons do próprio Retro98 (início da barra, erro, aviso, esvaziar a Lixeira), criados pelo projeto, cada um com um botão Tocar. Dá para desligá-los e para usar o alerta do Retro98 como som de alerta do macOS: ele vai para `~/Library/Sounds/Retro98.aiff` e aparece como "Retro98" em Ajustes do Sistema › Som.
+- **Componentes:** a barra de tarefas e o menu Iniciar, o Explorer no lugar do Finder em "Mostrar no Finder" e a barra de menus do macOS escondida (ela aparece ao levar o ponteiro ao topo). Uma peça não instalada aparece em cinza, com o jeito de instalar.
+- **Atalhos do macOS:** Rede, Impressoras, Teclado, Data/Hora, Usuários e Ajustes do Sistema abrem o painel correspondente.
+- **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Para removê-los também, rode `./uninstall.sh`.
+
+O que você muda aqui fica: `./install.sh --yes` mantém desligados os ajustes que você desligou, volta a cor ou a imagem escolhida e deixa desligada a barra de tarefas que você desligou (o arquivo de peças diz `shelloff`), mas continua atualizando os apps. Para ligar de novo, use o próprio Painel de Controle.
+
 ## O que a Fase 1 muda
 
 | Id | Ajuste | O que muda |
 |---|---|---|
-| `wallpaper` | Fundo verde-água sólido | O papel de parede vira `#008080` sólido em todas as telas |
+| `wallpaper` | Papel de parede do Retro98 | O papel de parede vira `#008080` sólido (ou a cor ou imagem escolhida no Painel de Controle) em todas as telas |
 | `lightAppearance` | Modo claro | Aparência clara, sem troca automática |
 | `colors` | Destaque grafite e seleção azul-marinho | Cor de destaque grafite, seleção de texto `#000080` |
 | `contrast` | Menos transparência e mais contraste | Menus e barras laterais opacos, controles com contorno |
@@ -174,6 +188,8 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 
 - Para trocar para o modo claro na hora, o macOS pode perguntar se o **Terminal pode controlar o System Events**. Se você recusar, o modo claro vale depois de sair e entrar de novo na conta.
 - Os ajustes de Acessibilidade (`contrast`, `pointer`) precisam de **Acesso Total ao Disco** para o app de terminal em que você roda o instalador. Se o macOS recusar, a ferramenta abre **Ajustes do Sistema › Privacidade e Segurança › Acesso Total ao Disco**: ative o seu app de terminal e rode o mesmo comando de novo. Os outros ajustes são aplicados normalmente. Use o mesmo app de terminal para desinstalar.
+- O Painel de Controle precisa do mesmo **Acesso Total ao Disco** para mudar `contrast` e `pointer`. Se o macOS recusar, ele avisa e oferece abrir o painel: ative o Retro98 Control Panel lá e aplique de novo. Na primeira troca para o modo claro, o macOS pergunta se o Retro98 Control Panel pode controlar o System Events.
+- A barra de menus escondida e o som de alerta usam ajustes do macOS que a Apple não documenta. Se um deles só valer depois de sair e entrar de novo na conta, é o macOS, não uma falha.
 - Alguns apps só mostram as novas cores, barras de rolagem ou animações depois de fechados e abertos de novo.
 
 ## Créditos

@@ -32,10 +32,12 @@ remove_signing_identity
 rm -rf "$SHELL_APP"
 remove_explorer
 remove_prompt
+remove_control_panel
+rm -f "$SOUNDS_DIR/Retro98.aiff"
 rm -f "$APPS_DIR/.DS_Store"
 rmdir "$APPS_DIR" 2>/dev/null || true
-rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-*.png "$SUPPORT_DIR/.DS_Store" \
-    "$PIECES_FILE" "$SUPPORT_DIR/shell-launches.plist"
+rm -f "$SUPPORT_DIR/backup.plist" "$INSTALLED_BIN" "$SUPPORT_DIR"/wallpaper-* "$SUPPORT_DIR/.DS_Store" \
+    "$PIECES_FILE" "$SUPPORT_DIR/shell-launches.plist" "$SUPPORT_DIR/choices.plist"
 rmdir "$SUPPORT_DIR/bin" 2>/dev/null || true
 rmdir "$SUPPORT_DIR" 2>/dev/null || true
 say "Pronto: seu Mac voltou ao normal e o Retro98 foi removido." "Done: your Mac is back to normal and Retro98 was removed."

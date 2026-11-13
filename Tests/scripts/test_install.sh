@@ -20,6 +20,8 @@ export RETRO98_SETTINGS_BIN="$WORK/stub-settings"
 export RETRO98_SUPPORT_DIR="$WORK/support"
 export RETRO98_APPS_DIR="$WORK/apps"
 export RETRO98_LAUNCH_AGENTS_DIR="$WORK/agents"
+# Never touch the real ~/Library/Sounds.
+export RETRO98_SOUNDS_DIR="$WORK/sounds"
 # Never register anything with the real LaunchServices database.
 export RETRO98_LSREGISTER="$WORK/stub-lsregister"
 # Never create the real signing keychain from tests.
@@ -64,6 +66,21 @@ check "prompt-has-icon" '[[ -s "$PROMPT/Contents/Resources/AppIcon.icns" ]]'
 check "prompt-apple-events-usage" '[[ -n "$(/usr/libexec/PlistBuddy -c "Print :NSAppleEventsUsageDescription" "$PROMPT/Contents/Info.plist" 2> /dev/null)" ]]'
 check "prompt-registered" 'grep -qx "lsregister -f $PROMPT" "$WORK_LOG"'
 check "prompt-not-default-terminal" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1 && ! /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$PROMPT/Contents/Info.plist" > /dev/null 2>&1'
+CONTROL_PANEL="$WORK/apps/Retro98 Control Panel.app"
+check "control-panel-built" 'codesign --verify "$CONTROL_PANEL" 2> /dev/null'
+check "control-panel-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$CONTROL_PANEL/Contents/Info.plist" > /dev/null 2>&1'
+check "control-panel-has-icon" '[[ -s "$CONTROL_PANEL/Contents/Resources/AppIcon.icns" ]]'
+check "control-panel-apple-events-usage" '[[ "$(/usr/libexec/PlistBuddy -c "Print :NSAppleEventsUsageDescription" "$CONTROL_PANEL/Contents/Info.plist" 2> /dev/null)" == "Retro98 Control Panel uses System Events to switch between light and dark mode right away." ]]'
+check "control-panel-registered" 'grep -qx "lsregister -f $CONTROL_PANEL" "$WORK_LOG"'
+
+# Turned off in the Control Panel ("shelloff"): the apps are rebuilt, the taskbar stays off and the Dock normal.
+echo "base shelloff prompt" > "$WORK/support/pieces"
+rm -rf "$WORK/apps/Retro98 Shell.app"
+: > "$WORK_LOG"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-shelloff.log" 2>&1
+check "shelloff-keeps-taskbar-off" '[[ -d "$WORK/apps/Retro98 Shell.app" ]] && ! grep -q "^bootstrap " "$WORK_LOG" \
+    && grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG" && grep -q "^bootout gui/$(id -u)/$LABEL" "$WORK_LOG" \
+    && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt" ]]'
 
 # Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.
 rm -rf "$PROMPT"

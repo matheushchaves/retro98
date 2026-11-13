@@ -20,7 +20,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 3B | Explorer: copy, move, rename, delete | ✅ available |
 | 3C | Explorer: views, search, Open With, Properties | ✅ available |
 | 4 | Prompt (terminal) | ✅ available |
-| 5 | Control Panel | planned |
+| 5 | Control Panel | ✅ available |
 | 6 | Notepad | planned |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | planned |
 | 8 | Retro web browser (WebKit) | planned |
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Prompt, comes in unless you declined it before.
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Prompt, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
 
 ## Uninstall
 
@@ -147,11 +147,25 @@ Retro98 Prompt is a full terminal in a 98-style window (`~/Applications/Retro98/
 | Copy, paste, select all | ⌘C · ⌘V · ⌘A |
 | Minimize | ⌘M |
 
+## Control Panel (Phase 5)
+
+Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) turns Retro98's pieces on and off without the terminal. Open it from Start › Settings › Control Panel, from Spotlight, or with `open -a "Retro98 Control Panel"`; Settings… (⌘,) brings its window back.
+
+- **Display:** the macOS wallpaper, one of 16 solid colors, or a picture of your own. The picture is copied into Retro98's folder, so moving the original later doesn't break it.
+- **Appearance:** each Phase 1 tweak on its own check box. The wallpaper is in Display and the pointer in Mouse.
+- **Mouse:** the white pointer with a black outline.
+- **Sounds:** Retro98's own sounds (taskbar startup, errors, warnings, emptying the Recycle Bin), made by the project, each with a Play button. You can turn them off, and you can make Retro98's alert the macOS alert sound: it goes to `~/Library/Sounds/Retro98.aiff` and shows as "Retro98" in System Settings › Sound.
+- **Components:** the taskbar and Start menu, Explorer instead of Finder for "Show in Finder", and a hidden macOS menu bar (it shows when you move the pointer to the top). A piece that isn't installed is grayed out, with how to install it.
+- **Shortcuts to macOS:** Network, Printers, Keyboard, Date/Time, Users and System Settings open the matching panel.
+- **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. To remove them too, run `./uninstall.sh`.
+
+What you change here sticks: `./install.sh --yes` keeps the tweaks you turned off off, brings back the color or picture you chose, and keeps a taskbar you turned off off (the pieces file says `shelloff`) while still updating the apps. Turn things back on in the Control Panel itself.
+
 ## What Phase 1 changes
 
 | Id | Tweak | What changes |
 |---|---|---|
-| `wallpaper` | Solid teal desktop | Wallpaper becomes solid `#008080` on every screen |
+| `wallpaper` | Retro98 wallpaper | Wallpaper becomes solid `#008080` (or the color or picture chosen in the Control Panel) on every screen |
 | `lightAppearance` | Light mode | Light appearance, automatic switching off |
 | `colors` | Graphite accent and navy selection | Graphite accent color, `#000080` text selection |
 | `contrast` | Reduced transparency and increased contrast | Opaque menus and sidebars, outlined controls |
@@ -174,6 +188,8 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 
 - To switch to light mode right away, macOS may ask whether **Terminal can control System Events**. If you decline, light mode still takes effect after you log out and back in.
 - The Accessibility tweaks (`contrast`, `pointer`) need **Full Disk Access** for the terminal app you run the installer from. If macOS refuses them, the tool opens **System Settings › Privacy & Security › Full Disk Access**: turn on your terminal app and run the same command again. Every other tweak still gets applied. Use the same terminal app to uninstall.
+- The Control Panel needs the same **Full Disk Access** to change `contrast` and `pointer`. If macOS refuses, it says so and offers to open the panel: turn on Retro98 Control Panel there and apply again. Its first switch to light mode makes macOS ask whether Retro98 Control Panel can control System Events.
+- The hidden menu bar and the alert sound use macOS settings Apple doesn't document. If one of them only takes effect after you log out and back in, that's macOS, not a failed change.
 - Some apps only show the new colors, scroll bars or animation setting after you quit and reopen them.
 
 ## Credits

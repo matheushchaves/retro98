@@ -18,8 +18,8 @@ SCHEME="${6:-}"
 ICON="${7:-}"
 APPLE_EVENTS_USAGE="${8:-}"
 RESOURCES="${9:-}"
-VERSION="0.7.0"
-BUILD="7"
+VERSION="0.8.0"
+BUILD="8"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
