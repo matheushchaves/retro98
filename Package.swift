@@ -14,6 +14,7 @@ let package = Package(
         .executable(name: "Retro98Explorer", targets: ["Retro98Explorer"]),
         .executable(name: "retro98-tools", targets: ["retro98-tools"]),
         .executable(name: "Retro98Prompt", targets: ["Retro98Prompt"]),
+        .executable(name: "Retro98ControlPanel", targets: ["Retro98ControlPanel"]),
     ],
     // SwiftTerm stays vendored at 1.11.2: 1.12+ needs Xcode's Metal Toolchain to build (see Vendor/SwiftTerm/VENDORED.md).
     dependencies: [
@@ -37,6 +38,8 @@ let package = Package(
             name: "Retro98Prompt",
             dependencies: ["Retro98UI", "Retro98Settings", .product(name: "SwiftTerm", package: "SwiftTerm")]
         ),
+        .executableTarget(name: "Retro98ControlPanel", dependencies: ["Retro98UI", "Retro98Settings"]),
+        .testTarget(name: "Retro98ControlPanelTests", dependencies: ["Retro98ControlPanel", "Retro98Settings", "Retro98UI"]),
         .testTarget(
             name: "Retro98PromptTests",
             dependencies: ["Retro98Prompt", "Retro98UI", .product(name: "SwiftTerm", package: "SwiftTerm")]

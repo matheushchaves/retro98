@@ -26,7 +26,8 @@ final class StartMenuController {
         let explorerInstalled = QuickLaunch.isAvailable { NSWorkspace.shared.urlForApplication(toOpen: $0) != nil }
         let nodes = StartMenuItems.build(
             programs: programs, documents: documents.recent(limit: StartMenuModel.recentDocumentsLimit), languages: languages,
-            findURL: explorerInstalled ? QuickLaunch.findURL : nil
+            findURL: explorerInstalled ? QuickLaunch.findURL : nil,
+            controlPanelURL: NSWorkspace.shared.urlForApplication(withBundleIdentifier: StartMenuModel.controlPanelBundleID)
         )
         let menu = RetroMenu(items: nodes.map { item($0, large: true) }, style: .startMenu)
         menu.ignoresClick = ignoresClick
@@ -95,6 +96,7 @@ final class StartMenuController {
         case .shutDown: Icons.shutDown
         case .folder: Icons.folder
         case .systemSettings: Icons.systemSettings
+        case .controlPanel: large ? ControlPanelIcons.app : ControlPanelIcons.appSmall
         case .find: large ? FileIcons.explorerApp : FileIcons.explorerAppSmall
         }
     }

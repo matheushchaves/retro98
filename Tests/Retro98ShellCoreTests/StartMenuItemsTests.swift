@@ -43,3 +43,14 @@ private let safari = URL(filePath: "/Applications/Safari.app")
     #expect(StartMenuItems.build(programs: [], documents: [], languages: ["en"], findURL: find)[3]?.title == "Find…")
     #expect(!StartMenuItems.build(programs: [], documents: [], languages: ["pt-BR"]).contains { $0?.title == "Localizar…" })
 }
+
+@Test func settingsListsControlPanelFirstWhenInstalled() {
+    let panel = URL(filePath: "/apps/Retro98 Control Panel.app")
+    let withPanel = StartMenuItems.build(programs: [], documents: [], languages: ["pt-BR"], controlPanelURL: panel)
+    let settings = withPanel.compactMap { $0 }.first { $0.symbol == .settings }
+    #expect(settings?.children?.map(\.title) == ["Painel de Controle", "Ajustes do Sistema"])
+    #expect(settings?.children?.map(\.symbol) == [.controlPanel, .systemSettings])
+    #expect(settings?.children?.first?.action == .open(panel))
+    let without = StartMenuItems.build(programs: [], documents: [], languages: ["pt-BR"])
+    #expect(without.compactMap { $0 }.first { $0.symbol == .settings }?.children?.map(\.symbol) == [.systemSettings])
+}

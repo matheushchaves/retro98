@@ -1,23 +1,6 @@
 import AppKit
 import Retro98UI
 
-/// A sunken 2-pt field border around a pane (tree and icon panes).
-final class FieldFrame: PixelView {
-    init(wrapping content: NSView) {
-        super.init(frame: content.frame)
-        content.frame = bounds.insetBy(dx: 2, dy: 2)
-        content.autoresizingMask = [.width, .height]
-        addSubview(content)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
-
-    override func drawPixels(in context: CGContext, size: CGSize) {
-        Bevel.draw(.sunken, in: CGRect(origin: .zero, size: size), context: context)
-    }
-}
-
 /// The right pane: the Details column header (only in Details) above the scrolling grid.
 final class GridPane: NSView {
     let header = RetroColumnHeader()

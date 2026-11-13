@@ -45,9 +45,9 @@ enum Recovery {
             title: "Retro98 Shell",
             message: LocalizedText(
                 en: "Retro98 Shell stopped working several times and was turned off. The Dock is back to normal. "
-                    + "To turn it on again, run ./install.sh.",
+                    + "To turn it on again, use Components in Control Panel or run ./install.sh.",
                 ptBR: "O Retro98 Shell parou de funcionar várias vezes e foi desligado. O Dock voltou ao normal. "
-                    + "Para ligar de novo, rode ./install.sh."
+                    + "Para ligar de novo, use Componentes no Painel de Controle ou rode ./install.sh."
             ).resolve(for: languages),
             icon: .warning, buttons: ["OK"]
         )

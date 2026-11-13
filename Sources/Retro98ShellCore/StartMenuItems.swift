@@ -8,7 +8,7 @@ public enum StartMenuAction: Equatable, Sendable {
 
 /// Built-in icon a node asks for; nodes without one use the icon of `iconURL`.
 public enum StartMenuSymbol: Equatable, Sendable {
-    case programs, documents, settings, find, help, run, shutDown, folder, systemSettings
+    case programs, documents, settings, find, help, run, shutDown, folder, systemSettings, controlPanel
 }
 
 /// One Start menu entry. A node with neither action nor children is shown disabled.
@@ -33,9 +33,10 @@ public struct StartMenuNode: Equatable, Sendable {
 
 public enum StartMenuItems {
     /// Top-level Start menu in `StartMenuModel.topLevel` order; nil marks a separator.
-    /// "Find…" opens `findURL` (the Explorer's search) and is left out without it.
+    /// "Find…" opens `findURL` (the Explorer's search) and is left out without it; Settings lists the
+    /// Control Panel first when `controlPanelURL` (the installed app) is given.
     public static func build(programs: [ProgramNode], documents: [RecentDocument], languages: [String],
-                             findURL: URL? = nil) -> [StartMenuNode?] {
+                             findURL: URL? = nil, controlPanelURL: URL? = nil) -> [StartMenuNode?] {
         StartMenuModel.topLevel.compactMap { entry -> StartMenuNode?? in
             let title = StartMenuModel.title(entry, languages: languages)
             switch entry {
@@ -55,7 +56,12 @@ public enum StartMenuItems {
                     title: StartMenuModel.systemSettingsTitle(languages: languages), iconURL: nil,
                     action: .open(StartMenuModel.systemSettingsURL), children: nil, symbol: .systemSettings
                 )
-                return StartMenuNode(title: title, iconURL: nil, action: nil, children: [systemSettings], symbol: .settings)
+                let controlPanel = controlPanelURL.map {
+                    StartMenuNode(title: StartMenuModel.controlPanelTitle(languages: languages), iconURL: nil, action: .open($0),
+                                  children: nil, symbol: .controlPanel)
+                }
+                return StartMenuNode(title: title, iconURL: nil, action: nil, children: [controlPanel, systemSettings].compactMap { $0 },
+                                     symbol: .settings)
             case .help:
                 return StartMenuNode(title: title, iconURL: nil, action: .open(StartMenuModel.helpURL), children: nil, symbol: .help)
             case .run:

@@ -9,6 +9,7 @@ public enum StartMenuModel {
     public static let topLevel: [StartMenuEntry] = [.programs, .documents, .settings, .find, .help, .run, .separator, .shutDown]
     public static let helpURL = URL(string: "https://github.com/matheushchaves/retro98#readme")!
     public static let systemSettingsURL = URL(filePath: "/System/Applications/System Settings.app")
+    public static let controlPanelBundleID = "io.github.matheushchaves.retro98.controlpanel"
     public static let recentDocumentsLimit = 15
 
     public static func title(_ entry: StartMenuEntry, languages: [String]) -> String {
@@ -24,6 +25,10 @@ public enum StartMenuModel {
         case .separator: return ""
         }
         return text.resolve(for: languages)
+    }
+
+    public static func controlPanelTitle(languages: [String]) -> String {
+        LocalizedText(en: "Control Panel", ptBR: "Painel de Controle").resolve(for: languages)
     }
 
     public static func systemSettingsTitle(languages: [String]) -> String {
