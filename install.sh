@@ -98,6 +98,7 @@ if [[ " $pieces " == *" shell "* ]]; then
     "$LSREGISTER" -f "$EXPLORER_APP" || status=$?
     "$BIN" apply --only dockUnderTaskbar || status=$?
     mkdir -p "$LAUNCH_AGENTS_DIR"
+    # Same keys as ShellAgent.plist in Retro98Settings (the Control Panel's switch); keep the two in step.
     cat > "$LAUNCH_AGENT_PLIST" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

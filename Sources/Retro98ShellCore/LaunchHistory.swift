@@ -2,7 +2,7 @@ import Foundation
 import Retro98Settings
 
 public enum ShellIdentity {
-    public static let label = "io.github.matheushchaves.retro98.shell"
+    public static let label = ShellAgent.label
     public static let launchHistoryFileName = "shell-launches.plist"
 
     /// Disable first so launchd won't start the Shell again at the next login, then stop it now.
