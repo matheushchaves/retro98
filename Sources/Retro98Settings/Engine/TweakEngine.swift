@@ -9,6 +9,11 @@ public enum FailureReason: Equatable, Sendable {
 public struct TweakFailure: Equatable, Sendable {
     public let id: TweakID
     public let reason: FailureReason
+
+    public init(id: TweakID, reason: FailureReason) {
+        self.id = id
+        self.reason = reason
+    }
 }
 
 public enum EngineWarning: Equatable, Sendable {

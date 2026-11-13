@@ -18,9 +18,14 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
     let services: ControlPanelServices
     let prompter: ControlPanelPrompter
     private(set) var backToNormalButton: RetroButton!
-    /// A Retro98 applet was opened (its dialog).
+    /// A Retro98 applet was opened; by default its dialog shows (one per applet).
     var onOpenApplet: ((Applet) -> Void)?
     var onClose: (() -> Void)?
+    let model: ControlPanelModel
+    /// Open applet dialogs, each kept until it closes.
+    private(set) var dialogs: [Applet: AppletDialog] = [:]
+    /// Tests build dialogs without putting them on screen.
+    var presentsDialogs = true
 
     private var languages: [String] { services.languages }
     private let applets = Applet.allCases
@@ -28,6 +33,7 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
     init(services: ControlPanelServices, prompter: ControlPanelPrompter) {
         self.services = services
         self.prompter = prompter
+        model = ControlPanelModel(services: services)
         window = RetroAppWindow(title: ControlPanelText.windowTitle(services.languages), icon: ControlPanelIcons.appSmall,
                                 contentSize: Self.contentSize)
         super.init()
@@ -38,6 +44,7 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
         }
         build()
         updateStatus()
+        onOpenApplet = { [weak self] applet in self?.openDialog(applet) }
     }
 
     // MARK: Layout
@@ -127,6 +134,44 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
         } else {
             onOpenApplet?(applet)
         }
+    }
+
+    /// Shows the applet's dialog, or brings the open one to the front.
+    func openDialog(_ applet: Applet) {
+        if let open = dialogs[applet] {
+            if presentsDialogs { open.window.makeKeyAndOrderFront(nil) }
+            return
+        }
+        guard let dialog = makeDialog(applet) else { return }
+        dialog.onClose = { [weak self] in
+            self?.dialogs[applet] = nil
+            self?.appletObjects[applet] = nil
+        }
+        dialogs[applet] = dialog
+        if presentsDialogs { dialog.show() }
+    }
+
+    /// The objects behind each dialog stay alive with it.
+    private var appletObjects: [Applet: AnyObject] = [:]
+
+    private func makeDialog(_ applet: Applet) -> AppletDialog? {
+        let object: AnyObject
+        let dialog: AppletDialog
+        switch applet {
+        case .display:
+            let display = DisplayApplet(model: model, services: services, prompter: prompter)
+            (object, dialog) = (display, display.dialog)
+        case .appearance:
+            let list = TweakListApplet.appearance(model: model, services: services, prompter: prompter)
+            (object, dialog) = (list, list.dialog)
+        case .mouse:
+            let list = TweakListApplet.mouse(model: model, services: services, prompter: prompter)
+            (object, dialog) = (list, list.dialog)
+        default:
+            return nil
+        }
+        appletObjects[applet] = object
+        return dialog
     }
 
     private func openItem(at index: Int) {

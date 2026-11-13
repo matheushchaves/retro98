@@ -104,7 +104,7 @@ public final class RetroIconView: PixelView {
 /// Lines of regular black text on the face color.
 @MainActor
 public final class RetroLabel: PixelView {
-    public let lines: [String]
+    public var lines: [String] { didSet { needsDisplay = true } }
 
     public init(lines: [String]) {
         self.lines = lines

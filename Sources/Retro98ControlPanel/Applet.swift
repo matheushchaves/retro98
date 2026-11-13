@@ -61,8 +61,13 @@ enum Applet: CaseIterable {
         case .keyboard: ControlPanelIcons.icon(.keyboard, size: 32)
         case .dateTime: ControlPanelIcons.icon(.dateTime, size: 32)
         case .users: ControlPanelIcons.icon(.users, size: 32)
-        case .systemSettings: Icons.systemSettings
+        case .systemSettings: Self.systemSettingsIcon
         }
+    }
+
+    /// The Start menu's 16-pixel System Settings icon, doubled without smoothing to sit among the 32-pixel ones.
+    private static let systemSettingsIcon = PixelIcon(width: 32, height: 32) { context in
+        PixelIcon.drawUpright(Icons.systemSettings.image(), in: CGRect(x: 0, y: 0, width: 32, height: 32), context: context)
     }
 
     /// The macOS panel a shortcut opens; nil for Retro98's own applets.
