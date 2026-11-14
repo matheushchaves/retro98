@@ -21,6 +21,7 @@ final class NotepadWindowController: NSObject, NSWindowDelegate, NSTextViewDeleg
     private(set) var file = TextFile.empty
     private(set) var isModified = false
     var onClose: (() -> Void)?
+    var onBecomeKey: (() -> Void)?
     var wordWrap: Bool {
         didSet { applyWordWrap() }
     }
@@ -60,6 +61,7 @@ final class NotepadWindowController: NSObject, NSWindowDelegate, NSTextViewDeleg
     private func build() {
         let content = window.contentContainer
         let width = content.bounds.width, height = content.bounds.height
+        menuBar.menus = NotepadMenus.retroMenus(languages: languages) { [weak self] in self?.wordWrap ?? false }
         menuBar.frame = CGRect(x: 0, y: 0, width: width, height: Self.menuHeight)
         menuBar.autoresizingMask = [.width]
         let line = EtchedLine(frame: CGRect(x: 0, y: Self.menuHeight, width: width, height: 2))
@@ -188,6 +190,8 @@ final class NotepadWindowController: NSObject, NSWindowDelegate, NSTextViewDeleg
     func windowWillReturnUndoManager(_ window: NSWindow) -> UndoManager? { textUndoManager }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool { confirmDiscardingChanges() }
+
+    func windowDidBecomeKey(_ notification: Notification) { onBecomeKey?() }
 
     func windowWillClose(_ notification: Notification) {
         guard !isClosed else { return }
