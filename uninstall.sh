@@ -37,6 +37,7 @@ if [[ -d "$SHELL_APP" ]]; then
 fi
 remove_explorer
 remove_prompt
+remove_notepad
 remove_control_panel
 rm -f "$SOUNDS_DIR/Retro98.aiff"
 rm -f "$APPS_DIR/.DS_Store"

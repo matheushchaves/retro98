@@ -21,7 +21,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 3C | Explorer: views, search, Open With, Properties | ✅ available |
 | 4 | Prompt (terminal) | ✅ available |
 | 5 | Control Panel | ✅ available |
-| 6 | Notepad | planned |
+| 6 | Notepad | ✅ available |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | planned |
 | 8 | Retro web browser (WebKit) | planned |
 
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Prompt, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt, the Notepad), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Notepad, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
 
 ## Uninstall
 
@@ -160,6 +160,27 @@ Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) turns
 - **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. `./install.sh --yes` then keeps macOS normal; run `./install.sh` and answer Yes to bring the retro look back, or run `./uninstall.sh` to remove the apps too.
 
 What you change here sticks: `./install.sh --yes` keeps the tweaks you turned off off, brings back the color or picture you chose, and keeps a taskbar you turned off off (the pieces file says `shelloff`) while still updating the apps. Turn things back on in the Control Panel itself.
+
+## Notepad (Phase 6)
+
+Retro98 Notepad (`~/Applications/Retro98/Retro98 Notepad.app`) is a plain-text editor in a 98-style window: black text on white in the same pixel-sharp VGA font as the Prompt, with no formatting and none of macOS's automatic substitutions (curly quotes, dashes, spelling correction), so the file holds exactly what you typed.
+
+- **Open it** from Start › Programs › Retro98 › Retro98 Notepad, from Spotlight, or with `open -a "Retro98 Notepad" file.txt`. It is also listed in **Open With** for text files, in Finder and in the Explorer, without becoming the default app for `.txt`. The installer asks about it separately ("Install the Notepad?", default Yes).
+- **Files:** it reads and writes UTF-8. Saving keeps the line breaks the file already had (Windows, Unix or old Mac) and its byte-order mark, if it had one. A file in another encoding, a binary file or one over 10 MB doesn't open: a message says why, and nothing is changed.
+- **Open and Save As** use Retro98's own retro dialogs: the "Look in" list with the Desktop, the disks and My Documents, the up-one-level button, the file name and the type (`*.txt` or all files). The name field also takes a path, such as `~/notes` or `/tmp/log.txt`. They don't create folders: use the Explorer for that.
+- **Windows:** one per document. Open reuses a window that is still empty; a file that is already open just comes to the front. Closing or quitting with changes asks whether to save.
+- **Search:** Find looks down or up from the cursor, matching case or not, and tells you when there is no match.
+- **Format › Word Wrap** applies to every window and is remembered.
+- **Not in this phase:** printing. TextEdit still opens the same files.
+
+| Action | Shortcut |
+|---|---|
+| New, open, save, save as | ⌘N · ⌘O · ⌘S · ⇧⌘S |
+| Undo, redo | ⌘Z · ⇧⌘Z |
+| Cut, copy, paste, select all | ⌘X · ⌘C · ⌘V · ⌘A |
+| Time/Date | F5 |
+| Find, find next | ⌘F · ⌘G |
+| Close | ⌘W |
 
 ## What Phase 1 changes
 

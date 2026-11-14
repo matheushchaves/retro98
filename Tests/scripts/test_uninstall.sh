@@ -77,7 +77,7 @@ run_shell_case() {
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
     local sounds="$WORK/sounds-$name"
     mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$apps/Retro98 Prompt.app/Contents" "$agents"
-    mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$sounds"
+    mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$apps/Retro98 Notepad.app/Contents" "$sounds"
     echo "aiff" > "$sounds/Retro98.aiff"
     echo "<plist/>" > "$support/choices.plist"
     echo "png" > "$support/wallpaper-picture-1.png"
@@ -109,6 +109,12 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Prompt.app" "$calls"; then
         problems+=" prompt-not-unregistered"
     fi
+    local notepad_state="absent"
+    [[ -d "$apps/Retro98 Notepad.app" ]] && notepad_state="present"
+    [[ "$notepad_state" == "$expected_app" ]] || problems+=" notepad=$notepad_state"
+    if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Notepad.app" "$calls"; then
+        problems+=" notepad-not-unregistered"
+    fi
     local panel_state="absent"
     [[ -d "$apps/Retro98 Control Panel.app" ]] && panel_state="present"
     [[ "$panel_state" == "$expected_app" ]] || problems+=" control-panel=$panel_state"
@@ -124,7 +130,7 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]]; then
         local id last_reset first_unregister
         for id in "$LABEL" io.github.matheushchaves.retro98.explorer io.github.matheushchaves.retro98.prompt \
-            io.github.matheushchaves.retro98.controlpanel; do
+            io.github.matheushchaves.retro98.controlpanel io.github.matheushchaves.retro98.notepad; do
             grep -qx "tccutil reset All $id" "$calls" || problems+=" permissions-kept:$id"
         done
         # tccutil can't find an unregistered bundle ID: every reset must come before any unregistering.

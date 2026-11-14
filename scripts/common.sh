@@ -53,6 +53,19 @@ remove_prompt() {
     fi
 }
 
+# Retro98 Notepad, the plain-text editor: a piece of its own too.
+NOTEPAD_ID="io.github.matheushchaves.retro98.notepad"
+NOTEPAD_APP="$APPS_DIR/Retro98 Notepad.app"
+
+# Quits, unregisters and deletes the Notepad bundle (no-op when it isn't installed).
+remove_notepad() {
+    if [[ -d "$NOTEPAD_APP" ]]; then
+        stop_executable "$NOTEPAD_APP/Contents/MacOS/Retro98Notepad"
+        "$LSREGISTER" -u "$NOTEPAD_APP" > /dev/null 2>&1 || true
+        rm -rf "$NOTEPAD_APP"
+    fi
+}
+
 # Retro98 Control Panel: always installed, since it is where pieces are turned on and off.
 CONTROL_PANEL_ID="io.github.matheushchaves.retro98.controlpanel"
 CONTROL_PANEL_APP="$APPS_DIR/Retro98 Control Panel.app"
@@ -111,7 +124,7 @@ DEFAULTS_TOOL="${RETRO98_DEFAULTS:-/usr/bin/defaults}"
 forget_permissions() {
     local pair id app failed=0
     for pair in "$SHELL_LABEL|$SHELL_APP" "$EXPLORER_ID|$EXPLORER_APP" "$PROMPT_ID|$PROMPT_APP" \
-        "$CONTROL_PANEL_ID|$CONTROL_PANEL_APP"; do
+        "$CONTROL_PANEL_ID|$CONTROL_PANEL_APP" "$NOTEPAD_ID|$NOTEPAD_APP"; do
         id="${pair%%|*}" app="${pair#*|}"
         [[ -d "$app" ]] || continue
         "$LSREGISTER" -f "$app" > /dev/null 2>&1 || true   # launchd starts the Shell, so it may never have been registered

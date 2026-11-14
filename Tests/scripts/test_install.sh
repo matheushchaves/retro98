@@ -49,7 +49,7 @@ check "bootstrapped" 'grep -q "bootstrap gui/$(id -u) $WORK/agents/$LABEL.plist"
 enable_line="$(grep -n "^enable gui/$(id -u)/$LABEL" "$WORK_LOG" | head -1 | cut -d: -f1)"
 bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
-check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell prompt" ]]'
+check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
 check "accessibility-hint" 'grep -qE "Acessibilidade|Accessibility" "$WORK/out.log"'
 EXPLORER="$WORK/apps/Retro98 Explorer.app"
 check "explorer-built" 'codesign --verify "$EXPLORER" 2> /dev/null'
@@ -75,6 +75,15 @@ check "control-panel-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIE
 check "control-panel-has-icon" '[[ -s "$CONTROL_PANEL/Contents/Resources/AppIcon.icns" ]]'
 check "control-panel-apple-events-usage" '[[ "$(/usr/libexec/PlistBuddy -c "Print :NSAppleEventsUsageDescription" "$CONTROL_PANEL/Contents/Info.plist" 2> /dev/null)" == "Retro98 Control Panel uses System Events to switch between light and dark mode right away." ]]'
 check "control-panel-registered" 'grep -qx "lsregister -f $CONTROL_PANEL" "$WORK_LOG"'
+NOTEPAD="$WORK/apps/Retro98 Notepad.app"
+check "notepad-built" 'codesign --verify "$NOTEPAD" 2> /dev/null'
+check "notepad-is-regular-app" '! /usr/libexec/PlistBuddy -c "Print :LSUIElement" "$NOTEPAD/Contents/Info.plist" > /dev/null 2>&1'
+check "notepad-has-font" '[[ -s "$NOTEPAD/Contents/Resources/PxPlus_IBM_VGA_8x16.ttf" && -s "$NOTEPAD/Contents/Resources/LICENSE-PxPlus_IBM_VGA_8x16.txt" ]]'
+check "notepad-has-icon" '[[ -s "$NOTEPAD/Contents/Resources/AppIcon.icns" ]]'
+# Listed in "Open With" for text files without becoming their default app.
+check "notepad-opens-plain-text-without-being-default" '[[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:LSItemContentTypes:0" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "public.plain-text" && "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:LSHandlerRank" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "Alternate" && "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:CFBundleTypeRole" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "Editor" ]]'
+check "notepad-registered" 'grep -qx "lsregister -f $NOTEPAD" "$WORK_LOG"'
+check "other-apps-declare-no-documents" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$EXPLORER/Contents/Info.plist" > /dev/null 2>&1'
 
 # Turned off in the Control Panel ("shelloff"): the apps are rebuilt, the taskbar stays off and the Dock normal.
 echo "base shelloff prompt" > "$WORK/support/pieces"
@@ -83,17 +92,27 @@ rm -rf "$WORK/apps/Retro98 Shell.app"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-shelloff.log" 2>&1
 check "shelloff-keeps-taskbar-off" '[[ -d "$WORK/apps/Retro98 Shell.app" ]] && ! grep -q "^bootstrap " "$WORK_LOG" \
     && grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG" && grep -q "^bootout gui/$(id -u)/$LABEL" "$WORK_LOG" \
-    && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt" ]]'
+    && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt notepad" ]]'
 
 # Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.
 rm -rf "$PROMPT"
 echo "base shell" > "$WORK/support/pieces"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-old-pieces.log" 2>&1
-check "old-pieces-get-prompt" '[[ -d "$PROMPT" && "$(cat "$WORK/support/pieces")" == "base shell prompt" ]]'
+check "old-pieces-get-prompt" '[[ -d "$PROMPT" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
 echo "base shell noprompt" > "$WORK/support/pieces"
 : > "$WORK_LOG"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-noprompt.log" 2>&1
-check "declined-prompt-stays-off" '[[ ! -e "$PROMPT" ]] && grep -qx "lsregister -u $PROMPT" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell noprompt" ]]'
+check "declined-prompt-stays-off" '[[ ! -e "$PROMPT" ]] && grep -qx "lsregister -u $PROMPT" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell noprompt notepad" ]]'
+
+# The same for the Notepad: pieces saved before it existed get it; a declined one stays off and goes away.
+rm -rf "$NOTEPAD"
+echo "base shell prompt" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-old-notepad.log" 2>&1
+check "old-pieces-get-notepad" '[[ -d "$NOTEPAD" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
+echo "base shell nonotepad" > "$WORK/support/pieces"
+: > "$WORK_LOG"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nonotepad.log" 2>&1
+check "declined-notepad-stays-off" '[[ ! -e "$NOTEPAD" ]] && grep -qx "lsregister -u $NOTEPAD" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell nonotepad prompt" ]]'
 
 # A Shell copy opened outside launchd must not survive a reinstall next to the LaunchAgent's copy.
 mkdir -p "$WORK/apps/Retro98 Shell.app/Contents/MacOS"

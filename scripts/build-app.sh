@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 # Builds one Retro98 app product and assembles it as a signed app bundle:
-#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text] [resources folder]
+#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text] [resources folder] [document types]
 # "agent" apps (LSUIElement) have no Dock icon or menu bar; the icon name goes to `retro98-tools iconset`;
-# the files in the resources folder (not its subfolders) are copied to Contents/Resources.
+# the files in the resources folder (not its subfolders) are copied to Contents/Resources; the document types
+# (space-separated UTIs) put the app in "Open With" for those files without making it their default app.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "$ROOT/scripts/common.sh"
 source "$ROOT/scripts/signing.sh"
 
-usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage] [resources folder]"
+usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage] [resources folder] [document types]"
 PRODUCT="${1:?$usage}"
 BUNDLE_ID="${2:?$usage}"
 NAME="${3:?$usage}"
@@ -18,8 +19,9 @@ SCHEME="${6:-}"
 ICON="${7:-}"
 APPLE_EVENTS_USAGE="${8:-}"
 RESOURCES="${9:-}"
-VERSION="0.8.1"
-BUILD="9"
+DOCUMENT_TYPES="${10:-}"
+VERSION="0.9.0"
+BUILD="10"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
@@ -62,6 +64,16 @@ if [[ -n "$ICON" ]]; then
 fi
 if [[ -n "$APPLE_EVENTS_USAGE" ]]; then
     extra+="    <key>NSAppleEventsUsageDescription</key><string>$APPLE_EVENTS_USAGE</string>"$'\n'
+fi
+if [[ -n "$DOCUMENT_TYPES" ]]; then
+    types=""
+    for type in $DOCUMENT_TYPES; do types+="<string>$type</string>"; done
+    extra+="    <key>CFBundleDocumentTypes</key><array><dict>
+        <key>CFBundleTypeName</key><string>Text</string>
+        <key>CFBundleTypeRole</key><string>Editor</string>
+        <key>LSHandlerRank</key><string>Alternate</string>
+        <key>LSItemContentTypes</key><array>$types</array>
+    </dict></array>"$'\n'
 fi
 
 cat > "$OUT/Contents/Info.plist" <<PLIST

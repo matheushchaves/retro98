@@ -21,7 +21,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 3C | Explorer: modos de exibição, busca, Abrir com, Propriedades | ✅ disponível |
 | 4 | Prompt (terminal) | ✅ disponível |
 | 5 | Painel de Controle | ✅ disponível |
-| 6 | Bloco de Notas | planejada |
+| 6 | Bloco de Notas | ✅ disponível |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | planejada |
 | 8 | Navegador retrô (WebKit) | planejada |
 
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Prompt, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt, o Bloco de Notas), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Bloco de Notas, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
 
 ## Desinstalar
 
@@ -160,6 +160,27 @@ O Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) lig
 - **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Depois disso, `./install.sh --yes` mantém o macOS normal; rode `./install.sh` e responda Sim para o visual retrô voltar, ou `./uninstall.sh` para remover os apps também.
 
 O que você muda aqui fica: `./install.sh --yes` mantém desligados os ajustes que você desligou, volta a cor ou a imagem escolhida e deixa desligada a barra de tarefas que você desligou (o arquivo de peças diz `shelloff`), mas continua atualizando os apps. Para ligar de novo, use o próprio Painel de Controle.
+
+## Bloco de Notas (Fase 6)
+
+O Retro98 Notepad (`~/Applications/Retro98/Retro98 Notepad.app`) é um editor de texto puro numa janela no estilo 98: texto preto sobre branco na mesma fonte VGA nítida do Prompt, sem formatação e sem as trocas automáticas do macOS (aspas curvas, travessões, correção ortográfica), para o arquivo guardar exatamente o que você digitou.
+
+- **Abrir:** em Iniciar › Programas › Retro98 › Retro98 Notepad, pelo Spotlight ou com `open -a "Retro98 Notepad" arquivo.txt`. Ele também aparece em **Abrir com** para arquivos de texto, no Finder e no Explorer, sem virar o app padrão do `.txt`. O instalador pergunta por ele separado ("Instalar o Bloco de Notas?", resposta padrão Sim).
+- **Arquivos:** lê e grava UTF-8. Ao salvar, mantém as quebras de linha que o arquivo já tinha (Windows, Unix ou Mac antigo) e a marca de ordem de bytes, se havia uma. Arquivo em outra codificação, binário ou com mais de 10 MB não abre: aparece uma mensagem dizendo o motivo, e nada é alterado.
+- **Abrir e Salvar como** usam os diálogos retrô do próprio Retro98: a lista "Examinar" com a Área de Trabalho, os discos e Meus Documentos, o botão de subir um nível, o nome do arquivo e o tipo (`*.txt` ou todos os arquivos). No campo do nome você também pode digitar um caminho, como `~/notas` ou `/tmp/log.txt`. Eles não criam pastas: para isso, use o Explorer.
+- **Janelas:** uma por documento. Abrir reaproveita a janela que ainda está vazia; um arquivo que já está aberto só vem para a frente. Fechar ou encerrar com alterações pergunta se você quer salvar.
+- **Pesquisar:** Localizar procura para baixo ou para cima a partir do cursor, diferenciando ou não maiúsculas de minúsculas, e avisa quando não acha.
+- **Formatar › Quebra automática de linha** vale para todas as janelas e é lembrada.
+- **Fora desta fase:** imprimir. O TextEdit continua abrindo os mesmos arquivos.
+
+| Ação | Atalho |
+|---|---|
+| Novo, abrir, salvar, salvar como | ⌘N · ⌘O · ⌘S · ⇧⌘S |
+| Desfazer, refazer | ⌘Z · ⇧⌘Z |
+| Recortar, copiar, colar, selecionar tudo | ⌘X · ⌘C · ⌘V · ⌘A |
+| Hora/data | F5 |
+| Localizar, localizar próxima | ⌘F · ⌘G |
+| Fechar | ⌘W |
 
 ## O que a Fase 1 muda
 

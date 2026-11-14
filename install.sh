@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell) and the Prompt,
-# plus the Control Panel, where they are turned on and off later.
+# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell), the Prompt and
+# the Notepad, plus the Control Panel, where they are turned on and off later.
 # Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
@@ -48,9 +48,10 @@ ask_no() {
 
 pieces=""
 if $ASSUME_YES; then
-    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt")"
-    # Pieces saved before the Prompt existed get it: a new piece arrives on unless it was declined.
+    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt notepad")"
+    # Pieces saved before the Prompt or the Notepad existed get them: a new piece arrives on unless it was declined.
     [[ " $pieces " == *" prompt "* || " $pieces " == *" noprompt "* ]] || pieces+=" prompt"
+    [[ " $pieces " == *" notepad "* || " $pieces " == *" nonotepad "* ]] || pieces+=" notepad"
 elif [[ ! -t 0 ]]; then
     say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
         "No interactive terminal: run ./install.sh --yes to apply."
@@ -66,6 +67,11 @@ else
         pieces+=" prompt"
     else
         pieces+=" noprompt"
+    fi
+    if ask "Instalar o Bloco de Notas?" "Install the Notepad?"; then
+        pieces+=" notepad"
+    else
+        pieces+=" nonotepad"
     fi
 fi
 pieces="$(echo $pieces)"
@@ -165,6 +171,16 @@ if [[ " $pieces " == *" prompt "* ]]; then
     "$LSREGISTER" -f "$PROMPT_APP" || status=$?
 else
     remove_prompt
+fi
+
+if [[ " $pieces " == *" notepad "* ]]; then
+    say "Montando o Retro98 Notepad..." "Building Retro98 Notepad..."
+    # Plain text as a document type lists the Notepad in "Open With" without making it the default app.
+    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Notepad "$NOTEPAD_ID" "Retro98 Notepad" "$NOTEPAD_APP" regular "" notepad "" \
+        "$RETRO98_ROOT/Resources/Fonts" "public.plain-text"
+    "$LSREGISTER" -f "$NOTEPAD_APP" || status=$?
+else
+    remove_notepad
 fi
 
 say "Montando o Retro98 Control Panel..." "Building Retro98 Control Panel..."
