@@ -117,3 +117,26 @@ func roundTripIsExact(text: String) throws {
     #expect(throws: (any Error).self) { try TextFile(text: "novo", lineEnding: .lf, hasBOM: false).write(to: url) }
     #expect(try Data(contentsOf: url) == utf8("original"))
 }
+
+@Test func readRefusesABigFileBehindALink() throws {
+    let root = try temporaryFolder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let big = root.appending(path: "grande.log"), link = root.appending(path: "atalho.log")
+    try Data().write(to: big)
+    let handle = try FileHandle(forWritingTo: big)
+    try handle.truncate(atOffset: UInt64(TextFile.maximumSize + 1))
+    try handle.close()
+    try FileManager.default.createSymbolicLink(at: link, withDestinationURL: big)
+    #expect(throws: TextFileError.tooLarge) { try TextFile.read(from: link) }
+}
+
+@Test func writeNeverReplacesAFolder() throws {
+    let root = try temporaryFolder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let folder = root.appending(path: "virou-pasta.txt")
+    try FileManager.default.createDirectory(at: folder.appending(path: "dentro"), withIntermediateDirectories: true)
+    try Data("guardado".utf8).write(to: folder.appending(path: "dentro/a.txt"))
+
+    #expect(throws: (any Error).self) { try TextFile(text: "novo", lineEnding: .lf, hasBOM: false).write(to: folder) }
+    #expect(try Data(contentsOf: folder.appending(path: "dentro/a.txt")) == Data("guardado".utf8))
+}

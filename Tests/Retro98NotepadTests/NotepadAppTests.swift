@@ -12,12 +12,18 @@ private let pt = ["pt-BR"]
     let dialogs = ScriptedNotepadDialogs()
     let preferences = NotepadPreferences.memory()
     let app: AppDelegate
+    /// How many windows existed each time the app registered its font.
+    private(set) var windowsAtFontRegistration: [Int] = []
 
     init() throws {
         VGAFont.register(at: vgaFontURL)
         home = try temporaryFolder()
         app = AppDelegate(preferences: preferences, dialogs: dialogs, prompter: prompter, home: home, languages: pt)
         app.presentsWindows = false
+        app.registerFont = { [weak self] in
+            guard let self else { return }
+            self.windowsAtFontRegistration.append(self.app.windowControllers.count)
+        }
     }
 
     func file(_ path: String, _ text: String = "oi") throws -> URL {
@@ -84,6 +90,14 @@ private let pt = ["pt-BR"]
     after.app.application(NSApplication.shared, open: [try after.file("a.txt"), try after.file("b.txt")])
     #expect(after.app.windowControllers.compactMap { $0.fileURL?.lastPathComponent } == ["a.txt", "b.txt"])
     #expect(after.app.windowControllers.count == 2)
+}
+
+@MainActor @Test func fontIsRegisteredBeforeTheFirstWindowEvenWithoutLaunchFinishing() throws {
+    let bench = try Bench()
+    bench.app.application(NSApplication.shared, open: [try bench.file("a.txt")])
+    bench.launch()
+    bench.app.openWindow()
+    #expect(bench.windowsAtFontRegistration == [0])
 }
 
 @MainActor @Test func unreadableFileOpensNoWindow() throws {

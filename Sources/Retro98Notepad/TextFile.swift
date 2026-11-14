@@ -36,16 +36,20 @@ struct TextFile: Equatable, Sendable {
         return (hasBOM ? Data(Self.byteOrderMark) : Data()) + Data(body.utf8)
     }
 
-    /// Checks the size before reading, so a huge file is refused without loading it.
+    /// Checks the size before reading, so a huge file is refused without loading it. The size is the one of the
+    /// file a link points to, not of the link.
     static func read(from url: URL) throws(TextFileError) -> TextFile {
-        guard let size = try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize else { throw .unreadable }
+        let target = url.resolvingSymlinksInPath()
+        guard let size = try? target.resourceValues(forKeys: [.fileSizeKey]).fileSize else { throw .unreadable }
         guard size <= maximumSize else { throw .tooLarge }
-        guard let data = try? Data(contentsOf: url) else { throw .unreadable }
+        guard let data = try? Data(contentsOf: target) else { throw .unreadable }
+        guard data.count <= maximumSize else { throw .tooLarge }
         return try decode(data)
     }
 
     /// Follows a symlink, so the link stays a link. An existing file is swapped for a finished copy that carries
-    /// its permissions; when anything fails, the original is left as it was.
+    /// its permissions; when anything fails, the original is left as it was. Only a regular file is ever swapped:
+    /// a path that became a folder since the document was opened is refused, never replaced.
     func write(to url: URL) throws {
         let files = FileManager.default
         let target = url.resolvingSymlinksInPath()
@@ -53,6 +57,9 @@ struct TextFile: Equatable, Sendable {
         guard files.fileExists(atPath: target.path) else {
             try data.write(to: target, options: .withoutOverwriting)
             return
+        }
+        guard try target.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true else {
+            throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: target.path])
         }
         let folder = try files.url(for: .itemReplacementDirectory, in: .userDomainMask, appropriateFor: target, create: true)
         defer { try? files.removeItem(at: folder) }

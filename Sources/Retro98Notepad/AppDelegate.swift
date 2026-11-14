@@ -13,6 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     let languages: [String]
     /// Tests open windows without putting them on screen.
     var presentsWindows = true
+    /// Makes the VGA font available; runs once, before the first window is built.
+    var registerFont: () -> Void = {
+        if let font = VGAFont.bundledURL { VGAFont.register(at: font) }
+    }
+    private var isFontRegistered = false
     /// Where the dialogs start when the document has no folder: the last folder used, first ~/Documents.
     private(set) var lastFolder: URL
     private var controllers: [NotepadWindowController] = []
@@ -49,7 +54,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     /// Files that launched the app may arrive before or after this; either way the first one takes the empty window.
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if let font = VGAFont.bundledURL { VGAFont.register(at: font) }
         if controllers.isEmpty { openWindow() }
     }
 
@@ -107,6 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     private func makeController() -> NotepadWindowController {
+        // Here and not at launch: a file that started the app ("Open With") gets its window before launch finishes.
+        if !isFontRegistered {
+            registerFont()
+            isFontRegistered = true
+        }
         let controller = NotepadWindowController(
             languages: languages, preferences: preferences, dialogs: dialogs, prompter: prompter,
             startFolder: { [weak self] in self?.lastFolder ?? FileManager.default.homeDirectoryForCurrentUser },
