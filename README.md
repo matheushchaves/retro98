@@ -22,7 +22,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 4 | Prompt (terminal) | ✅ available |
 | 5 | Control Panel | ✅ available |
 | 6 | Notepad | ✅ available |
-| 7 | Themes for Chrome, Sublime Text and Terminal.app | planned |
+| 7 | Themes for Chrome, Sublime Text and Terminal.app | ✅ available |
 | 8 | Retro web browser (WebKit) | planned |
 
 ## Requirements
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt, the Notepad), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Notepad, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt, the Notepad, the themes for other apps), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the themes, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
 
 ## Uninstall
 
@@ -47,6 +47,8 @@ The installer asks which pieces you want (base tweaks, taskbar with the Explorer
 ```
 
 This puts back every original value. Retro98's files are removed **only** if everything was restored. If something could not be restored, the backup stays in `~/Library/Application Support/Retro98/` and you can run `./uninstall.sh` again.
+
+If the themes were installed, the uninstaller removes their files and tells you what is left to remove inside Chrome and Terminal (see [Themes](#themes-phase-7)).
 
 ## Taskbar and Start menu (Phase 2A)
 
@@ -182,6 +184,20 @@ Retro98 Notepad (`~/Applications/Retro98/Retro98 Notepad.app`) is a plain-text e
 | Find, find next | ⌘F · ⌘G |
 | Close | ⌘W |
 
+## Themes (Phase 7)
+
+Three apps you already use get the 98 look. Retro98 **never edits those apps' settings**: the installer leaves the files ready in `~/Library/Application Support/Retro98/Themes/` (the folder opens in Finder the first time) and you turn each theme on in the app itself. The installer asks about them separately ("Install the themes for Chrome, Sublime Text and Terminal?", default Yes).
+
+| App | What it looks like | To turn on | To turn off |
+|---|---|---|---|
+| **Chrome** | Navy gradient frame (gray when the window is inactive), gray toolbar, teal new tab page | Open `chrome://extensions`, turn on **Developer mode** and drag the `Chrome` folder onto the page | Remove "Retro98" in `chrome://extensions` |
+| **Sublime Text** | Gray interface in Tahoma with a navy selection; black code on white, blue keywords, green comments | Preferences › Select Theme… › Retro98 and Preferences › Select Color Scheme… › Retro98 | Pick another theme and scheme in the same menus |
+| **Terminal** | "Retro98 Prompt" profile: gray on black, the console colors and the VGA font, 80×25 | Double-click `Retro98 Prompt.terminal` | Delete the profile in Terminal › Settings › Profiles |
+
+- **Chrome:** the theme is loaded straight from the folder, so the folder has to stay there. If Chrome warns about developer-mode extensions, this is why.
+- **Sublime Text:** the package goes to `Packages/Retro98/` in Sublime Text's data folder, and is installed only if Sublime Text is already on the Mac. The theme changes only colors and the font of the default theme.
+- **Terminal:** the default profile doesn't change. For Terminal to use the VGA font, the installer copies it to `~/Library/Fonts/`, only if it isn't there yet; a font you already had is never replaced or deleted.
+
 ## What Phase 1 changes
 
 | Id | Tweak | What changes |
@@ -215,7 +231,7 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 
 ## Credits
 
-- **Prompt and Notepad font:** PxPlus IBM VGA 8x16 from [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/) by VileR, licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The font and its license travel in `Resources/Fonts/` and inside both apps. It's the "Plus" version because the original code page 437 one has no ã or õ.
+- **Font of the Prompt, the Notepad and the Terminal profile:** PxPlus IBM VGA 8x16 from [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/) by VileR, licensed under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). The font and its license travel in `Resources/Fonts/` and inside both apps; with the themes installed, the font also goes to `~/Library/Fonts/`. It's the "Plus" version because the original code page 437 one has no ã or õ.
 - **Terminal engine:** [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm) by Miguel de Icaza, MIT license, vendored at 1.11.2 in `Vendor/SwiftTerm` with three small fixes taken from SwiftTerm 1.19 (crisp pixel fonts, room for our own scroll bar, noticing the shell's exit). Newer versions need Xcode's separately downloaded Metal Toolchain to build, which would break the install on most Macs; `Vendor/SwiftTerm/VENDORED.md` has the details.
 
 ## License

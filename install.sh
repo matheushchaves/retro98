@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell), the Prompt and
-# the Notepad, plus the Control Panel, where they are turned on and off later.
+# Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell), the Prompt, the
+# Notepad and the themes for other apps, plus the Control Panel, where they are turned on and off later.
 # Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
@@ -48,10 +48,11 @@ ask_no() {
 
 pieces=""
 if $ASSUME_YES; then
-    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt notepad")"
-    # Pieces saved before the Prompt or the Notepad existed get them: a new piece arrives on unless it was declined.
+    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt notepad themes")"
+    # Pieces saved before the Prompt, the Notepad or the themes existed get them: a new piece arrives on unless it was declined.
     [[ " $pieces " == *" prompt "* || " $pieces " == *" noprompt "* ]] || pieces+=" prompt"
     [[ " $pieces " == *" notepad "* || " $pieces " == *" nonotepad "* ]] || pieces+=" notepad"
+    [[ " $pieces " == *" themes "* || " $pieces " == *" nothemes "* ]] || pieces+=" themes"
 elif [[ ! -t 0 ]]; then
     say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
         "No interactive terminal: run ./install.sh --yes to apply."
@@ -72,6 +73,11 @@ else
         pieces+=" notepad"
     else
         pieces+=" nonotepad"
+    fi
+    if ask "Instalar os temas para Chrome, Sublime Text e Terminal?" "Install the themes for Chrome, Sublime Text and Terminal?"; then
+        pieces+=" themes"
+    else
+        pieces+=" nothemes"
     fi
 fi
 pieces="$(echo $pieces)"
@@ -181,6 +187,13 @@ if [[ " $pieces " == *" notepad "* ]]; then
     "$LSREGISTER" -f "$NOTEPAD_APP" || status=$?
 else
     remove_notepad
+fi
+
+if [[ " $pieces " == *" themes "* ]]; then
+    say "Preparando os temas..." "Preparing the themes..."
+    install_themes || status=$?
+else
+    remove_themes || true
 fi
 
 say "Montando o Retro98 Control Panel..." "Building Retro98 Control Panel..."

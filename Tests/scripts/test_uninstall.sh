@@ -30,6 +30,24 @@ printf '#!/usr/bin/env bash\necho "defaults $*" >> "${LAUNCHCTL_LOG:-/dev/null}"
 chmod +x "$WORK/stub-tccutil" "$WORK/stub-defaults"
 export RETRO98_TCCUTIL="$WORK/stub-tccutil"
 export RETRO98_DEFAULTS="$WORK/stub-defaults"
+# Nor the real ~/Library/Fonts or Sublime Text's real packages.
+export RETRO98_FONTS_DIR="$WORK/fonts-default"
+export RETRO98_SUBLIME_PACKAGES="$WORK/sublime-default/Packages"
+FONT_FILE="PxPlus_IBM_VGA_8x16.ttf"
+
+# Plants what the installer's themes piece leaves: <support> <fonts> <sublime packages>
+plant_themes() {
+    local themes="$1/Themes" fonts="$2" package="$3/Retro98"
+    mkdir -p "$themes/Chrome/images" "$fonts" "$package"
+    echo "{}" > "$themes/Chrome/manifest.json"
+    echo "png" > "$themes/Chrome/images/theme_frame.png"
+    echo "png" > "$themes/Chrome/images/theme_frame_inactive.png"
+    echo "plist" > "$themes/Retro98 Prompt.terminal"
+    : > "$themes/.font-installed"
+    echo "ttf" > "$fonts/$FONT_FILE"
+    echo "{}" > "$package/Retro98.sublime-theme"
+    echo "{}" > "$package/Retro98.sublime-color-scheme"
+}
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0
@@ -75,7 +93,8 @@ run_case defaults-unreadable 0 0 absent "$BROKEN_DEFAULTS"
 run_shell_case() {
     local name="$1" stub_exit="$2" expected_exit="$3" expected_app="$4"
     local support="$WORK/support-$name" apps="$WORK/apps-$name" agents="$WORK/agents-$name" calls="$WORK/launchctl-$name.log"
-    local sounds="$WORK/sounds-$name"
+    local sounds="$WORK/sounds-$name" fonts="$WORK/fonts-$name" packages="$WORK/sublime-$name/Packages"
+    plant_themes "$support" "$fonts" "$packages"
     mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$apps/Retro98 Prompt.app/Contents" "$agents"
     mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$apps/Retro98 Notepad.app/Contents" "$sounds"
     echo "aiff" > "$sounds/Retro98.aiff"
@@ -87,6 +106,7 @@ run_shell_case() {
 
     LAUNCHCTL_LOG="$calls" STUB_EXIT="$stub_exit" RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" \
         RETRO98_APPS_DIR="$apps" RETRO98_LAUNCH_AGENTS_DIR="$agents" RETRO98_SOUNDS_DIR="$sounds" \
+        RETRO98_FONTS_DIR="$fonts" RETRO98_SUBLIME_PACKAGES="$packages" \
         bash "$ROOT/uninstall.sh" > /dev/null 2>&1
     local actual_exit=$?
 
@@ -127,6 +147,13 @@ run_shell_case() {
         [[ "$file_state" == "$expected_app" ]] || problems+=" $(basename "$file")=$file_state"
     done
     if [[ "$expected_app" == "absent" && -d "$apps" ]]; then problems+=" apps-folder-left"; fi
+    for file in "$support/Themes/Chrome/manifest.json" "$support/Themes/Retro98 Prompt.terminal" "$fonts/$FONT_FILE" \
+        "$packages/Retro98/Retro98.sublime-theme" "$packages/Retro98/Retro98.sublime-color-scheme"; do
+        local theme_state="absent"
+        [[ -e "$file" ]] && theme_state="present"
+        [[ "$theme_state" == "$expected_app" ]] || problems+=" $(basename "$file")=$theme_state"
+    done
+    if [[ "$expected_app" == "absent" && ( -d "$support" || -d "$packages/Retro98" ) ]]; then problems+=" theme-folders-left"; fi
     if [[ "$expected_app" == "absent" ]]; then
         local id last_reset first_unregister
         for id in "$LABEL" io.github.matheushchaves.retro98.explorer io.github.matheushchaves.retro98.prompt \
@@ -154,6 +181,44 @@ run_shell_case() {
 
 run_shell_case explorer-removed 0 0 absent
 run_shell_case shell-kept-on-failure 2 2 present
+
+# With themes installed, the closing note says what is left to remove inside Chrome and Terminal.
+themes_note_case() {   # <name> <with themes: yes|no>
+    local name="$1" with_themes="$2"
+    local support="$WORK/support-$name" fonts="$WORK/fonts-$name" packages="$WORK/sublime-$name/Packages"
+    mkdir -p "$support"
+    echo "<plist/>" > "$support/backup.plist"
+    [[ "$with_themes" == yes ]] && plant_themes "$support" "$fonts" "$packages"
+    STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" RETRO98_APPS_DIR="$WORK/apps-$name" \
+        RETRO98_FONTS_DIR="$fonts" RETRO98_SUBLIME_PACKAGES="$packages" bash "$ROOT/uninstall.sh" > "$WORK/$name.log" 2>&1
+    local told=no
+    grep -qE "Temas removidos|Themes removed" "$WORK/$name.log" && told=yes
+    if [[ "$told" == "$with_themes" ]]; then
+        echo "PASS $name"
+    else
+        echo "FAIL $name (note told=$told)"
+        failures=$((failures + 1))
+    fi
+}
+themes_note_case themes-note-when-removed yes
+themes_note_case no-themes-note-without-themes no
+
+# A font the person already had (no marker from the installer) survives, and so do their own files in the package.
+OWN_SUPPORT="$WORK/support-ownfont" OWN_FONTS="$WORK/fonts-ownfont" OWN_PACKAGES="$WORK/sublime-ownfont/Packages"
+mkdir -p "$OWN_SUPPORT"
+echo "<plist/>" > "$OWN_SUPPORT/backup.plist"
+plant_themes "$OWN_SUPPORT" "$OWN_FONTS" "$OWN_PACKAGES"
+rm "$OWN_SUPPORT/Themes/.font-installed"
+echo "da pessoa" > "$OWN_PACKAGES/Retro98/minha.txt"
+STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$OWN_SUPPORT" RETRO98_APPS_DIR="$WORK/apps-ownfont" \
+    RETRO98_FONTS_DIR="$OWN_FONTS" RETRO98_SUBLIME_PACKAGES="$OWN_PACKAGES" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+if [[ -e "$OWN_FONTS/$FONT_FILE" && -e "$OWN_PACKAGES/Retro98/minha.txt" && ! -e "$OWN_PACKAGES/Retro98/Retro98.sublime-theme" \
+    && ! -d "$OWN_SUPPORT" ]]; then
+    echo "PASS uninstall-keeps-the-persons-font-and-files"
+else
+    echo "FAIL uninstall-keeps-the-persons-font-and-files"
+    failures=$((failures + 1))
+fi
 
 # The closing note says whether macOS forgot Retro98's permissions or they must be removed by hand.
 permissions_note_case() {   # <name> <tccutil exit> <expected note>

@@ -66,6 +66,67 @@ remove_notepad() {
     fi
 }
 
+# Themes for other apps (Chrome, Sublime Text, Terminal): a piece of its own. Retro98 never edits those apps'
+# settings; it leaves the files ready and the person turns each theme on in the app.
+THEMES_DIR="$SUPPORT_DIR/Themes"
+VGA_FONT_FILE="PxPlus_IBM_VGA_8x16.ttf"
+# Overridable so tests never touch the real fonts folder or Sublime Text's real packages.
+FONTS_DIR="${RETRO98_FONTS_DIR:-$HOME/Library/Fonts}"
+SUBLIME_PACKAGES="${RETRO98_SUBLIME_PACKAGES:-$HOME/Library/Application Support/Sublime Text/Packages}"
+SUBLIME_THEME_FILES=("Retro98.sublime-theme" "Retro98.sublime-color-scheme")
+
+# Builds retro98-tools, writes the themes folder, installs the VGA font for Terminal (only when no font of
+# that name is there) and the Sublime Text package (only when Sublime Text is there), then says the step left
+# in each app. Opens the folder in Finder the first time only.
+install_themes() {
+    local first_time=1 file
+    [[ -d "$THEMES_DIR" ]] && first_time=0
+    (cd "$RETRO98_ROOT" && swift build -c release --product retro98-tools)
+    "$RETRO98_ROOT/.build/release/retro98-tools" themes "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$THEMES_DIR"
+    cp "$RETRO98_ROOT/Resources/Themes/Chrome/manifest.json" "$THEMES_DIR/Chrome/manifest.json"
+
+    # The marker says the font is Retro98's to remove; a font the person already had is left alone.
+    if [[ ! -e "$FONTS_DIR/$VGA_FONT_FILE" ]]; then
+        mkdir -p "$FONTS_DIR"
+        cp "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$FONTS_DIR/$VGA_FONT_FILE"
+        : > "$THEMES_DIR/.font-installed"
+    fi
+
+    say "Temas do Retro98 em $THEMES_DIR." "Retro98 themes are in $THEMES_DIR."
+    say "Chrome: abra chrome://extensions, ligue o Modo do desenvolvedor e arraste a pasta Chrome para a página." \
+        "Chrome: open chrome://extensions, turn on Developer mode and drag the Chrome folder onto the page."
+    say "Terminal: dê dois cliques em \"Retro98 Prompt.terminal\" para adicionar o perfil." \
+        "Terminal: double-click \"Retro98 Prompt.terminal\" to add the profile."
+    if [[ -d "$SUBLIME_PACKAGES" ]]; then
+        mkdir -p "$SUBLIME_PACKAGES/Retro98"
+        for file in "${SUBLIME_THEME_FILES[@]}"; do
+            cp "$RETRO98_ROOT/Resources/Themes/Sublime Text/$file" "$SUBLIME_PACKAGES/Retro98/$file"
+        done
+        say "Sublime Text: escolha Retro98 em Preferences › Select Theme… e em Select Color Scheme…" \
+            "Sublime Text: pick Retro98 in Preferences › Select Theme… and in Select Color Scheme…"
+    else
+        say "Sublime Text não encontrado: o tema dele não foi instalado." \
+            "Sublime Text not found: its theme was not installed."
+    fi
+    if [[ $first_time -eq 1 ]]; then open "$THEMES_DIR" || true; fi
+}
+
+# Removes what install_themes put, file by file: the theme files, the Sublime Text package's two files, and
+# the font when the marker says Retro98 installed it. Folders go only if they end up empty, so anything the
+# person added stays. Returns 0 when there were themes to remove, 1 when there were none.
+remove_themes() {
+    local file
+    [[ -d "$THEMES_DIR" ]] || return 1
+    if [[ -e "$THEMES_DIR/.font-installed" ]]; then rm -f "$FONTS_DIR/$VGA_FONT_FILE"; fi
+    rm -f "$THEMES_DIR/.font-installed" "$THEMES_DIR/Retro98 Prompt.terminal" "$THEMES_DIR/.DS_Store" \
+        "$THEMES_DIR/Chrome/manifest.json" "$THEMES_DIR/Chrome/.DS_Store" "$THEMES_DIR/Chrome/images/theme_frame.png" \
+        "$THEMES_DIR/Chrome/images/theme_frame_inactive.png"
+    rmdir "$THEMES_DIR/Chrome/images" "$THEMES_DIR/Chrome" "$THEMES_DIR" 2> /dev/null || true
+    for file in "${SUBLIME_THEME_FILES[@]}"; do rm -f "$SUBLIME_PACKAGES/Retro98/$file"; done
+    rmdir "$SUBLIME_PACKAGES/Retro98" 2> /dev/null || true
+    return 0
+}
+
 # Retro98 Control Panel: always installed, since it is where pieces are turned on and off.
 CONTROL_PANEL_ID="io.github.matheushchaves.retro98.controlpanel"
 CONTROL_PANEL_APP="$APPS_DIR/Retro98 Control Panel.app"

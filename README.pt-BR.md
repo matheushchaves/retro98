@@ -22,7 +22,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 4 | Prompt (terminal) | ✅ disponível |
 | 5 | Painel de Controle | ✅ disponível |
 | 6 | Bloco de Notas | ✅ disponível |
-| 7 | Temas para Chrome, Sublime Text e Terminal.app | planejada |
+| 7 | Temas para Chrome, Sublime Text e Terminal.app | ✅ disponível |
 | 8 | Navegador retrô (WebKit) | planejada |
 
 ## Requisitos
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt, o Bloco de Notas), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Bloco de Notas, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt, o Bloco de Notas, os temas para outros apps), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como os temas, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
 
 ## Desinstalar
 
@@ -47,6 +47,8 @@ O instalador pergunta quais peças você quer (ajustes base, barra de tarefas co
 ```
 
 Isso devolve todos os valores originais. Os arquivos do Retro98 só são removidos **se tudo foi restaurado**. Se algo não puder ser restaurado, o backup fica em `~/Library/Application Support/Retro98/` e você pode rodar `./uninstall.sh` de novo.
+
+Se os temas estavam instalados, o desinstalador tira os arquivos deles e avisa o que falta remover dentro do Chrome e do Terminal (veja [Temas](#temas-fase-7)).
 
 ## Barra de tarefas e menu Iniciar (Fase 2A)
 
@@ -182,6 +184,20 @@ O Retro98 Notepad (`~/Applications/Retro98/Retro98 Notepad.app`) é um editor de
 | Localizar, localizar próxima | ⌘F · ⌘G |
 | Fechar | ⌘W |
 
+## Temas (Fase 7)
+
+Três apps que você já usa ganham o visual 98. O Retro98 **nunca altera os ajustes desses apps**: o instalador deixa os arquivos prontos em `~/Library/Application Support/Retro98/Themes/` (a pasta abre no Finder na primeira vez) e você liga cada tema no próprio app. O instalador pergunta por eles separado ("Instalar os temas para Chrome, Sublime Text e Terminal?", resposta padrão Sim).
+
+| App | Como fica | Para ligar | Para desligar |
+|---|---|---|---|
+| **Chrome** | Moldura em degradê azul-marinho (cinza com a janela inativa), barra cinza, nova aba verde-azulada | Abra `chrome://extensions`, ligue o **Modo do desenvolvedor** e arraste a pasta `Chrome` para a página | Remova "Retro98" em `chrome://extensions` |
+| **Sublime Text** | Interface cinza com Tahoma e seleção azul-marinho; código preto no branco, palavras-chave azuis, comentários verdes | Preferences › Select Theme… › Retro98 e Preferences › Select Color Scheme… › Retro98 | Escolha outro tema e outro esquema nos mesmos menus |
+| **Terminal** | Perfil "Retro98 Prompt": cinza sobre preto, as cores do console e a fonte VGA, 80×25 | Dê dois cliques em `Retro98 Prompt.terminal` | Apague o perfil em Terminal › Ajustes › Perfis |
+
+- **Chrome:** o tema é carregado direto da pasta, então ela precisa continuar lá. Se o Chrome avisar sobre extensões no modo do desenvolvedor, é por isso.
+- **Sublime Text:** o pacote vai para `Packages/Retro98/` na pasta de dados do Sublime Text, e só é instalado se o Sublime Text já estiver no Mac. O tema muda apenas cores e a fonte do tema padrão.
+- **Terminal:** o perfil padrão não muda. Para o Terminal usar a fonte VGA, o instalador a copia para `~/Library/Fonts/`, só se ela ainda não estiver lá; uma fonte que você já tinha nunca é trocada nem apagada.
+
 ## O que a Fase 1 muda
 
 | Id | Ajuste | O que muda |
@@ -215,7 +231,7 @@ TOOL="$HOME/Library/Application Support/Retro98/bin/retro98-settings"
 
 ## Créditos
 
-- **Fonte do Prompt e do Bloco de Notas:** PxPlus IBM VGA 8x16, do [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/), de VileR, sob a licença [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br). A fonte e a licença dela ficam em `Resources/Fonts/` e vão dentro dos dois apps. É a versão "Plus" porque a original, da página de código 437, não tem ã nem õ.
+- **Fonte do Prompt, do Bloco de Notas e do perfil do Terminal:** PxPlus IBM VGA 8x16, do [The Ultimate Oldschool PC Font Pack](https://int10h.org/oldschool-pc-fonts/), de VileR, sob a licença [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/deed.pt-br). A fonte e a licença dela ficam em `Resources/Fonts/` e vão dentro dos dois apps; com os temas instalados, a fonte também vai para `~/Library/Fonts/`. É a versão "Plus" porque a original, da página de código 437, não tem ã nem õ.
 - **Motor do terminal:** [SwiftTerm](https://github.com/migueldeicaza/SwiftTerm), de Miguel de Icaza, licença MIT, incluído na versão 1.11.2 em `Vendor/SwiftTerm` com três pequenas correções trazidas do SwiftTerm 1.19 (fonte de pixel nítida, espaço para a nossa barra de rolagem e perceber quando o shell termina). As versões mais novas precisam do Metal Toolchain, que se baixa à parte do Xcode, e quebrariam a instalação na maioria dos Macs; os detalhes estão em `Vendor/SwiftTerm/VENDORED.md`.
 
 ## Licença

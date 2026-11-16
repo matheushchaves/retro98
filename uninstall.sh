@@ -38,6 +38,8 @@ fi
 remove_explorer
 remove_prompt
 remove_notepad
+themes_removed=1
+remove_themes || themes_removed=0
 remove_control_panel
 rm -f "$SOUNDS_DIR/Retro98.aiff"
 rm -f "$APPS_DIR/.DS_Store"
@@ -53,4 +55,8 @@ if [[ $permissions_forgotten -eq 1 ]]; then
 else
     say "Não consegui apagar todas as permissões do Retro98: remova os apps do Retro98 das listas em Ajustes do Sistema › Privacidade e Segurança (Acessibilidade, Acesso Total ao Disco e Automação)." \
         "Couldn't clear all of Retro98's permissions: remove the Retro98 apps from the lists in System Settings › Privacy & Security (Accessibility, Full Disk Access and Automation)."
+fi
+if [[ $themes_removed -eq 1 ]]; then
+    say "Temas removidos. No Chrome, remova o Retro98 em chrome://extensions. No Terminal, apague o perfil Retro98 Prompt em Ajustes › Perfis. No Sublime Text, escolha outro tema se o Retro98 estava em uso." \
+        "Themes removed. In Chrome, remove Retro98 in chrome://extensions. In Terminal, delete the Retro98 Prompt profile in Settings › Profiles. In Sublime Text, pick another theme if Retro98 was in use."
 fi

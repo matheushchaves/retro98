@@ -30,6 +30,11 @@ export RETRO98_SIGNING_KEYCHAIN="$WORK/never-created.keychain-db"
 # Never touch the real permissions or the Shell's real preferences.
 export RETRO98_TCCUTIL=/usr/bin/false
 export RETRO98_DEFAULTS=/usr/bin/false
+# Never touch the real ~/Library/Fonts or Sublime Text's real packages.
+export RETRO98_FONTS_DIR="$WORK/fonts"
+export RETRO98_SUBLIME_PACKAGES="$WORK/sublime/Packages"
+mkdir -p "$WORK/sublime/Packages"
+FONT_FILE="PxPlus_IBM_VGA_8x16.ttf"
 LABEL="io.github.matheushchaves.retro98.shell"
 
 failures=0
@@ -49,7 +54,7 @@ check "bootstrapped" 'grep -q "bootstrap gui/$(id -u) $WORK/agents/$LABEL.plist"
 enable_line="$(grep -n "^enable gui/$(id -u)/$LABEL" "$WORK_LOG" | head -1 | cut -d: -f1)"
 bootstrap_line="$(grep -n "^bootstrap " "$WORK_LOG" | head -1 | cut -d: -f1)"
 check "enabled-before-bootstrap" '[[ -n "$enable_line" && -n "$bootstrap_line" && "$enable_line" -lt "$bootstrap_line" ]]'
-check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
+check "pieces-recorded" '[[ "$(cat "$WORK/support/pieces")" == "base shell prompt notepad themes" ]]'
 check "accessibility-hint" 'grep -qE "Acessibilidade|Accessibility" "$WORK/out.log"'
 EXPLORER="$WORK/apps/Retro98 Explorer.app"
 check "explorer-built" 'codesign --verify "$EXPLORER" 2> /dev/null'
@@ -84,6 +89,12 @@ check "notepad-has-icon" '[[ -s "$NOTEPAD/Contents/Resources/AppIcon.icns" ]]'
 check "notepad-opens-plain-text-without-being-default" '[[ "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:LSItemContentTypes:0" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "public.plain-text" && "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:LSHandlerRank" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "Alternate" && "$(/usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes:0:CFBundleTypeRole" "$NOTEPAD/Contents/Info.plist" 2> /dev/null)" == "Editor" ]]'
 check "notepad-registered" 'grep -qx "lsregister -f $NOTEPAD" "$WORK_LOG"'
 check "other-apps-declare-no-documents" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$EXPLORER/Contents/Info.plist" > /dev/null 2>&1'
+THEMES="$WORK/support/Themes"
+check "themes-written" '[[ -s "$THEMES/Chrome/manifest.json" && -s "$THEMES/Chrome/images/theme_frame.png" && -s "$THEMES/Chrome/images/theme_frame_inactive.png" && -s "$THEMES/Retro98 Prompt.terminal" ]] && plutil -lint "$THEMES/Retro98 Prompt.terminal" > /dev/null && plutil -convert xml1 -o /dev/null "$THEMES/Chrome/manifest.json"'
+check "themes-font-installed" 'cmp -s "$WORK/fonts/$FONT_FILE" "$ROOT/Resources/Fonts/$FONT_FILE" && [[ -e "$THEMES/.font-installed" ]]'
+check "themes-sublime-installed" '[[ -s "$WORK/sublime/Packages/Retro98/Retro98.sublime-theme" && -s "$WORK/sublime/Packages/Retro98/Retro98.sublime-color-scheme" ]]'
+check "themes-steps-told" 'grep -q "chrome://extensions" "$WORK/out.log" && grep -q "Retro98 Prompt.terminal" "$WORK/out.log" && grep -q "Select Theme" "$WORK/out.log"'
+check "themes-folder-opened-the-first-time" 'grep -qx "open $THEMES" "$WORK_LOG"'
 
 # Turned off in the Control Panel ("shelloff"): the apps are rebuilt, the taskbar stays off and the Dock normal.
 echo "base shelloff prompt" > "$WORK/support/pieces"
@@ -92,27 +103,29 @@ rm -rf "$WORK/apps/Retro98 Shell.app"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-shelloff.log" 2>&1
 check "shelloff-keeps-taskbar-off" '[[ -d "$WORK/apps/Retro98 Shell.app" ]] && ! grep -q "^bootstrap " "$WORK_LOG" \
     && grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG" && grep -q "^bootout gui/$(id -u)/$LABEL" "$WORK_LOG" \
-    && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt notepad" ]]'
+    && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt notepad themes" ]]'
+# A later install refreshes the themes without opening their folder again, and the font stays marked as ours.
+check "themes-folder-not-opened-again" '! grep -qx "open $THEMES" "$WORK_LOG" && [[ -e "$THEMES/.font-installed" && -s "$THEMES/Chrome/manifest.json" ]]'
 
 # Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.
 rm -rf "$PROMPT"
 echo "base shell" > "$WORK/support/pieces"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-old-pieces.log" 2>&1
-check "old-pieces-get-prompt" '[[ -d "$PROMPT" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
+check "old-pieces-get-prompt" '[[ -d "$PROMPT" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad themes" ]]'
 echo "base shell noprompt" > "$WORK/support/pieces"
 : > "$WORK_LOG"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-noprompt.log" 2>&1
-check "declined-prompt-stays-off" '[[ ! -e "$PROMPT" ]] && grep -qx "lsregister -u $PROMPT" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell noprompt notepad" ]]'
+check "declined-prompt-stays-off" '[[ ! -e "$PROMPT" ]] && grep -qx "lsregister -u $PROMPT" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell noprompt notepad themes" ]]'
 
 # The same for the Notepad: pieces saved before it existed get it; a declined one stays off and goes away.
 rm -rf "$NOTEPAD"
 echo "base shell prompt" > "$WORK/support/pieces"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-old-notepad.log" 2>&1
-check "old-pieces-get-notepad" '[[ -d "$NOTEPAD" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad" ]]'
+check "old-pieces-get-notepad" '[[ -d "$NOTEPAD" && "$(cat "$WORK/support/pieces")" == "base shell prompt notepad themes" ]]'
 echo "base shell nonotepad" > "$WORK/support/pieces"
 : > "$WORK_LOG"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nonotepad.log" 2>&1
-check "declined-notepad-stays-off" '[[ ! -e "$NOTEPAD" ]] && grep -qx "lsregister -u $NOTEPAD" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell nonotepad prompt" ]]'
+check "declined-notepad-stays-off" '[[ ! -e "$NOTEPAD" ]] && grep -qx "lsregister -u $NOTEPAD" "$WORK_LOG" && [[ "$(cat "$WORK/support/pieces")" == "base shell nonotepad prompt themes" ]]'
 
 # A Shell copy opened outside launchd must not survive a reinstall next to the LaunchAgent's copy.
 mkdir -p "$WORK/apps/Retro98 Shell.app/Contents/MacOS"
@@ -146,6 +159,28 @@ viewer_line="$(grep -nx "settings restore --only explorerFileViewer" "$WORK_LOG"
 unregister_line="$(grep -nx "lsregister -u $EXPLORER" "$WORK_LOG" | head -1 | cut -d: -f1)"
 # "Show in Finder" must point back at Finder before the Explorer leaves the disk.
 check "install-without-shell-restores-file-viewer-first" '[[ -n "$viewer_line" && -n "$unregister_line" && "$viewer_line" -lt "$unregister_line" ]]'
+
+# A font the person already had is never replaced, and never marked as Retro98's.
+mkdir -p "$WORK/support-font" "$WORK/fonts-own"
+echo "fonte da pessoa" > "$WORK/fonts-own/$FONT_FILE"
+echo "base noprompt nonotepad themes" > "$WORK/support-font/pieces"
+RETRO98_SUPPORT_DIR="$WORK/support-font" RETRO98_FONTS_DIR="$WORK/fonts-own" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-font.log" 2>&1
+check "themes-keep-the-persons-font" '[[ "$(cat "$WORK/fonts-own/$FONT_FILE")" == "fonte da pessoa" && ! -e "$WORK/support-font/Themes/.font-installed" && -s "$WORK/support-font/Themes/Retro98 Prompt.terminal" ]]'
+
+# Without Sublime Text the installer says so and creates nothing in its place.
+mkdir -p "$WORK/support-nosublime"
+echo "base noprompt nonotepad themes" > "$WORK/support-nosublime/pieces"
+RETRO98_SUPPORT_DIR="$WORK/support-nosublime" RETRO98_SUBLIME_PACKAGES="$WORK/no-sublime/Packages" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nosublime.log" 2>&1
+check "themes-without-sublime" 'grep -qE "Sublime Text não encontrado|Sublime Text not found" "$WORK/out-nosublime.log" && [[ ! -e "$WORK/no-sublime" ]]'
+
+# Declining the themes later removes what the installer put, and only that.
+echo "base noprompt nonotepad themes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-themes-on.log" 2>&1
+echo "da pessoa" > "$WORK/sublime/Packages/Retro98/minha.txt"
+echo "base noprompt nonotepad nothemes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nothemes.log" 2>&1
+check "declined-themes-are-removed" '[[ ! -e "$THEMES" && ! -e "$WORK/fonts/$FONT_FILE" && ! -e "$WORK/sublime/Packages/Retro98/Retro98.sublime-theme" && ! -e "$WORK/sublime/Packages/Retro98/Retro98.sublime-color-scheme" ]]'
+check "declined-themes-keep-the-persons-files" '[[ "$(cat "$WORK/sublime/Packages/Retro98/minha.txt")" == "da pessoa" && "$(cat "$WORK/support/pieces")" == "base noprompt nonotepad nothemes" ]]'
 
 # The bundle script must refuse anything that isn't an .app path (it deletes its target first).
 mkdir -p "$WORK/nao-e-app" && touch "$WORK/nao-e-app/keep"
