@@ -15,25 +15,48 @@ public struct Choices: Equatable, Sendable {
     /// Base tweaks turned off in the Control Panel.
     public let turnedOff: Set<TweakID>
     public let soundsOn: Bool
+    public let screensaver: ScreensaverKind
+    /// Idle timeout in minutes before the screensaver activates.
+    public let screensaverTimeout: Int
 
-    public static let standard = Choices(wallpaper: .standard, turnedOff: [], soundsOn: true)
+    public static let standard = Choices(
+        wallpaper: .standard, turnedOff: [], soundsOn: true,
+        screensaver: .standard, screensaverTimeout: 5
+    )
 
-    public init(wallpaper: WallpaperChoice, turnedOff: Set<TweakID>, soundsOn: Bool) {
+    public init(wallpaper: WallpaperChoice, turnedOff: Set<TweakID>, soundsOn: Bool,
+                screensaver: ScreensaverKind = .standard, screensaverTimeout: Int = 5) {
         self.wallpaper = wallpaper
         self.turnedOff = turnedOff
         self.soundsOn = soundsOn
+        self.screensaver = screensaver
+        self.screensaverTimeout = screensaverTimeout
     }
 
     public func with(wallpaper: WallpaperChoice) -> Choices {
-        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn)
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
     }
 
     public func with(soundsOn: Bool) -> Choices {
-        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn)
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+    }
+
+    public func with(screensaver: ScreensaverKind) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+    }
+
+    public func with(screensaverTimeout: Int) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
     }
 
     public func turning(_ id: TweakID, on: Bool) -> Choices {
-        Choices(wallpaper: wallpaper, turnedOff: on ? turnedOff.subtracting([id]) : turnedOff.union([id]), soundsOn: soundsOn)
+        Choices(wallpaper: wallpaper,
+                turnedOff: on ? turnedOff.subtracting([id]) : turnedOff.union([id]),
+                soundsOn: soundsOn, screensaver: screensaver, screensaverTimeout: screensaverTimeout)
     }
 }
 
@@ -60,10 +83,15 @@ public struct ChoicesFile {
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
         else { return .standard }
         let names = plist["turnedOff"] as? [String] ?? []
+        let screensaver = (plist["screensaver"] as? String)
+            .flatMap(ScreensaverKind.init(rawValue:)) ?? .standard
+        let screensaverTimeout = plist["screensaverTimeout"] as? Int ?? 5
         return Choices(
             wallpaper: Self.wallpaper(from: plist["wallpaper"] as? [String: Any]) ?? .standard,
             turnedOff: Set(names.compactMap(TweakID.init(rawValue:))),
-            soundsOn: plist["soundsOn"] as? Bool ?? Choices.standard.soundsOn
+            soundsOn: plist["soundsOn"] as? Bool ?? Choices.standard.soundsOn,
+            screensaver: screensaver,
+            screensaverTimeout: screensaverTimeout
         )
     }
 
@@ -76,6 +104,8 @@ public struct ChoicesFile {
             "wallpaper": wallpaper,
             "turnedOff": choices.turnedOff.map(\.rawValue).sorted(),
             "soundsOn": choices.soundsOn,
+            "screensaver": choices.screensaver.rawValue,
+            "screensaverTimeout": choices.screensaverTimeout,
         ]
         try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
     }
