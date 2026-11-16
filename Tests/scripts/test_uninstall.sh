@@ -96,7 +96,7 @@ run_shell_case() {
     local sounds="$WORK/sounds-$name" fonts="$WORK/fonts-$name" packages="$WORK/sublime-$name/Packages"
     plant_themes "$support" "$fonts" "$packages"
     mkdir -p "$support" "$apps/Retro98 Shell.app/Contents" "$apps/Retro98 Explorer.app/Contents" "$apps/Retro98 Prompt.app/Contents" "$agents"
-    mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$apps/Retro98 Notepad.app/Contents" "$sounds"
+    mkdir -p "$apps/Retro98 Control Panel.app/Contents" "$apps/Retro98 Notepad.app/Contents" "$apps/Retro98 Browser.app/Contents" "$sounds"
     echo "aiff" > "$sounds/Retro98.aiff"
     echo "<plist/>" > "$support/choices.plist"
     echo "png" > "$support/wallpaper-picture-1.png"
@@ -135,6 +135,12 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Notepad.app" "$calls"; then
         problems+=" notepad-not-unregistered"
     fi
+    local browser_state="absent"
+    [[ -d "$apps/Retro98 Browser.app" ]] && browser_state="present"
+    [[ "$browser_state" == "$expected_app" ]] || problems+=" browser=$browser_state"
+    if [[ "$expected_app" == "absent" ]] && ! grep -qx "lsregister -u $apps/Retro98 Browser.app" "$calls"; then
+        problems+=" browser-not-unregistered"
+    fi
     local panel_state="absent"
     [[ -d "$apps/Retro98 Control Panel.app" ]] && panel_state="present"
     [[ "$panel_state" == "$expected_app" ]] || problems+=" control-panel=$panel_state"
@@ -157,7 +163,8 @@ run_shell_case() {
     if [[ "$expected_app" == "absent" ]]; then
         local id last_reset first_unregister
         for id in "$LABEL" io.github.matheushchaves.retro98.explorer io.github.matheushchaves.retro98.prompt \
-            io.github.matheushchaves.retro98.controlpanel io.github.matheushchaves.retro98.notepad; do
+            io.github.matheushchaves.retro98.controlpanel io.github.matheushchaves.retro98.notepad \
+            io.github.matheushchaves.retro98.browser; do
             grep -qx "tccutil reset All $id" "$calls" || problems+=" permissions-kept:$id"
         done
         # tccutil can't find an unregistered bundle ID: every reset must come before any unregistering.
@@ -202,6 +209,38 @@ themes_note_case() {   # <name> <with themes: yes|no>
 }
 themes_note_case themes-note-when-removed yes
 themes_note_case no-themes-note-without-themes no
+
+# The Browser's favorites and history are the person's: uninstall keeps them and says where they are.
+browser_data_case() {   # <name> <with data: yes|no>
+    local name="$1" with_data="$2"
+    local support="$WORK/support-$name" apps="$WORK/apps-$name"
+    mkdir -p "$support" "$apps/Retro98 Browser.app/Contents"
+    echo "<plist/>" > "$support/backup.plist"
+    if [[ "$with_data" == yes ]]; then
+        mkdir -p "$support/Browser"
+        echo "favoritos da pessoa" > "$support/Browser/favorites.json"
+    fi
+    STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$support" RETRO98_APPS_DIR="$apps" \
+        bash "$ROOT/uninstall.sh" > "$WORK/$name.log" 2>&1
+    local problems=""
+    [[ ! -e "$apps/Retro98 Browser.app" ]] || problems+=" app-left"
+    if [[ "$with_data" == yes ]]; then
+        [[ "$(cat "$support/Browser/favorites.json" 2> /dev/null)" == "favoritos da pessoa" ]] || problems+=" favorites-lost"
+        grep -qF "$support/Browser" "$WORK/$name.log" || problems+=" folder-not-named"
+        [[ ! -e "$support/backup.plist" ]] || problems+=" other-files-left"
+    else
+        grep -qE "favoritos|favorites" "$WORK/$name.log" && problems+=" note-without-data"
+        [[ ! -d "$support" ]] || problems+=" support-folder-left"
+    fi
+    if [[ -z "$problems" ]]; then
+        echo "PASS $name"
+    else
+        echo "FAIL $name ($problems )"
+        failures=$((failures + 1))
+    fi
+}
+browser_data_case uninstall-keeps-browser-favorites yes
+browser_data_case uninstall-without-browser-data-says-nothing-about-it no
 
 # A font the person already had (no marker from the installer) survives, and so do their own files in the package.
 OWN_SUPPORT="$WORK/support-ownfont" OWN_FONTS="$WORK/fonts-ownfont" OWN_PACKAGES="$WORK/sublime-ownfont/Packages"

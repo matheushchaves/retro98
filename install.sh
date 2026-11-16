@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Builds Retro98 on this Mac and installs the chosen pieces: base tweaks, the taskbar (Shell), the Prompt, the
-# Notepad and the themes for other apps, plus the Control Panel, where they are turned on and off later.
+# Notepad, the themes for other apps and the Browser, plus the Control Panel, where they are turned on and off later.
 # Every setting it changes is backed up first; ./uninstall.sh puts everything back.
 set -euo pipefail
 source "$(cd "$(dirname "$0")" && pwd)/scripts/common.sh"
@@ -48,11 +48,13 @@ ask_no() {
 
 pieces=""
 if $ASSUME_YES; then
-    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt notepad themes")"
-    # Pieces saved before the Prompt, the Notepad or the themes existed get them: a new piece arrives on unless it was declined.
+    pieces="$(cat "$PIECES_FILE" 2>/dev/null || echo "base shell prompt notepad themes browser")"
+    # Pieces saved before the Prompt, the Notepad, the themes or the Browser existed get them: a new piece arrives
+    # on unless it was declined.
     [[ " $pieces " == *" prompt "* || " $pieces " == *" noprompt "* ]] || pieces+=" prompt"
     [[ " $pieces " == *" notepad "* || " $pieces " == *" nonotepad "* ]] || pieces+=" notepad"
     [[ " $pieces " == *" themes "* || " $pieces " == *" nothemes "* ]] || pieces+=" themes"
+    [[ " $pieces " == *" browser "* || " $pieces " == *" nobrowser "* ]] || pieces+=" browser"
 elif [[ ! -t 0 ]]; then
     say "Sem terminal interativo: rode ./install.sh --yes para aplicar." \
         "No interactive terminal: run ./install.sh --yes to apply."
@@ -78,6 +80,11 @@ else
         pieces+=" themes"
     else
         pieces+=" nothemes"
+    fi
+    if ask "Instalar o Navegador (motor WebKit)?" "Install the Browser (WebKit engine)?"; then
+        pieces+=" browser"
+    else
+        pieces+=" nobrowser"
     fi
 fi
 pieces="$(echo $pieces)"
@@ -198,6 +205,18 @@ if [[ " $pieces " == *" themes "* ]]; then
     fi
 else
     remove_themes || true
+fi
+
+if [[ " $pieces " == *" browser "* ]]; then
+    say "Montando o Retro98 Browser..." "Building Retro98 Browser..."
+    # Web pages as a document type list the Browser in "Open With". No http/https scheme is declared, so macOS
+    # never offers it as the default browser.
+    "$RETRO98_ROOT/scripts/build-app.sh" Retro98Browser "$BROWSER_ID" "Retro98 Browser" "$BROWSER_APP" regular "" browser "" \
+        "" "public.html" Viewer web
+    "$LSREGISTER" -f "$BROWSER_APP" || status=$?
+else
+    remove_browser
+    say_browser_data_kept
 fi
 
 say "Montando o Retro98 Control Panel..." "Building Retro98 Control Panel..."

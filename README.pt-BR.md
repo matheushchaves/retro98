@@ -23,7 +23,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | 5 | Painel de Controle | ✅ disponível |
 | 6 | Bloco de Notas | ✅ disponível |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | ✅ disponível |
-| 8 | Navegador retrô (WebKit) | planejada |
+| 8 | Navegador retrô (WebKit) | ✅ disponível |
 
 ## Requisitos
 
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt, o Bloco de Notas, os temas para outros apps), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como os temas, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
+O instalador pergunta quais peças você quer (ajustes base, barra de tarefas com o Explorer, o Prompt, o Bloco de Notas, os temas para outros apps, o Navegador), compila tudo no seu Mac (sem conta de desenvolvedor e sem aviso de "desenvolvedor não identificado"), guarda o valor original de cada ajuste que vai mudar e depois instala. `./install.sh --yes` repete as escolhas anteriores (ou instala tudo na primeira vez); uma peça nova, como o Navegador, entra junto, a menos que você a tenha recusado antes. O Painel de Controle é sempre instalado, e o que você muda nele continua valendo depois de `./install.sh --yes` (veja abaixo).
 
 ## Desinstalar
 
@@ -49,6 +49,8 @@ O instalador pergunta quais peças você quer (ajustes base, barra de tarefas co
 Isso devolve todos os valores originais. Os arquivos do Retro98 só são removidos **se tudo foi restaurado**. Se algo não puder ser restaurado, o backup fica em `~/Library/Application Support/Retro98/` e você pode rodar `./uninstall.sh` de novo.
 
 Se os temas estavam instalados, o desinstalador tira os arquivos deles e avisa o que falta remover dentro do Chrome e do Terminal (veja [Temas](#temas-fase-7)).
+
+Os favoritos e o histórico do Navegador são seus e ficam: o desinstalador remove o app e diz em que pasta eles estão (veja [Navegador](#navegador-fase-8)). Para apagar os logins e os cookies dos sites, use Ir › Limpar dados de navegação… antes de desinstalar.
 
 ## Barra de tarefas e menu Iniciar (Fase 2A)
 
@@ -197,6 +199,35 @@ Três apps que você já usa ganham o visual 98. O Retro98 **nunca altera os aju
 - **Chrome:** o tema é carregado direto da pasta, então ela precisa continuar lá. Se o Chrome avisar sobre extensões no modo do desenvolvedor, é por isso.
 - **Sublime Text:** o pacote vai para `Packages/Retro98/` na pasta de dados do Sublime Text, e só é instalado se o Sublime Text já estiver no Mac. O tema muda apenas cores e a fonte do tema padrão.
 - **Terminal:** o perfil padrão não muda. Para o Terminal usar a fonte VGA, o instalador a copia para `~/Library/Fonts/`, só se ela ainda não estiver lá; uma fonte que você já tinha nunca é trocada nem apagada.
+
+## Navegador (Fase 8)
+
+O Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) é uma moldura no estilo 98 em volta do WebKit que vem com o macOS, o mesmo motor do Safari. A moldura é retrô (menus, barra de ferramentas, endereço, abas e barra de status); as páginas aparecem como são hoje.
+
+**É um navegador secundário.** Ele não usa extensões do Chrome e não compartilha logins com o Chrome nem com o Safari. Não tem gerenciador de senhas nem chaves de acesso (passkeys), e não usa câmera, microfone ou localização. Ele nunca se oferece como navegador padrão do macOS.
+
+- **Abrir:** em Iniciar › Programas › Retro98 › Retro98 Browser, pelo Spotlight ou com `open -a "Retro98 Browser" https://example.com`. Ele também aparece em **Abrir com** para arquivos HTML. O instalador pergunta por ele separado ("Instalar o Navegador (motor WebKit)?", resposta padrão Sim).
+- **Endereço:** digite um endereço (`example.com`), um caminho (`~/site/index.html`) ou qualquer outra coisa, que vira uma busca no DuckDuckGo. `localhost`, endereços numéricos e nomes `.local` abrem em `http://`; o resto ganha `https://`.
+- **Abas:** o botão "+" ou ⌘T abre uma aba na página inicial. ⌘-clique num link abre em segundo plano, e um link que abriria outra janela vira aba. Fechar a última aba fecha a janela. As abas não são reabertas na próxima vez.
+- **Página inicial:** uma página do próprio navegador, com busca e seus favoritos. Ir › Usar a página atual como inicial troca por outra.
+- **Downloads:** vão para a pasta Downloads, com um diálogo de progresso e Cancelar. Um download nunca substitui um arquivo: se o nome já existe, ele vira `nome (2).ext`. Arquivo › Abrir a pasta Downloads mostra a pasta.
+- **Favoritos e histórico:** ficam em `~/Library/Application Support/Retro98/Browser/`. Favoritos › Organizar Favoritos… renomeia, reordena e exclui; Ir › Histórico… lista as páginas visitadas, com filtro. Ir › Limpar dados de navegação… apaga o histórico e os dados de sites (cookies, cache e logins) e mantém os favoritos.
+- **Links para outros apps** (`mailto:`, reuniões, lojas): o navegador pergunta antes de abrir outro app.
+- **Limites:** páginas que pedem senha pela janela do próprio navegador (autenticação HTTP) e o `prompt()` de JavaScript não têm diálogo. Erros de certificado não podem ser ignorados. Não há sugestões ao digitar o endereço.
+
+| Ação | Atalho |
+|---|---|
+| Nova janela, nova guia | ⌘N · ⌘T |
+| Ir para o endereço, abrir arquivo | ⌘L · ⌘O |
+| Fechar guia, fechar janela | ⌘W · ⇧⌘W |
+| Voltar, avançar, página inicial | ⌘[ · ⌘] · ⇧⌘H |
+| Parar, atualizar | ⌘. · ⌘R |
+| Próxima guia, guia anterior | ⌃⇥ · ⌃⇧⇥ (ou ⇧⌘] · ⇧⌘[) |
+| Guia 1 a 8, última guia | ⌘1 a ⌘8 · ⌘9 |
+| Aumentar, diminuir, tamanho normal | ⌘+ · ⌘− · ⌘0 |
+| Localizar na página, localizar próxima | ⌘F · ⌘G |
+| Adicionar a Favoritos, Histórico | ⌘D · ⌘Y |
+| Abrir a pasta Downloads | ⌥⌘L |
 
 ## O que a Fase 1 muda
 

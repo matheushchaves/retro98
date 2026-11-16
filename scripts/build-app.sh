@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Builds one Retro98 app product and assembles it as a signed app bundle:
-#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text] [resources folder] [document types]
+#   scripts/build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [Apple Events usage text] [resources folder] [document types] [document role] [web]
 # "agent" apps (LSUIElement) have no Dock icon or menu bar; the icon name goes to `retro98-tools iconset`;
 # the files in the resources folder (not its subfolders) are copied to Contents/Resources; the document types
-# (space-separated UTIs) put the app in "Open With" for those files without making it their default app.
+# (space-separated UTIs) put the app in "Open With" for those files without making it their default app, as an
+# Editor or, with the document role "Viewer", as a viewer; "web" lets the app's web views load plain http pages.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "$ROOT/scripts/common.sh"
 source "$ROOT/scripts/signing.sh"
 
-usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage] [resources folder] [document types]"
+usage="usage: build-app.sh <product> <bundle id> <name> <output.app> <agent|regular> [url scheme] [icon] [apple events usage] [resources folder] [document types] [document role] [web]"
 PRODUCT="${1:?$usage}"
 BUNDLE_ID="${2:?$usage}"
 NAME="${3:?$usage}"
@@ -20,12 +21,22 @@ ICON="${7:-}"
 APPLE_EVENTS_USAGE="${8:-}"
 RESOURCES="${9:-}"
 DOCUMENT_TYPES="${10:-}"
-VERSION="0.10.0"
-BUILD="11"
+DOCUMENT_ROLE="${11:-Editor}"
+WEB="${12:-}"
+VERSION="0.11.0"
+BUILD="12"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
     echo "build-app.sh: refusing '$OUT' (must end in .app)" >&2
+    exit 1
+fi
+if [[ "$DOCUMENT_ROLE" != Editor && "$DOCUMENT_ROLE" != Viewer ]]; then
+    echo "build-app.sh: document role must be 'Editor' or 'Viewer', not '$DOCUMENT_ROLE'" >&2
+    exit 1
+fi
+if [[ -n "$WEB" && "$WEB" != web ]]; then
+    echo "build-app.sh: the last argument must be 'web' or empty, not '$WEB'" >&2
     exit 1
 fi
 if [[ "$MODE" != agent && "$MODE" != regular ]]; then
@@ -70,10 +81,13 @@ if [[ -n "$DOCUMENT_TYPES" ]]; then
     for type in $DOCUMENT_TYPES; do types+="<string>$type</string>"; done
     extra+="    <key>CFBundleDocumentTypes</key><array><dict>
         <key>CFBundleTypeName</key><string>Text</string>
-        <key>CFBundleTypeRole</key><string>Editor</string>
+        <key>CFBundleTypeRole</key><string>$DOCUMENT_ROLE</string>
         <key>LSHandlerRank</key><string>Alternate</string>
         <key>LSItemContentTypes</key><array>$types</array>
     </dict></array>"$'\n'
+fi
+if [[ "$WEB" == web ]]; then
+    extra+="    <key>NSAppTransportSecurity</key><dict><key>NSAllowsArbitraryLoadsInWebContent</key><true/></dict>"$'\n'
 fi
 
 cat > "$OUT/Contents/Info.plist" <<PLIST

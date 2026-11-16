@@ -23,7 +23,7 @@ macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reve
 | 5 | Control Panel | ✅ available |
 | 6 | Notepad | ✅ available |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | ✅ available |
-| 8 | Retro web browser (WebKit) | planned |
+| 8 | Retro web browser (WebKit) | ✅ available |
 
 ## Requirements
 
@@ -38,7 +38,7 @@ cd retro98
 ./install.sh
 ```
 
-The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt, the Notepad, the themes for other apps), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the themes, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
+The installer asks which pieces you want (base tweaks, taskbar with the Explorer, the Prompt, the Notepad, the themes for other apps, the Browser), builds everything on your Mac (no developer account, no "unidentified developer" warning), saves the original value of every setting it is about to change, and then installs them. `./install.sh --yes` repeats your previous choices (or installs everything the first time); a new piece, like the Browser, comes in unless you declined it before. The Control Panel is always installed, and what you change in it survives `./install.sh --yes` (see below).
 
 ## Uninstall
 
@@ -49,6 +49,8 @@ The installer asks which pieces you want (base tweaks, taskbar with the Explorer
 This puts back every original value. Retro98's files are removed **only** if everything was restored. If something could not be restored, the backup stays in `~/Library/Application Support/Retro98/` and you can run `./uninstall.sh` again.
 
 If the themes were installed, the uninstaller removes their files and tells you what is left to remove inside Chrome and Terminal (see [Themes](#themes-phase-7)).
+
+The Browser's favorites and history are yours and stay: the uninstaller removes the app and tells you which folder they are in (see [Browser](#browser-phase-8)). To clear site logins and cookies, use Go › Clear Browsing Data… before uninstalling.
 
 ## Taskbar and Start menu (Phase 2A)
 
@@ -197,6 +199,35 @@ Three apps you already use get the 98 look. Retro98 **never edits those apps' se
 - **Chrome:** the theme is loaded straight from the folder, so the folder has to stay there. If Chrome warns about developer-mode extensions, this is why.
 - **Sublime Text:** the package goes to `Packages/Retro98/` in Sublime Text's data folder, and is installed only if Sublime Text is already on the Mac. The theme changes only colors and the font of the default theme.
 - **Terminal:** the default profile doesn't change. For Terminal to use the VGA font, the installer copies it to `~/Library/Fonts/`, only if it isn't there yet; a font you already had is never replaced or deleted.
+
+## Browser (Phase 8)
+
+Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) is a 98-style frame around the WebKit that comes with macOS, the same engine as Safari. The frame is retro (menus, toolbar, address, tabs and status bar); pages look the way they do today.
+
+**It is a secondary browser.** It doesn't use Chrome extensions and doesn't share logins with Chrome or Safari. It has no password manager and no passkeys, and it doesn't use the camera, the microphone or your location. It never offers itself as the default browser of macOS.
+
+- **Open it** from Start › Programs › Retro98 › Retro98 Browser, from Spotlight, or with `open -a "Retro98 Browser" https://example.com`. It also shows up in **Open With** for HTML files. The installer asks about it separately ("Install the Browser (WebKit engine)?", default Yes).
+- **Address:** type an address (`example.com`), a path (`~/site/index.html`) or anything else, which becomes a DuckDuckGo search. `localhost`, numeric addresses and `.local` names open over `http://`; everything else gets `https://`.
+- **Tabs:** the "+" button or ⌘T opens a tab on the home page. ⌘-click on a link opens it in the background, and a link that would open another window becomes a tab. Closing the last tab closes the window. Tabs are not reopened next time.
+- **Home page:** a page of the browser's own, with a search box and your favorites. Go › Use the Current Page as Home picks another.
+- **Downloads** go to the Downloads folder, with a progress dialog and Cancel. A download never replaces a file: if the name is taken, it becomes `name (2).ext`. File › Open the Downloads Folder shows the folder.
+- **Favorites and history** are kept in `~/Library/Application Support/Retro98/Browser/`. Favorites › Organize Favorites… renames, reorders and deletes; Go › History… lists the pages you visited, with a filter. Go › Clear Browsing Data… clears the history and the site data (cookies, cache and logins) and keeps the favorites.
+- **Links to other apps** (`mailto:`, meetings, stores): the browser asks before opening another app.
+- **Limits:** pages that ask for a password in the browser's own window (HTTP authentication) and JavaScript's `prompt()` have no dialog. Certificate errors can't be bypassed. There are no suggestions while you type an address.
+
+| Action | Shortcut |
+|---|---|
+| New window, new tab | ⌘N · ⌘T |
+| Go to the address, open a file | ⌘L · ⌘O |
+| Close tab, close window | ⌘W · ⇧⌘W |
+| Back, forward, home | ⌘[ · ⌘] · ⇧⌘H |
+| Stop, refresh | ⌘. · ⌘R |
+| Next tab, previous tab | ⌃⇥ · ⌃⇧⇥ (or ⇧⌘] · ⇧⌘[) |
+| Tab 1 to 8, last tab | ⌘1 to ⌘8 · ⌘9 |
+| Zoom in, zoom out, actual size | ⌘+ · ⌘− · ⌘0 |
+| Find on the page, find next | ⌘F · ⌘G |
+| Add to Favorites, History | ⌘D · ⌘Y |
+| Open the Downloads folder | ⌥⌘L |
 
 ## What Phase 1 changes
 

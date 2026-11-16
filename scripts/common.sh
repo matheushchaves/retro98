@@ -66,6 +66,28 @@ remove_notepad() {
     fi
 }
 
+# Retro98 Browser, the retro frame around macOS's WebKit: a piece of its own as well.
+BROWSER_ID="io.github.matheushchaves.retro98.browser"
+BROWSER_APP="$APPS_DIR/Retro98 Browser.app"
+# The person's favorites and history. They are theirs: removing the Browser never deletes them.
+BROWSER_DATA_DIR="$SUPPORT_DIR/Browser"
+
+# Quits, unregisters and deletes the Browser bundle (no-op when it isn't installed).
+remove_browser() {
+    if [[ -d "$BROWSER_APP" ]]; then
+        stop_executable "$BROWSER_APP/Contents/MacOS/Retro98Browser"
+        "$LSREGISTER" -u "$BROWSER_APP" > /dev/null 2>&1 || true
+        rm -rf "$BROWSER_APP"
+    fi
+}
+
+# Says where the Browser's favorites and history were left, when there are any.
+say_browser_data_kept() {
+    [[ -d "$BROWSER_DATA_DIR" ]] || return 0
+    say "Seus favoritos e o histórico do Navegador ficaram em $BROWSER_DATA_DIR. Apague a pasta se não quiser guardá-los." \
+        "Your Browser favorites and history were kept in $BROWSER_DATA_DIR. Delete the folder if you don't want them."
+}
+
 # Themes for other apps (Chrome, Sublime Text, Terminal): a piece of its own. Retro98 never edits those apps'
 # settings; it leaves the files ready and the person turns each theme on in the app.
 THEMES_DIR="$SUPPORT_DIR/Themes"
@@ -211,7 +233,7 @@ DEFAULTS_TOOL="${RETRO98_DEFAULTS:-/usr/bin/defaults}"
 forget_permissions() {
     local pair id app failed=0
     for pair in "$SHELL_LABEL|$SHELL_APP" "$EXPLORER_ID|$EXPLORER_APP" "$PROMPT_ID|$PROMPT_APP" \
-        "$CONTROL_PANEL_ID|$CONTROL_PANEL_APP" "$NOTEPAD_ID|$NOTEPAD_APP"; do
+        "$CONTROL_PANEL_ID|$CONTROL_PANEL_APP" "$NOTEPAD_ID|$NOTEPAD_APP" "$BROWSER_ID|$BROWSER_APP"; do
         id="${pair%%|*}" app="${pair#*|}"
         [[ -d "$app" ]] || continue
         "$LSREGISTER" -f "$app" > /dev/null 2>&1 || true   # launchd starts the Shell, so it may never have been registered
