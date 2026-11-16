@@ -63,6 +63,34 @@ enum BrowserText {
     }
     static func homePageChanged(_ l: [String]) -> String { text(l, "Página inicial alterada.", "Home page changed.") }
 
+    // MARK: Downloads
+
+    static func downloadTitle(_ l: [String]) -> String { text(l, "Download de arquivo", "File Download") }
+    static func cancel(_ l: [String]) -> String { text(l, "Cancelar", "Cancel") }
+    static func toDownloads(_ l: [String]) -> String { text(l, "Para: Downloads", "To: Downloads") }
+
+    /// "Salvando: a.zip de example.com"; without a server, just the name.
+    static func saving(name: String, host: String, _ l: [String]) -> String {
+        host.isEmpty ? text(l, "Salvando: \(name)", "Saving: \(name)") : text(l, "Salvando: \(name) de \(host)", "Saving: \(name) from \(host)")
+    }
+
+    static func receivedOfTotal(_ received: String, _ total: String, _ l: [String]) -> String {
+        text(l, "\(received) de \(total)", "\(received) of \(total)")
+    }
+
+    static func downloadDone(name: String, _ l: [String]) -> String {
+        text(l, "Download concluído: \(name)", "Download complete: \(name)")
+    }
+
+    static func downloadFailed(name: String, message: String, _ l: [String]) -> String {
+        text(l, "Não foi possível baixar \(name).\n\n\(message)", "Couldn't download \(name).\n\n\(message)")
+    }
+
+    static func quitWithDownloads(_ l: [String]) -> String {
+        text(l, "Há downloads em andamento. Sair cancela esses downloads.\n\nSair mesmo assim?",
+             "There are downloads in progress. Quitting cancels them.\n\nQuit anyway?")
+    }
+
     // MARK: Pages
 
     static func search(_ l: [String]) -> String { text(l, "Pesquisar", "Search") }
