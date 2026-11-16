@@ -85,11 +85,11 @@ final class DisplayApplet {
         pictureOption.frame.origin = CGPoint(x: margin, y: y)
         content.addSubview(pictureOption)
         let browseTitle = ControlPanelText.browse(l)
-        let browse = RetroButton(title: browseTitle) { [weak self] in self?.browse() }
+        let browseButton = RetroButton(title: browseTitle) { [weak self] in self?.browse() }
         let browseSize = RetroButton.preferredSize(title: browseTitle, icon: nil, bold: false)
-        browse.frame = CGRect(x: Self.width - margin - browseSize.width, y: y - 4, width: browseSize.width, height: browseSize.height)
-        content.addSubview(browse)
-        pictureName.frame = CGRect(x: swatchesX, y: y, width: browse.frame.minX - swatchesX - 6, height: CGFloat(PixelText.lineHeight))
+        browseButton.frame = CGRect(x: Self.width - margin - browseSize.width, y: y - 4, width: browseSize.width, height: browseSize.height)
+        content.addSubview(browseButton)
+        pictureName.frame = CGRect(x: swatchesX, y: y, width: browseButton.frame.minX - swatchesX - 6, height: CGFloat(PixelText.lineHeight))
         content.addSubview(pictureName)
         y += 30
         let displays = macOSButton(ControlPanelText.macOSDisplays(l), .displays, services: services)

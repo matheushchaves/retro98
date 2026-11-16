@@ -62,7 +62,7 @@ final class PropertiesWindow {
         measureFolders()
     }
 
-    isolated deinit { control.cancel() }
+    deinit { control.cancel() }
 
     /// The value next to `label` ("Tamanho:"), or nil when there is no such row.
     func text(of label: String) -> String? {

@@ -39,8 +39,10 @@ let package = Package(
         .executableTarget(name: "retro98-tools", dependencies: ["Retro98UI", "Retro98Themes"]),
         .target(name: "Retro98Dialogs", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings"]),
         .testTarget(name: "Retro98DialogsTests", dependencies: ["Retro98Dialogs", "Retro98FilesCore", "Retro98UI"]),
-        .executableTarget(name: "Retro98Explorer", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings", "Retro98Dialogs"]),
-        .testTarget(name: "Retro98ExplorerTests", dependencies: ["Retro98Explorer", "Retro98FilesCore", "Retro98UI"]),
+        .executableTarget(name: "Retro98Explorer", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings", "Retro98Dialogs"],
+                          swiftSettings: [.enableExperimentalFeature("IsolatedDeinit")]),
+        .testTarget(name: "Retro98ExplorerTests", dependencies: ["Retro98Explorer", "Retro98FilesCore", "Retro98UI"],
+                    swiftSettings: [.enableExperimentalFeature("IsolatedDeinit")]),
         .executableTarget(name: "Retro98Shell", dependencies: ["Retro98UI", "Retro98ShellCore", "Retro98Settings"]),
         .executableTarget(
             name: "Retro98Prompt",
