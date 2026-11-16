@@ -19,6 +19,8 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
     static let contentSize = CGSize(width: 900, height: 620)
     static let menuHeight: CGFloat = 22, toolbarHeight: CGFloat = 42, statusHeight: CGFloat = 24
     static let statusProgressWidth: CGFloat = 150
+    /// The status bar's left edge (2), the gaps after each field (4 + 4) and the resize grip (12).
+    static let statusReserve: CGFloat = 22
     static let zoomStep = 1.1, zoomRange = 0.5...3.0
     static let menuTitleLimit = 60
 
@@ -89,9 +91,6 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
         statusBar.frame = CGRect(x: 0, y: height - Self.statusHeight, width: width, height: Self.statusHeight)
         statusBar.autoresizingMask = [.width, .minYMargin]
         content.addSubview(statusBar)
-        let fields = RetroStatusBar.fieldFrames(widths: [nil, Self.statusProgressWidth], totalWidth: width, height: Self.statusHeight)
-        progressBar.frame = fields[1].insetBy(dx: 2, dy: 2)
-        progressBar.autoresizingMask = [.minXMargin]
         progressBar.isHidden = true
         statusBar.addSubview(progressBar)
 
@@ -274,7 +273,11 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
         tabStrip.selected = selectedIndex
         let title = BrowserText.windowTitle(page.title, languages)
         if window.title != title { window.setTitle(title, icon: BrowserIcons.appSmall) }
-        statusBar.fields = [(statusText, nil), ("", Self.statusProgressWidth)]
+        // The text field takes what the progress field, the gaps and the resize grip leave.
+        let widths: [CGFloat?] = [max(statusBar.bounds.width - Self.statusProgressWidth - Self.statusReserve, 0), Self.statusProgressWidth]
+        statusBar.fields = [(statusText, widths[0]), ("", widths[1])]
+        let frames = RetroStatusBar.fieldFrames(widths: widths, totalWidth: statusBar.bounds.width, height: statusBar.bounds.height)
+        progressBar.frame = frames[1].insetBy(dx: 2, dy: 2)
         progressBar.isHidden = !page.isLoading
         progressBar.fraction = page.progress
     }
@@ -325,6 +328,9 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
     // MARK: Window
 
     func windowDidBecomeKey(_ notification: Notification) { onBecomeKey?() }
+
+    /// The status fields are laid out on the bar's width.
+    func windowDidResize(_ notification: Notification) { refresh() }
 
     func windowWillClose(_ notification: Notification) {
         guard !isClosed else { return }

@@ -210,3 +210,34 @@ private let saoPaulo = TimeZone(identifier: "America/Sao_Paulo")!
     orphan.findNext()
     #expect(prompter.told.isEmpty)
 }
+
+// MARK: Drawing
+
+/// How many different colors the view draws: a list with rows has its text, icon and background.
+@MainActor private func distinctColors(_ view: NSView) -> Int {
+    guard let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return 0 }
+    view.cacheDisplay(in: view.bounds, to: rep)
+    guard let data = rep.bitmapData else { return 0 }
+    var colors = Set<UInt32>()
+    for y in 0..<rep.pixelsHigh {
+        for x in 0..<rep.pixelsWide {
+            let i = y * rep.bytesPerRow + x * (rep.bitsPerPixel / 8)
+            colors.insert(UInt32(data[i]) << 16 | UInt32(data[i + 1]) << 8 | UInt32(data[i + 2]))
+        }
+    }
+    return colors.count
+}
+
+@MainActor @Test func listsDrawTheirRows() throws {
+    let browser = try TestBrowser()
+    defer { browser.cleanUp() }
+    let empty = FavoritesWindow(favorites: browser.favorites, languages: pt)
+    #expect(distinctColors(empty.grid) == 1)
+    let window = favoritesWindow(browser)
+    #expect(window.grid.frame.width > 300 && window.grid.frame.height > 200)
+    #expect(window.grid.enclosingScrollView.map { $0.frame.maxY <= ($0.superview?.bounds.height ?? 0) - 20 } == true)
+    #expect(distinctColors(window.grid) > 2)
+    // Held in a constant: the grid only keeps a weak reference to the window that feeds it.
+    let history = historyWindow(browser)
+    #expect(distinctColors(history.grid) > 2)
+}

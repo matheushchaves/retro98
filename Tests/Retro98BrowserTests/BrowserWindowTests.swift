@@ -420,3 +420,24 @@ private let example = web("https://example.com/")
     window.tabStrip.onClose?(1)
     #expect(window.tabs.count == 1)
 }
+
+// MARK: Layout
+
+@MainActor @Test func progressFieldStaysInsideTheStatusBar() throws {
+    let browser = try TestBrowser()
+    defer { browser.cleanUp() }
+    let window = browser.window()
+    func check() {
+        let bar = window.statusBar.bounds.width
+        let frames = RetroStatusBar.fieldFrames(widths: window.statusBar.fields.map(\.width), totalWidth: bar, height: window.statusBar.bounds.height)
+        #expect(frames.count == 2 && frames[1].width == 150)
+        #expect(frames[0].maxX < frames[1].minX && frames[1].maxX <= bar - 12)
+        #expect(frames[1].contains(window.progressBar.frame))
+        #expect(window.progressBar.frame.width > 100)
+    }
+    check()
+    var frame = window.window.frame
+    frame.size.width += 240
+    window.window.setFrame(frame, display: false)
+    check()
+}
