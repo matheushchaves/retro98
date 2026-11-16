@@ -12,8 +12,10 @@ final class ScreensaverApplet {
     let dialog: AppletDialog
     private let kindDrop: RetroDropDown
     private let timeoutDrop: RetroDropDown
+    private var previewBtn: RetroButton!
     private let model: ControlPanelModel
     private let services: ControlPanelServices
+    private var previewWin: ScreensaverWindow?
 
     // Test seams
     private(set) var selectedKind: ScreensaverKind
@@ -52,11 +54,17 @@ final class ScreensaverApplet {
                                     width: 100, height: CGFloat(PixelText.lineHeight))
         content.addSubview(timeoutLabel)
 
+        let timeoutY = kindDrop.frame.minY - margin / 2 - RetroDropDown.height
         timeoutDrop = RetroDropDown(items: { [] })
-        timeoutDrop.frame = CGRect(x: margin + 100,
-                                   y: kindDrop.frame.minY - margin / 2 - RetroDropDown.height,
-                                   width: 100, height: RetroDropDown.height)
+        timeoutDrop.frame = CGRect(x: margin + 100, y: timeoutY, width: 100, height: RetroDropDown.height)
         content.addSubview(timeoutDrop)
+
+        let previewX = timeoutDrop.frame.maxX + 4
+        previewBtn = RetroButton(title: ControlPanelText.screensaverPreview(l),
+                                 action: { [weak self] in self?.showPreview() })
+        previewBtn.frame = CGRect(x: previewX, y: timeoutY,
+                                  width: Self.width - margin - previewX, height: RetroButton.height)
+        content.addSubview(previewBtn)
 
         // Wire items now that self is fully initialized
         rebuildKindItems(l)
@@ -105,6 +113,16 @@ final class ScreensaverApplet {
     private func refresh(_ l: [String]) {
         kindDrop.set(text: ControlPanelText.screensaverKindName(selectedKind, l), icon: nil)
         timeoutDrop.set(text: ControlPanelText.screensaverTimeoutName(selectedTimeout, l), icon: nil)
+        previewBtn.isEnabled = selectedKind != .none
+    }
+
+    private func showPreview() {
+        guard selectedKind != .none,
+              let renderer = ScreensaverRendererFactory.make(selectedKind) else { return }
+        let win = ScreensaverWindow()
+        previewWin = win
+        win.onDismiss = { [weak self] in self?.previewWin = nil }
+        win.present(renderer: renderer)
     }
 
     private func apply() {

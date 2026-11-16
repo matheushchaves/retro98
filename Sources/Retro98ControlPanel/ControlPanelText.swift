@@ -143,6 +143,7 @@ extension ControlPanelText {
     static func screensaverTimeoutName(_ minutes: Int, _ l: [String]) -> String {
         text(l, "\(minutes) min", "\(minutes) min")
     }
+    static func screensaverPreview(_ l: [String]) -> String { text(l, "Ver", "Preview") }
 
     static func taskbar(_ l: [String]) -> String { text(l, "Barra de tarefas e menu Iniciar", "Taskbar and Start menu") }
     static func notInstalled(_ l: [String]) -> String {
