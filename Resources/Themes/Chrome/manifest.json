@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Retro98",
+  "version": "1.0",
+  "description": "Classic gray and navy for Chrome, from the Retro98 project.",
+  "theme": {
+    "images": {
+      "theme_frame": "images/theme_frame.png",
+      "theme_frame_inactive": "images/theme_frame_inactive.png"
+    },
+    "colors": {
+      "frame": [0, 0, 128],
+      "frame_inactive": [128, 128, 128],
+      "background_tab": [128, 128, 128],
+      "background_tab_inactive": [128, 128, 128],
+      "tab_background_text": [255, 255, 255],
+      "tab_background_text_inactive": [255, 255, 255],
+      "toolbar": [192, 192, 192],
+      "toolbar_text": [0, 0, 0],
+      "toolbar_button_icon": [0, 0, 0],
+      "tab_text": [0, 0, 0],
+      "bookmark_text": [0, 0, 0],
+      "omnibox_background": [255, 255, 255],
+      "omnibox_text": [0, 0, 0],
+      "ntp_background": [0, 128, 128],
+      "ntp_text": [255, 255, 255],
+      "ntp_link": [255, 255, 255],
+      "ntp_header": [0, 0, 128],
+      "button_background": [192, 192, 192]
+    },
+    "properties": {
+      "ntp_logo_alternate": 1
+    }
+  }
+}
