@@ -3,7 +3,6 @@
 <p align="center"><strong>Um ambiente estilo Windows 98 para macOS que nunca atrapalha o seu trabalho.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-008080">
   <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-000080">
   <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-808080"></a>
