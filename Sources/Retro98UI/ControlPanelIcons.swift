@@ -2,7 +2,7 @@ import CoreGraphics
 import Foundation
 
 public enum ControlPanelIcon: CaseIterable, Sendable {
-    case display, appearance, mouse, sounds, components, network, printers, keyboard, dateTime, users
+    case display, appearance, mouse, sounds, components, network, printers, keyboard, dateTime, users, screensaver
 }
 
 /// The Control Panel's own icon and its applets' icons: original pixel art on FileIcons' 16-unit grid.
@@ -111,6 +111,20 @@ public enum ControlPanelIcons {
             s.box(0, 6, 9, 7, fill: navy)
             s.box(9, 4, 5, 5, fill: teal)
             s.box(7, 9, 9, 6, fill: teal)
+        case .screensaver:
+            // Monitor with star burst: a small screen showing a star
+            s.box(1, 1, 14, 10, fill: gray)
+            s.fill(2, 2, 12, 8, navy)
+            // Star in center of screen
+            s.fill(7, 4, 2, 6, yellow)   // vertical bar
+            s.fill(5, 6, 6, 2, yellow)   // horizontal bar
+            s.fill(5, 4, 2, 2, yellow)   // top-left diagonal
+            s.fill(9, 4, 2, 2, yellow)   // top-right diagonal
+            s.fill(5, 8, 2, 2, yellow)   // bottom-left diagonal
+            s.fill(9, 8, 2, 2, yellow)   // bottom-right diagonal
+            // Stand
+            s.fill(6, 11, 4, 1, dark)
+            s.box(4, 12, 8, 2, fill: gray)
         }
     }
 }

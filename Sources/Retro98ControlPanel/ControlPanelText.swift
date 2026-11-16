@@ -128,6 +128,22 @@ extension ControlPanelText {
         }
     }
 
+    static func screensaverKindLabel(_ l: [String]) -> String { text(l, "Proteção:", "Screen saver:") }
+    static func screensaverTimeoutLabel(_ l: [String]) -> String { text(l, "Aguardar:", "Wait:") }
+
+    static func screensaverKindName(_ kind: Retro98Settings.ScreensaverKind, _ l: [String]) -> String {
+        switch kind {
+        case .none: text(l, "(nenhuma)", "(None)")
+        case .pipes: text(l, "Tubulações 3D", "3D Pipes")
+        case .text3d: text(l, "Texto 3D", "3D Text")
+        case .johnny: "Johnny Castaway"
+        }
+    }
+
+    static func screensaverTimeoutName(_ minutes: Int, _ l: [String]) -> String {
+        text(l, "\(minutes) min", "\(minutes) min")
+    }
+
     static func taskbar(_ l: [String]) -> String { text(l, "Barra de tarefas e menu Iniciar", "Taskbar and Start menu") }
     static func notInstalled(_ l: [String]) -> String {
         text(l, "Não instalado: rode ./install.sh para instalar.", "Not installed: run ./install.sh to install it.")

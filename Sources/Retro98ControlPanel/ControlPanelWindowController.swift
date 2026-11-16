@@ -173,6 +173,9 @@ final class ControlPanelWindowController: NSObject, NSWindowDelegate, RetroIconG
         case .components:
             let components = ComponentsApplet(model: model, services: services, prompter: prompter)
             (object, dialog) = (components, components.dialog)
+        case .screensaver:
+            let ss = ScreensaverApplet(model: model, services: services, prompter: prompter)
+            (object, dialog) = (ss, ss.dialog)
         case .network, .printers, .keyboard, .dateTime, .users, .systemSettings:
             return nil
         }

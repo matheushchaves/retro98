@@ -16,5 +16,5 @@ import Testing
     for (i, a) in renders.enumerated() {
         for b in renders.dropFirst(i + 1) { #expect(a != b) }
     }
-    #expect(ControlPanelIcon.allCases.count == 10)
+    #expect(ControlPanelIcon.allCases.count == 11)
 }

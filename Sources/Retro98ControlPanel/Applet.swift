@@ -3,7 +3,7 @@ import Retro98UI
 
 /// One icon in the Control Panel: a Retro98 applet (opens its dialog) or a shortcut to a macOS settings panel.
 enum Applet: CaseIterable {
-    case display, appearance, mouse, sounds, components, network, printers, keyboard, dateTime, users, systemSettings
+    case display, appearance, mouse, sounds, components, screensaver, network, printers, keyboard, dateTime, users, systemSettings
 
     func title(_ l: [String]) -> String {
         switch self {
@@ -12,6 +12,7 @@ enum Applet: CaseIterable {
         case .mouse: "Mouse"
         case .sounds: ControlPanelText.text(l, "Sons", "Sounds")
         case .components: ControlPanelText.text(l, "Componentes", "Components")
+        case .screensaver: ControlPanelText.text(l, "Proteção de Tela", "Screen Saver")
         case .network: ControlPanelText.text(l, "Rede", "Network")
         case .printers: ControlPanelText.text(l, "Impressoras", "Printers")
         case .keyboard: ControlPanelText.text(l, "Teclado", "Keyboard")
@@ -36,6 +37,9 @@ enum Applet: CaseIterable {
         case .components:
             ControlPanelText.text(l, "Liga e desliga a barra de tarefas, o Explorer como padrão e a barra de menus escondida.",
                                   "Turns the taskbar, Explorer as default and the hidden menu bar on and off.")
+        case .screensaver:
+            ControlPanelText.text(l, "Escolhe e configura a proteção de tela do Retro98.",
+                                  "Chooses and configures the Retro98 screen saver.")
         case .network: Self.opens(ControlPanelText.text(l, "Rede", "Network"), l)
         case .printers: Self.opens(ControlPanelText.text(l, "Impressoras e Scanners", "Printers & Scanners"), l)
         case .keyboard: Self.opens(ControlPanelText.text(l, "Teclado", "Keyboard"), l)
@@ -56,6 +60,7 @@ enum Applet: CaseIterable {
         case .mouse: ControlPanelIcons.icon(.mouse, size: 32)
         case .sounds: ControlPanelIcons.icon(.sounds, size: 32)
         case .components: ControlPanelIcons.icon(.components, size: 32)
+        case .screensaver: ControlPanelIcons.icon(.screensaver, size: 32)
         case .network: ControlPanelIcons.icon(.network, size: 32)
         case .printers: ControlPanelIcons.icon(.printers, size: 32)
         case .keyboard: ControlPanelIcons.icon(.keyboard, size: 32)
@@ -73,7 +78,7 @@ enum Applet: CaseIterable {
     /// The macOS panel a shortcut opens; nil for Retro98's own applets.
     var settingsURL: URL? {
         switch self {
-        case .display, .appearance, .mouse, .sounds, .components: nil
+        case .display, .appearance, .mouse, .sounds, .components, .screensaver: nil
         case .network: MacOSPanel.settings("com.apple.Network-Settings.extension")
         case .printers: MacOSPanel.settings("com.apple.Print-Scan-Settings.extension")
         case .keyboard: MacOSPanel.settings("com.apple.Keyboard-Settings.extension")
