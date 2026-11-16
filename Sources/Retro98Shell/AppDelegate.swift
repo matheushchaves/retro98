@@ -1,6 +1,7 @@
 import AppKit
 import Retro98Settings
 import Retro98ShellCore
+import Retro98Screensavers
 import Retro98UI
 
 @MainActor
@@ -8,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var taskbar: TaskbarController?
     private var hotKey: HotKey?
     private var accessibility: AccessibilityGate?
+    private var screensaver: ScreensaverController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         let languages = Locale.preferredLanguages
@@ -24,6 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotKey = HotKey { [weak taskbar] in taskbar?.toggleStartMenu() }
         self.taskbar = taskbar
         gate.start()
+        let sc = ScreensaverController(choices: { ChoicesFile.live().load() }, window: ScreensaverWindow())
+        sc.start()
+        screensaver = sc
     }
 
     func applicationWillTerminate(_ notification: Notification) {

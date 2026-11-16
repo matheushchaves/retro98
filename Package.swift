@@ -6,6 +6,7 @@ let package = Package(
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "Retro98Settings", targets: ["Retro98Settings"]),
+        .library(name: "Retro98Screensavers", targets: ["Retro98Screensavers"]),
         .library(name: "Retro98UI", targets: ["Retro98UI"]),
         .library(name: "Retro98ShellCore", targets: ["Retro98ShellCore"]),
         .library(name: "Retro98FilesCore", targets: ["Retro98FilesCore"]),
@@ -43,12 +44,14 @@ let package = Package(
                           swiftSettings: [.enableExperimentalFeature("IsolatedDeinit")]),
         .testTarget(name: "Retro98ExplorerTests", dependencies: ["Retro98Explorer", "Retro98FilesCore", "Retro98UI"],
                     swiftSettings: [.enableExperimentalFeature("IsolatedDeinit")]),
-        .executableTarget(name: "Retro98Shell", dependencies: ["Retro98UI", "Retro98ShellCore", "Retro98Settings"]),
+        .target(name: "Retro98Screensavers", dependencies: ["Retro98UI", "Retro98Settings"]),
+        .testTarget(name: "Retro98ScreensaversTests", dependencies: ["Retro98Screensavers", "Retro98Settings"]),
+        .executableTarget(name: "Retro98Shell", dependencies: ["Retro98UI", "Retro98ShellCore", "Retro98Settings", "Retro98Screensavers"]),
         .executableTarget(
             name: "Retro98Prompt",
             dependencies: ["Retro98UI", "Retro98Settings", .product(name: "SwiftTerm", package: "SwiftTerm")]
         ),
-        .executableTarget(name: "Retro98ControlPanel", dependencies: ["Retro98UI", "Retro98Settings"]),
+        .executableTarget(name: "Retro98ControlPanel", dependencies: ["Retro98UI", "Retro98Settings", "Retro98Screensavers"]),
         .testTarget(name: "Retro98ControlPanelTests", dependencies: ["Retro98ControlPanel", "Retro98Settings", "Retro98UI"]),
         .executableTarget(name: "Retro98Notepad", dependencies: ["Retro98UI", "Retro98FilesCore", "Retro98Settings", "Retro98Dialogs"]),
         .testTarget(name: "Retro98NotepadTests", dependencies: ["Retro98Notepad", "Retro98UI", "Retro98Dialogs"]),
