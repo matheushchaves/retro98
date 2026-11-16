@@ -128,7 +128,10 @@ public enum RetroSound {
         let shift = whole.leadingZeroBitCount
         let exponent = UInt16(16383 + 63 - shift)
         let mantissa = whole << shift
-        return [UInt8(exponent >> 8), UInt8(exponent & 0xFF)] + (0..<8).map { UInt8((mantissa >> (56 - 8 * $0)) & 0xFF) }
+        let hi = UInt8(exponent >> 8)
+        let lo = UInt8(exponent & 0xFF)
+        let mantissaBytes: [UInt8] = (0..<8).map { i in UInt8((mantissa >> (56 - 8 * i)) & 0xFF) }
+        return [hi, lo] + mantissaBytes
     }
 
     // MARK: Playing
