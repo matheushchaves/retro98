@@ -63,6 +63,28 @@ enum BrowserText {
     }
     static func homePageChanged(_ l: [String]) -> String { text(l, "Página inicial alterada.", "Home page changed.") }
 
+    // MARK: Small windows
+
+    static func organizeTitle(_ l: [String]) -> String { text(l, "Organizar Favoritos", "Organize Favorites") }
+    static func nameColumn(_ l: [String]) -> String { text(l, "Nome", "Name") }
+    static func titleColumn(_ l: [String]) -> String { text(l, "Título", "Title") }
+    static func visitedColumn(_ l: [String]) -> String { text(l, "Visitado", "Visited") }
+    static func filterLabel(_ l: [String]) -> String { text(l, "Filtrar:", "Filter:") }
+    static func open(_ l: [String]) -> String { text(l, "Abrir", "Open") }
+    static func rename(_ l: [String]) -> String { text(l, "Renomear", "Rename") }
+    static func delete(_ l: [String]) -> String { text(l, "Excluir", "Delete") }
+    static func moveUp(_ l: [String]) -> String { text(l, "Para cima", "Move Up") }
+    static func moveDown(_ l: [String]) -> String { text(l, "Para baixo", "Move Down") }
+    static func close(_ l: [String]) -> String { text(l, "Fechar", "Close") }
+    static func findTitle(_ l: [String]) -> String { text(l, "Localizar", "Find") }
+    static func findWhat(_ l: [String]) -> String { text(l, "Localizar:", "Find what:") }
+    static func findNext(_ l: [String]) -> String { text(l, "Localizar próxima", "Find Next") }
+    static func findPrevious(_ l: [String]) -> String { text(l, "Localizar anterior", "Find Previous") }
+    static func notFound(_ needle: String, _ l: [String]) -> String {
+        let needle = oneLine(needle, limit: 100)
+        return text(l, "Não foi possível encontrar \"\(needle)\" nesta página.", "Can't find \"\(needle)\" on this page.")
+    }
+
     // MARK: Downloads
 
     static func downloadTitle(_ l: [String]) -> String { text(l, "Download de arquivo", "File Download") }
