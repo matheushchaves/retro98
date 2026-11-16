@@ -374,11 +374,11 @@ private let example = web("https://example.com/")
     let window = browser.window()
     window.openTab()
     window.openTab()
-    window.selectNextTab(nil)
+    window.showNextTab(nil)
     #expect(window.selectedIndex == 0)
-    window.selectPreviousTab(nil)
+    window.showPreviousTab(nil)
     #expect(window.selectedIndex == 2)
-    window.selectPreviousTab(nil)
+    window.showPreviousTab(nil)
     #expect(window.selectedIndex == 1)
 }
 
@@ -399,13 +399,13 @@ private let example = web("https://example.com/")
     let browser = try TestBrowser()
     defer { browser.cleanUp() }
     let window = browser.window()
-    window.zoomIn(nil)
+    window.zoomPageIn(nil)
     #expect(abs(browser.pages[0].zoom - 1.1) < 0.0001)
-    for _ in 0..<40 { window.zoomIn(nil) }
+    for _ in 0..<40 { window.zoomPageIn(nil) }
     #expect(browser.pages[0].zoom == 3)
-    for _ in 0..<80 { window.zoomOut(nil) }
+    for _ in 0..<80 { window.zoomPageOut(nil) }
     #expect(browser.pages[0].zoom == 0.5)
-    window.zoomReset(nil)
+    window.zoomPageReset(nil)
     #expect(browser.pages[0].zoom == 1)
 }
 

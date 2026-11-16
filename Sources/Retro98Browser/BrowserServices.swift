@@ -18,7 +18,7 @@ struct BrowserServices {
 }
 
 /// Commands the windows send up the responder chain for the app to answer.
-@objc protocol BrowserAppCommands {
+@MainActor @objc protocol BrowserAppCommands {
     @objc func showHistory(_ sender: Any?)
     @objc func organizeFavorites(_ sender: Any?)
 }

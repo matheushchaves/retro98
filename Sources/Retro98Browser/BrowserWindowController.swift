@@ -95,6 +95,7 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
         progressBar.isHidden = true
         statusBar.addSubview(progressBar)
 
+        menuBar.menus = BrowserMenus.retroMenus(languages: languages) { [weak self] in self?.favoritesMenuItems() ?? [] }
         addressBar.onSubmit = { [weak self] in self?.go($0) }
         addressBar.onCancel = { [weak self] in
             guard let self else { return }
@@ -243,9 +244,9 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
             }
         }
         return [
-            item(BrowserText.back(l), FileIcons.back, page.canGoBack) { $0.goBack(nil) },
-            item(BrowserText.forward(l), FileIcons.forward, page.canGoForward) { $0.goForward(nil) },
-            item(BrowserText.stop(l), BrowserIcons.stop, page.isLoading) { $0.stopLoading(nil) },
+            item(BrowserText.back(l), FileIcons.back, page.canGoBack) { $0.pageBack(nil) },
+            item(BrowserText.forward(l), FileIcons.forward, page.canGoForward) { $0.pageForward(nil) },
+            item(BrowserText.stop(l), BrowserIcons.stop, page.isLoading) { $0.stopPage(nil) },
             item(BrowserText.refresh(l), BrowserIcons.refresh) { $0.reloadPage(nil) },
             item(BrowserText.home(l), BrowserIcons.home) { $0.goHome(nil) },
             nil,

@@ -63,6 +63,64 @@ enum BrowserText {
     }
     static func homePageChanged(_ l: [String]) -> String { text(l, "Página inicial alterada.", "Home page changed.") }
 
+    // MARK: Menus
+
+    static func menuFile(_ l: [String]) -> String { text(l, "Arquivo", "File") }
+    static func menuEdit(_ l: [String]) -> String { text(l, "Editar", "Edit") }
+    static func menuView(_ l: [String]) -> String { text(l, "Exibir", "View") }
+    static func menuGo(_ l: [String]) -> String { text(l, "Ir", "Go") }
+    static func menuWindow(_ l: [String]) -> String { text(l, "Janela", "Window") }
+    static func menuHelp(_ l: [String]) -> String { text(l, "Ajuda", "Help") }
+
+    static func newWindow(_ l: [String]) -> String { text(l, "Nova janela", "New Window") }
+    static func newTab(_ l: [String]) -> String { text(l, "Nova guia", "New Tab") }
+    static func openAddress(_ l: [String]) -> String { text(l, "Abrir endereço…", "Open Address…") }
+    static func openFile(_ l: [String]) -> String { text(l, "Abrir arquivo…", "Open File…") }
+    static func openDownloads(_ l: [String]) -> String { text(l, "Abrir a pasta Downloads", "Open the Downloads Folder") }
+    static func closeTab(_ l: [String]) -> String { text(l, "Fechar guia", "Close Tab") }
+    static func closeWindow(_ l: [String]) -> String { text(l, "Fechar janela", "Close Window") }
+
+    static func undo(_ l: [String]) -> String { text(l, "Desfazer", "Undo") }
+    static func redo(_ l: [String]) -> String { text(l, "Refazer", "Redo") }
+    static func cut(_ l: [String]) -> String { text(l, "Recortar", "Cut") }
+    static func copy(_ l: [String]) -> String { text(l, "Copiar", "Copy") }
+    static func paste(_ l: [String]) -> String { text(l, "Colar", "Paste") }
+    static func selectAll(_ l: [String]) -> String { text(l, "Selecionar tudo", "Select All") }
+    static func findInPage(_ l: [String]) -> String { text(l, "Localizar nesta página…", "Find on This Page…") }
+
+    static func zoomIn(_ l: [String]) -> String { text(l, "Aumentar", "Zoom In") }
+    static func zoomOut(_ l: [String]) -> String { text(l, "Diminuir", "Zoom Out") }
+    static func zoomReset(_ l: [String]) -> String { text(l, "Tamanho normal", "Actual Size") }
+
+    static func nextTab(_ l: [String]) -> String { text(l, "Próxima guia", "Next Tab") }
+    static func previousTab(_ l: [String]) -> String { text(l, "Guia anterior", "Previous Tab") }
+    static func tabNumber(_ number: Int, _ l: [String]) -> String { text(l, "Guia \(number)", "Tab \(number)") }
+    static func historyItem(_ l: [String]) -> String { text(l, "Histórico…", "History…") }
+    static func clearData(_ l: [String]) -> String { text(l, "Limpar dados de navegação…", "Clear Browsing Data…") }
+    static func useCurrentAsHome(_ l: [String]) -> String { text(l, "Usar a página atual como inicial", "Use the Current Page as Home") }
+    static func useDefaultHome(_ l: [String]) -> String { text(l, "Voltar à página inicial padrão", "Go Back to the Default Home Page") }
+
+    static func readme(_ l: [String]) -> String { text(l, "Leia-me", "Readme") }
+    static func about(_ l: [String]) -> String { text(l, "Sobre o Retro98 Browser", "About Retro98 Browser") }
+    static func hide(_ l: [String]) -> String { text(l, "Ocultar Retro98 Browser", "Hide Retro98 Browser") }
+    static func hideOthers(_ l: [String]) -> String { text(l, "Ocultar outros", "Hide Others") }
+    static func showAll(_ l: [String]) -> String { text(l, "Mostrar tudo", "Show All") }
+    static func quit(_ l: [String]) -> String { text(l, "Encerrar Retro98 Browser", "Quit Retro98 Browser") }
+    static func minimize(_ l: [String]) -> String { text(l, "Minimizar", "Minimize") }
+    static func zoomWindow(_ l: [String]) -> String { text(l, "Zoom", "Zoom") }
+    static func bringAllToFront(_ l: [String]) -> String { text(l, "Trazer todas para a frente", "Bring All to Front") }
+
+    static func aboutCredits(_ l: [String]) -> String {
+        text(l, "Um navegador secundário com moldura retrô. As páginas são desenhadas pelo WebKit que vem com o macOS.",
+             "A secondary browser in a retro frame. Pages are drawn by the WebKit that comes with macOS.")
+    }
+
+    static func clearDataQuestion(_ l: [String]) -> String {
+        text(l, "Isto apaga o histórico e os dados de sites (cookies, cache e logins). Os favoritos ficam.\n\nApagar?",
+             "This clears the history and the site data (cookies, cache and logins). Favorites stay.\n\nClear?")
+    }
+    static func dataCleared(_ l: [String]) -> String { text(l, "Dados de navegação apagados.", "Browsing data cleared.") }
+
     // MARK: Small windows
 
     static func organizeTitle(_ l: [String]) -> String { text(l, "Organizar Favoritos", "Organize Favorites") }

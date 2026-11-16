@@ -39,14 +39,16 @@ final class WebKitEnvironment {
     private let pages = NSHashTable<WebKitPage>.weakObjects()
 
     init(favorites: FavoritesStore, prompter: BrowserPrompter, dialogs: BrowserDialogs, opener: @escaping (URL) -> Void,
-         home: URL = FileManager.default.homeDirectoryForCurrentUser, languages: [String]) {
+         home: URL = FileManager.default.homeDirectoryForCurrentUser, languages: [String],
+         dataStore: WKWebsiteDataStore = .default()) {
         self.prompter = prompter
         self.dialogs = dialogs
         self.opener = opener
         self.home = home
         self.languages = languages
         configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
+        // The app's own store: logins stay between launches.
+        configuration.websiteDataStore = dataStore
         configuration.applicationNameForUserAgent = Self.userAgentName
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
         configuration.preferences.isElementFullscreenEnabled = true
