@@ -25,6 +25,7 @@
     "quick_panel_selected_label_color": "#FFFFFF",
     "quick_panel_selected_path_label_color": "#FFFFFF",
     "quick_panel_selected_matched_label_color": "#FFFFFF",
+    "quick_panel_selected_matched_path_label_color": "#FFFFFF",
     "tool_tip_bg": "#FFFFE1",
     "tool_tip_fg": "#000000",
     "progress_bar_fg": "#000080",

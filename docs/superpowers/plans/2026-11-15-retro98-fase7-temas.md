@@ -31,7 +31,7 @@
 - **Pasta de temas [minha escolha]:** `~/Library/Application Support/Retro98/Themes/`, com:
   - `Chrome/manifest.json` e `Chrome/images/theme_frame.png`, `Chrome/images/theme_frame_inactive.png`;
   - `Retro98 Prompt.terminal`;
-  - `.font-installed`, só quando foi o Retro98 que pôs a fonte em `~/Library/Fonts`.
+  - `.font-installed`, só quando foi o Retro98 que pôs a fonte em `~/Library/Fonts`. (Na revisão final a marca passou para `~/Library/Application Support/Retro98/font-installed`, fora da pasta que a pessoa vê.)
   - Na primeira vez que a pasta é criada, o instalador a abre no Finder (`open`). Nas seguintes, só atualiza os arquivos.
 - **Chrome [minha escolha]:**
   - `manifest.json`, versão 3 do manifesto, `"name": "Retro98"`, `"version": "1.0"`.

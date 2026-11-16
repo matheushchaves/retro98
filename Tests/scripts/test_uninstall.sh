@@ -43,8 +43,8 @@ plant_themes() {
     echo "png" > "$themes/Chrome/images/theme_frame.png"
     echo "png" > "$themes/Chrome/images/theme_frame_inactive.png"
     echo "plist" > "$themes/Retro98 Prompt.terminal"
-    : > "$themes/.font-installed"
-    echo "ttf" > "$fonts/$FONT_FILE"
+    : > "$1/font-installed"
+    cp "$ROOT/Resources/Fonts/$FONT_FILE" "$fonts/$FONT_FILE"
     echo "{}" > "$package/Retro98.sublime-theme"
     echo "{}" > "$package/Retro98.sublime-color-scheme"
 }
@@ -208,7 +208,7 @@ OWN_SUPPORT="$WORK/support-ownfont" OWN_FONTS="$WORK/fonts-ownfont" OWN_PACKAGES
 mkdir -p "$OWN_SUPPORT"
 echo "<plist/>" > "$OWN_SUPPORT/backup.plist"
 plant_themes "$OWN_SUPPORT" "$OWN_FONTS" "$OWN_PACKAGES"
-rm "$OWN_SUPPORT/Themes/.font-installed"
+rm "$OWN_SUPPORT/font-installed"
 echo "da pessoa" > "$OWN_PACKAGES/Retro98/minha.txt"
 STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$OWN_SUPPORT" RETRO98_APPS_DIR="$WORK/apps-ownfont" \
     RETRO98_FONTS_DIR="$OWN_FONTS" RETRO98_SUBLIME_PACKAGES="$OWN_PACKAGES" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
@@ -217,6 +217,37 @@ if [[ -e "$OWN_FONTS/$FONT_FILE" && -e "$OWN_PACKAGES/Retro98/minha.txt" && ! -e
     echo "PASS uninstall-keeps-the-persons-font-and-files"
 else
     echo "FAIL uninstall-keeps-the-persons-font-and-files"
+    failures=$((failures + 1))
+fi
+
+# The themes folder is visible in Finder: with it binned, uninstall still removes the font and the Sublime package.
+GONE_SUPPORT="$WORK/support-nofolder" GONE_FONTS="$WORK/fonts-nofolder" GONE_PACKAGES="$WORK/sublime-nofolder/Packages"
+mkdir -p "$GONE_SUPPORT"
+echo "<plist/>" > "$GONE_SUPPORT/backup.plist"
+plant_themes "$GONE_SUPPORT" "$GONE_FONTS" "$GONE_PACKAGES"
+rm -rf "$GONE_SUPPORT/Themes"
+STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$GONE_SUPPORT" RETRO98_APPS_DIR="$WORK/apps-nofolder" \
+    RETRO98_FONTS_DIR="$GONE_FONTS" RETRO98_SUBLIME_PACKAGES="$GONE_PACKAGES" bash "$ROOT/uninstall.sh" > "$WORK/nofolder.log" 2>&1
+if [[ ! -e "$GONE_FONTS/$FONT_FILE" && ! -d "$GONE_PACKAGES/Retro98" && ! -d "$GONE_SUPPORT" ]] \
+    && grep -qE "Temas removidos|Themes removed" "$WORK/nofolder.log"; then
+    echo "PASS uninstall-removes-themes-without-their-folder"
+else
+    echo "FAIL uninstall-removes-themes-without-their-folder"
+    failures=$((failures + 1))
+fi
+
+# A font Retro98 installed and the person later replaced is theirs: uninstall leaves it.
+SWAP_SUPPORT="$WORK/support-swapped" SWAP_FONTS="$WORK/fonts-swapped" SWAP_PACKAGES="$WORK/sublime-swapped/Packages"
+mkdir -p "$SWAP_SUPPORT"
+echo "<plist/>" > "$SWAP_SUPPORT/backup.plist"
+plant_themes "$SWAP_SUPPORT" "$SWAP_FONTS" "$SWAP_PACKAGES"
+echo "trocada pela pessoa" > "$SWAP_FONTS/$FONT_FILE"
+STUB_EXIT=0 RETRO98_SETTINGS_BIN="$STUB" RETRO98_SUPPORT_DIR="$SWAP_SUPPORT" RETRO98_APPS_DIR="$WORK/apps-swapped" \
+    RETRO98_FONTS_DIR="$SWAP_FONTS" RETRO98_SUBLIME_PACKAGES="$SWAP_PACKAGES" bash "$ROOT/uninstall.sh" > /dev/null 2>&1
+if [[ "$(cat "$SWAP_FONTS/$FONT_FILE" 2> /dev/null)" == "trocada pela pessoa" && ! -d "$SWAP_SUPPORT" ]]; then
+    echo "PASS uninstall-keeps-a-replaced-font"
+else
+    echo "FAIL uninstall-keeps-a-replaced-font"
     failures=$((failures + 1))
 fi
 

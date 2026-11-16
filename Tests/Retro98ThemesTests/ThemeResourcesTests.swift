@@ -52,7 +52,11 @@ private func hexColors(in value: Any) -> [String] {
     #expect(variables["ui_bg"] == "#C0C0C0" && variables["font_face"] == "Tahoma")
     #expect(variables["sidebar_row_selected"] == "#000080" && variables["sidebar_label_selected"] == "#FFFFFF")
     #expect(variables["quick_panel_selected_row_bg"] == "#000080" && variables["tool_tip_bg"] == "#FFFFE1")
-    #expect(variables.count == 29)
+    // Every label on the navy selected row is white, the matched letters of the path included.
+    for name in ["label", "path_label", "matched_label", "matched_path_label"] {
+        #expect(variables["quick_panel_selected_\(name)_color"] == "#FFFFFF", "\(name)")
+    }
+    #expect(variables.count == 30)
 }
 
 @Test func sublimeColorSchemeIsBlackOnWhiteWithNavySelection() throws {

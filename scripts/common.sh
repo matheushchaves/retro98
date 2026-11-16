@@ -75,21 +75,31 @@ FONTS_DIR="${RETRO98_FONTS_DIR:-$HOME/Library/Fonts}"
 SUBLIME_PACKAGES="${RETRO98_SUBLIME_PACKAGES:-$HOME/Library/Application Support/Sublime Text/Packages}"
 SUBLIME_THEME_FILES=("Retro98.sublime-theme" "Retro98.sublime-color-scheme")
 
+# Says the VGA font in the fonts folder was put there by Retro98, so it is Retro98's to remove. Kept outside the
+# themes folder, which the person sees in Finder and may delete.
+FONT_MARKER="$SUPPORT_DIR/font-installed"
+# Overridable so tests can make the generator fail.
+RETRO98_TOOLS="${RETRO98_TOOLS:-$RETRO98_ROOT/.build/release/retro98-tools}"
+
 # Builds retro98-tools, writes the themes folder, installs the VGA font for Terminal (only when no font of
-# that name is there) and the Sublime Text package (only when Sublime Text is there), then says the step left
-# in each app. Opens the folder in Finder the first time only.
+# that name is there) and the Sublime Text package (only when Sublime Text's data folder is there), then says
+# the step left in each app. Opens the folder in Finder the first time only. Returns 1, having installed no
+# font and no package, when the themes can't be generated.
 install_themes() {
     local first_time=1 file
     [[ -d "$THEMES_DIR" ]] && first_time=0
-    (cd "$RETRO98_ROOT" && swift build -c release --product retro98-tools)
-    "$RETRO98_ROOT/.build/release/retro98-tools" themes "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$THEMES_DIR"
-    cp "$RETRO98_ROOT/Resources/Themes/Chrome/manifest.json" "$THEMES_DIR/Chrome/manifest.json"
+    (cd "$RETRO98_ROOT" && swift build -c release --product retro98-tools) || return 1
+    "$RETRO98_TOOLS" themes "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$THEMES_DIR" || return 1
+    cp "$RETRO98_ROOT/Resources/Themes/Chrome/manifest.json" "$THEMES_DIR/Chrome/manifest.json" || return 1
 
-    # The marker says the font is Retro98's to remove; a font the person already had is left alone.
+    # The marker goes first: a font is never left in the fonts folder without it. A font the person already
+    # had gets no marker and is left alone.
     if [[ ! -e "$FONTS_DIR/$VGA_FONT_FILE" ]]; then
-        mkdir -p "$FONTS_DIR"
-        cp "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$FONTS_DIR/$VGA_FONT_FILE"
-        : > "$THEMES_DIR/.font-installed"
+        if ! { mkdir -p "$FONTS_DIR" && : > "$FONT_MARKER" \
+            && cp "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE" "$FONTS_DIR/$VGA_FONT_FILE"; }; then
+            rm -f "$FONT_MARKER"
+            return 1
+        fi
     fi
 
     say "Temas do Retro98 em $THEMES_DIR." "Retro98 themes are in $THEMES_DIR."
@@ -98,9 +108,9 @@ install_themes() {
     say "Terminal: dê dois cliques em \"Retro98 Prompt.terminal\" para adicionar o perfil." \
         "Terminal: double-click \"Retro98 Prompt.terminal\" to add the profile."
     if [[ -d "$SUBLIME_PACKAGES" ]]; then
-        mkdir -p "$SUBLIME_PACKAGES/Retro98"
+        mkdir -p "$SUBLIME_PACKAGES/Retro98" || return 1
         for file in "${SUBLIME_THEME_FILES[@]}"; do
-            cp "$RETRO98_ROOT/Resources/Themes/Sublime Text/$file" "$SUBLIME_PACKAGES/Retro98/$file"
+            cp "$RETRO98_ROOT/Resources/Themes/Sublime Text/$file" "$SUBLIME_PACKAGES/Retro98/$file" || return 1
         done
         say "Sublime Text: escolha Retro98 em Preferences › Select Theme… e em Select Color Scheme…" \
             "Sublime Text: pick Retro98 in Preferences › Select Theme… and in Select Color Scheme…"
@@ -109,22 +119,38 @@ install_themes() {
             "Sublime Text not found: its theme was not installed."
     fi
     if [[ $first_time -eq 1 ]]; then open "$THEMES_DIR" || true; fi
+    return 0
 }
 
 # Removes what install_themes put, file by file: the theme files, the Sublime Text package's two files, and
-# the font when the marker says Retro98 installed it. Folders go only if they end up empty, so anything the
-# person added stays. Returns 0 when there were themes to remove, 1 when there were none.
+# the font when the marker says Retro98 installed it and the file is still Retro98's (a font the person put
+# in its place stays). Each part is looked for on its own, so a deleted themes folder orphans nothing.
+# Folders go only if they end up empty, so anything the person added stays. Returns 0 when there was
+# something to remove, 1 when there was nothing.
 remove_themes() {
-    local file
-    [[ -d "$THEMES_DIR" ]] || return 1
-    if [[ -e "$THEMES_DIR/.font-installed" ]]; then rm -f "$FONTS_DIR/$VGA_FONT_FILE"; fi
-    rm -f "$THEMES_DIR/.font-installed" "$THEMES_DIR/Retro98 Prompt.terminal" "$THEMES_DIR/.DS_Store" \
-        "$THEMES_DIR/Chrome/manifest.json" "$THEMES_DIR/Chrome/.DS_Store" "$THEMES_DIR/Chrome/images/theme_frame.png" \
-        "$THEMES_DIR/Chrome/images/theme_frame_inactive.png"
-    rmdir "$THEMES_DIR/Chrome/images" "$THEMES_DIR/Chrome" "$THEMES_DIR" 2> /dev/null || true
-    for file in "${SUBLIME_THEME_FILES[@]}"; do rm -f "$SUBLIME_PACKAGES/Retro98/$file"; done
+    local file found=1
+    if [[ -e "$FONT_MARKER" ]]; then
+        found=0
+        if cmp -s "$FONTS_DIR/$VGA_FONT_FILE" "$RETRO98_ROOT/Resources/Fonts/$VGA_FONT_FILE"; then
+            rm -f "$FONTS_DIR/$VGA_FONT_FILE"
+        fi
+        rm -f "$FONT_MARKER"
+    fi
+    if [[ -d "$THEMES_DIR" ]]; then
+        found=0
+        rm -f "$THEMES_DIR/Retro98 Prompt.terminal" "$THEMES_DIR/.DS_Store" "$THEMES_DIR/Chrome/manifest.json" \
+            "$THEMES_DIR/Chrome/.DS_Store" "$THEMES_DIR/Chrome/images/theme_frame.png" \
+            "$THEMES_DIR/Chrome/images/theme_frame_inactive.png"
+        rmdir "$THEMES_DIR/Chrome/images" "$THEMES_DIR/Chrome" "$THEMES_DIR" 2> /dev/null || true
+    fi
+    for file in "${SUBLIME_THEME_FILES[@]}"; do
+        if [[ -e "$SUBLIME_PACKAGES/Retro98/$file" ]]; then
+            found=0
+            rm -f "$SUBLIME_PACKAGES/Retro98/$file"
+        fi
+    done
     rmdir "$SUBLIME_PACKAGES/Retro98" 2> /dev/null || true
-    return 0
+    return $found
 }
 
 # Retro98 Control Panel: always installed, since it is where pieces are turned on and off.

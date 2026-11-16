@@ -191,7 +191,11 @@ fi
 
 if [[ " $pieces " == *" themes "* ]]; then
     say "Preparando os temas..." "Preparing the themes..."
-    install_themes || status=$?
+    if ! install_themes; then
+        say "Não foi possível preparar os temas. O resto da instalação continua." \
+            "Couldn't prepare the themes. The rest of the install goes on."
+        status=1
+    fi
 else
     remove_themes || true
 fi

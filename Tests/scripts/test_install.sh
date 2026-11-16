@@ -91,7 +91,7 @@ check "notepad-registered" 'grep -qx "lsregister -f $NOTEPAD" "$WORK_LOG"'
 check "other-apps-declare-no-documents" '! /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$EXPLORER/Contents/Info.plist" > /dev/null 2>&1'
 THEMES="$WORK/support/Themes"
 check "themes-written" '[[ -s "$THEMES/Chrome/manifest.json" && -s "$THEMES/Chrome/images/theme_frame.png" && -s "$THEMES/Chrome/images/theme_frame_inactive.png" && -s "$THEMES/Retro98 Prompt.terminal" ]] && plutil -lint "$THEMES/Retro98 Prompt.terminal" > /dev/null && plutil -convert xml1 -o /dev/null "$THEMES/Chrome/manifest.json"'
-check "themes-font-installed" 'cmp -s "$WORK/fonts/$FONT_FILE" "$ROOT/Resources/Fonts/$FONT_FILE" && [[ -e "$THEMES/.font-installed" ]]'
+check "themes-font-installed" 'cmp -s "$WORK/fonts/$FONT_FILE" "$ROOT/Resources/Fonts/$FONT_FILE" && [[ -e "$WORK/support/font-installed" ]]'
 check "themes-sublime-installed" '[[ -s "$WORK/sublime/Packages/Retro98/Retro98.sublime-theme" && -s "$WORK/sublime/Packages/Retro98/Retro98.sublime-color-scheme" ]]'
 check "themes-steps-told" 'grep -q "chrome://extensions" "$WORK/out.log" && grep -q "Retro98 Prompt.terminal" "$WORK/out.log" && grep -q "Select Theme" "$WORK/out.log"'
 check "themes-folder-opened-the-first-time" 'grep -qx "open $THEMES" "$WORK_LOG"'
@@ -105,7 +105,7 @@ check "shelloff-keeps-taskbar-off" '[[ -d "$WORK/apps/Retro98 Shell.app" ]] && !
     && grep -qx "settings restore --only dockUnderTaskbar" "$WORK_LOG" && grep -q "^bootout gui/$(id -u)/$LABEL" "$WORK_LOG" \
     && [[ ! -e "$WORK/agents/$LABEL.plist" ]] && [[ "$(cat "$WORK/support/pieces")" == "base shelloff prompt notepad themes" ]]'
 # A later install refreshes the themes without opening their folder again, and the font stays marked as ours.
-check "themes-folder-not-opened-again" '! grep -qx "open $THEMES" "$WORK_LOG" && [[ -e "$THEMES/.font-installed" && -s "$THEMES/Chrome/manifest.json" ]]'
+check "themes-folder-not-opened-again" '! grep -qx "open $THEMES" "$WORK_LOG" && [[ -e "$WORK/support/font-installed" && -s "$THEMES/Chrome/manifest.json" ]]'
 
 # Pieces saved before the Prompt existed get it (new pieces arrive on); a declined Prompt stays off and goes away.
 rm -rf "$PROMPT"
@@ -165,13 +165,22 @@ mkdir -p "$WORK/support-font" "$WORK/fonts-own"
 echo "fonte da pessoa" > "$WORK/fonts-own/$FONT_FILE"
 echo "base noprompt nonotepad themes" > "$WORK/support-font/pieces"
 RETRO98_SUPPORT_DIR="$WORK/support-font" RETRO98_FONTS_DIR="$WORK/fonts-own" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-font.log" 2>&1
-check "themes-keep-the-persons-font" '[[ "$(cat "$WORK/fonts-own/$FONT_FILE")" == "fonte da pessoa" && ! -e "$WORK/support-font/Themes/.font-installed" && -s "$WORK/support-font/Themes/Retro98 Prompt.terminal" ]]'
+check "themes-keep-the-persons-font" '[[ "$(cat "$WORK/fonts-own/$FONT_FILE")" == "fonte da pessoa" && ! -e "$WORK/support-font/font-installed" && -s "$WORK/support-font/Themes/Retro98 Prompt.terminal" ]]'
 
 # Without Sublime Text the installer says so and creates nothing in its place.
 mkdir -p "$WORK/support-nosublime"
 echo "base noprompt nonotepad themes" > "$WORK/support-nosublime/pieces"
 RETRO98_SUPPORT_DIR="$WORK/support-nosublime" RETRO98_SUBLIME_PACKAGES="$WORK/no-sublime/Packages" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nosublime.log" 2>&1
 check "themes-without-sublime" 'grep -qE "Sublime Text não encontrado|Sublime Text not found" "$WORK/out-nosublime.log" && [[ ! -e "$WORK/no-sublime" ]]'
+
+# When the themes can't be generated, the installer fails and leaves no font or Sublime package behind.
+mkdir -p "$WORK/support-broken" "$WORK/sublime-broken/Packages"
+echo "base noprompt nonotepad themes" > "$WORK/support-broken/pieces"
+RETRO98_TOOLS=/usr/bin/false RETRO98_SUPPORT_DIR="$WORK/support-broken" RETRO98_FONTS_DIR="$WORK/fonts-broken" \
+    RETRO98_SUBLIME_PACKAGES="$WORK/sublime-broken/Packages" bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-broken.log" 2>&1
+broken_status=$?
+check "failed-themes-fail-the-install" '[[ $broken_status -ne 0 ]] && ! grep -qE "Temas do Retro98 em|Retro98 themes are in" "$WORK/out-broken.log" && grep -qE "Não foi possível preparar os temas|Couldn.t prepare the themes" "$WORK/out-broken.log"'
+check "failed-themes-leave-nothing" '[[ ! -e "$WORK/fonts-broken/$FONT_FILE" && ! -e "$WORK/sublime-broken/Packages/Retro98" && ! -e "$WORK/support-broken/font-installed" ]]'
 
 # Declining the themes later removes what the installer put, and only that.
 echo "base noprompt nonotepad themes" > "$WORK/support/pieces"
@@ -181,6 +190,23 @@ echo "base noprompt nonotepad nothemes" > "$WORK/support/pieces"
 bash "$ROOT/install.sh" --yes < /dev/null > "$WORK/out-nothemes.log" 2>&1
 check "declined-themes-are-removed" '[[ ! -e "$THEMES" && ! -e "$WORK/fonts/$FONT_FILE" && ! -e "$WORK/sublime/Packages/Retro98/Retro98.sublime-theme" && ! -e "$WORK/sublime/Packages/Retro98/Retro98.sublime-color-scheme" ]]'
 check "declined-themes-keep-the-persons-files" '[[ "$(cat "$WORK/sublime/Packages/Retro98/minha.txt")" == "da pessoa" && "$(cat "$WORK/support/pieces")" == "base noprompt nonotepad nothemes" ]]'
+
+# The themes folder is visible in Finder: binning it must not orphan the font or the Sublime package.
+echo "base noprompt nonotepad themes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > /dev/null 2>&1
+rm -rf "$THEMES"
+echo "base noprompt nonotepad nothemes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > /dev/null 2>&1
+check "themes-removed-even-without-their-folder" '[[ ! -e "$WORK/fonts/$FONT_FILE" && ! -e "$WORK/sublime/Packages/Retro98/Retro98.sublime-theme" && ! -e "$WORK/support/font-installed" ]]'
+
+# A font Retro98 installed and the person later replaced with their own file is theirs: it stays.
+echo "base noprompt nonotepad themes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > /dev/null 2>&1
+echo "trocada pela pessoa" > "$WORK/fonts/$FONT_FILE"
+echo "base noprompt nonotepad nothemes" > "$WORK/support/pieces"
+bash "$ROOT/install.sh" --yes < /dev/null > /dev/null 2>&1
+check "replaced-font-is-kept" '[[ "$(cat "$WORK/fonts/$FONT_FILE" 2> /dev/null)" == "trocada pela pessoa" && ! -e "$WORK/support/font-installed" ]]'
+rm -f "$WORK/fonts/$FONT_FILE"
 
 # The bundle script must refuse anything that isn't an .app path (it deletes its target first).
 mkdir -p "$WORK/nao-e-app" && touch "$WORK/nao-e-app/keep"
