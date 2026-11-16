@@ -23,8 +23,8 @@ RESOURCES="${9:-}"
 DOCUMENT_TYPES="${10:-}"
 DOCUMENT_ROLE="${11:-Editor}"
 WEB="${12:-}"
-VERSION="0.11.0"
-BUILD="12"
+VERSION="0.12.0"
+BUILD="13"
 
 # The target is deleted before rebuilding: refuse anything that isn't an .app bundle path.
 if [[ "$OUT" != *.app ]]; then
