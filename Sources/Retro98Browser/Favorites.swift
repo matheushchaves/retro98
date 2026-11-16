@@ -12,11 +12,17 @@ final class FavoritesStore {
     var onChange: (() -> Void)?
     /// False when the last change could not be written (the list in memory still has it).
     private(set) var isSaved = true
+    /// A change could not be written; called once each time saving starts to fail.
+    var onSaveFailure: (() -> Void)?
+    /// Where a file that couldn't be read was kept at launch, if that happened.
+    let damagedCopy: URL?
     private let storage: BrowserStorage<[Favorite]>
 
     init(file: URL) {
         storage = BrowserStorage(file: file)
-        items = storage.load() ?? []
+        let loaded = storage.loadReportingDamage()
+        items = loaded.value ?? []
+        damagedCopy = loaded.damagedCopy
     }
 
     /// False when the address is already a favorite.
@@ -50,7 +56,9 @@ final class FavoritesStore {
     }
 
     private func changed() {
+        let wasSaved = isSaved
         isSaved = (try? storage.save(items)) != nil
+        if wasSaved, !isSaved { onSaveFailure?() }
         onChange?()
     }
 }

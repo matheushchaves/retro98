@@ -20,6 +20,13 @@ struct BrowserStorage<Value: Codable> {
         return nil
     }
 
+    /// Reads the file and says whether it had to be moved aside as damaged.
+    func loadReportingDamage(fileManager: FileManager = .default) -> (value: Value?, damagedCopy: URL?) {
+        let existed = fileManager.fileExists(atPath: file.path)
+        let value = load(fileManager: fileManager)
+        return (value, existed && value == nil ? damagedFile : nil)
+    }
+
     func save(_ value: Value, fileManager: FileManager = .default) throws {
         try fileManager.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         let encoder = JSONEncoder()

@@ -155,6 +155,10 @@ final class BrowserWindowController: NSObject, NSWindowDelegate {
             guard tab === selectedTab else { return }
             if tab.hoverText != nil { notice = nil } else { refresh() }
         }
+        page.onNotice = { [weak self, weak tab] text in
+            guard let self, let tab, tab === selectedTab else { return }
+            notice = text
+        }
         page.onNewPage = { [weak self, weak tab] newPage, inBackground in
             guard let self, let tab, let index = tabs.firstIndex(where: { $0 === tab }) else {
                 newPage.close()

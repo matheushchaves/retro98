@@ -190,3 +190,22 @@ import Testing
     #expect(downloads.center.lines(for: stranger) == nil)
     #expect(downloads.prompter.told.isEmpty && downloads.finished.isEmpty && stranger.cancels == 0)
 }
+
+// MARK: Review fixes
+
+@MainActor @Test func finishedFileThatCannotBeMovedIsKept() throws {
+    let downloads = try Downloads()
+    defer {
+        try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: downloads.folder.path)
+        downloads.cleanUp()
+    }
+    let transfer = FakeTransfer()
+    let part = downloads.center.begin(transfer, suggestedName: "a.zip", host: "example.com")
+    try Data("completo".utf8).write(to: part)
+    try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: downloads.folder.path)
+    downloads.center.finished(transfer)
+    try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: downloads.folder.path)
+    #expect(try String(contentsOf: part, encoding: .utf8) == "completo")
+    #expect(downloads.prompter.told.count == 1 && downloads.prompter.told[0].contains("a.zip.download"))
+    #expect(downloads.center.activeCount == 0 && downloads.finished.isEmpty)
+}

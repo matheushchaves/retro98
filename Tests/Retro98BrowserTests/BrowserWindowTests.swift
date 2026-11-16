@@ -441,3 +441,17 @@ private let example = web("https://example.com/")
     window.window.setFrame(frame, display: false)
     check()
 }
+
+// MARK: Review fixes
+
+@MainActor @Test func pageNoticeShowsInTheStatusBar() throws {
+    let browser = try TestBrowser()
+    defer { browser.cleanUp() }
+    let window = browser.window()
+    window.openTab()
+    browser.pages[0].onNotice?("de outra guia")
+    #expect(window.statusText == "Concluído")
+    browser.pages[1].onNotice?("Link não aberto\n" + String(repeating: "x", count: 5_000))
+    #expect(window.statusText.hasPrefix("Link não aberto x"))
+    #expect(window.statusText.count <= 300)
+}

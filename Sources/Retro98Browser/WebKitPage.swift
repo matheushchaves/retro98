@@ -9,6 +9,7 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
     var onVisit: ((URL, String) -> Void)?
     var onHover: ((String?) -> Void)?
     var onNewPage: ((BrowserPage, Bool) -> Void)?
+    var onNotice: ((String) -> Void)?
     var onClose: (() -> Void)?
 
     private let environment: WebKitEnvironment
@@ -20,6 +21,8 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
     private var errorNavigation: WKNavigation?
     /// A "no" to opening another app holds until the person navigates.
     private var otherAppsRefused = false
+    /// The page's alerts and confirms, counted so a page can't hold the app with them.
+    private var dialogs = PageDialogs()
     private var isClosed = false
 
     init(environment: WebKitEnvironment, configuration: WKWebViewConfiguration) {
@@ -121,11 +124,13 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
         onVisit = nil
         onHover = nil
         onNewPage = nil
+        onNotice = nil
         onClose = nil
     }
 
     private func personNavigated() {
         otherAppsRefused = false
+        dialogs.reset()
         failedURL = nil
     }
 
@@ -136,6 +141,11 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
         // No target frame means a new window, which opens as a tab.
         let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
         let isCommandClick = navigationAction.navigationType == .linkActivated && navigationAction.modifierFlags.contains(.command)
+        let isPersonAction = navigationAction.navigationType == .linkActivated || navigationAction.navigationType == .formSubmitted
+        let wasRefused = otherAppsRefused
+        otherAppsRefused = NavigationPolicy.refusedAfter(refused: otherAppsRefused, scheme: url?.scheme, isMainFrame: isMainFrame,
+                                                         isPersonAction: isPersonAction)
+        if wasRefused, !otherAppsRefused { dialogs.reset() }
         let decision = NavigationPolicy.decide(scheme: url?.scheme, isMainFrame: isMainFrame, isCommandClick: isCommandClick,
                                                wantsDownload: navigationAction.shouldPerformDownload, otherAppsRefused: otherAppsRefused)
         switch decision {
@@ -161,6 +171,10 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
             }
             return .cancel
         case .cancel:
+            // A link to another app that goes nowhere after a "no" says why.
+            if isMainFrame, otherAppsRefused, let scheme = url?.scheme?.lowercased(), !NavigationPolicy.webSchemes.contains(scheme) {
+                onNotice?(BrowserText.otherAppRefused(scheme: scheme, environment.languages))
+            }
             return .cancel
         }
     }
@@ -235,12 +249,27 @@ final class WebKitPage: NSObject, BrowserPage, WKNavigationDelegate, WKUIDelegat
 
     func webViewDidClose(_ webView: WKWebView) { onClose?() }
 
+    /// False when the person silenced this page's messages (after two, the next one asks first).
+    private func mayShowDialog() -> Bool {
+        switch dialogs.next() {
+        case .show: return true
+        case .silent: return false
+        case .askFirst:
+            let keep = environment.prompter.ask(BrowserText.keepShowingMessages(environment.languages), languages: environment.languages)
+            dialogs.answer(keepShowing: keep)
+            if !keep { onNotice?(BrowserText.messagesSilenced(environment.languages)) }
+            return keep
+        }
+    }
+
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo) async {
+        guard mayShowDialog() else { return }
         let l = environment.languages
         environment.prompter.tell(BrowserText.pageSays(host: frame.securityOrigin.host, message: message, l), icon: .warning, languages: l)
     }
 
     func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo) async -> Bool {
+        guard mayShowDialog() else { return false }
         let l = environment.languages
         return environment.prompter.ask(BrowserText.pageSays(host: frame.securityOrigin.host, message: message, l), languages: l)
     }

@@ -73,3 +73,35 @@ func otherSchemesAsk(scheme: String) {
     #expect(NavigationPolicy.hoverText("a\nb\r\nc") == "a b c")
     #expect(NavigationPolicy.hoverText(String(repeating: "x", count: 10_000))?.count == 300)
 }
+
+// MARK: Review fixes
+
+@Test func refusalEndsWhenThePersonFollowsAWebLink() {
+    func after(_ scheme: String?, mainFrame: Bool = true, person: Bool = true) -> Bool {
+        NavigationPolicy.refusedAfter(refused: true, scheme: scheme, isMainFrame: mainFrame, isPersonAction: person)
+    }
+    #expect(!after("https"))
+    #expect(!after("HTTP"))
+    // A script moving the page, a frame, or another app's link doesn't give the page a new question.
+    #expect(after("https", person: false))
+    #expect(after("https", mainFrame: false))
+    #expect(after("mailto"))
+    #expect(after(nil))
+    #expect(!NavigationPolicy.refusedAfter(refused: false, scheme: "mailto", isMainFrame: true, isPersonAction: false))
+}
+
+@Test func pageDialogsOfferAWayOutAfterTwo() {
+    var dialogs = PageDialogs()
+    #expect(dialogs.next() == .show)
+    #expect(dialogs.next() == .show)
+    #expect(dialogs.next() == .askFirst)
+    #expect(dialogs.next() == .askFirst)
+    dialogs.answer(keepShowing: true)
+    #expect(dialogs.next() == .show)
+    #expect(dialogs.next() == .askFirst)
+    dialogs.answer(keepShowing: false)
+    #expect(dialogs.next() == .silent)
+    #expect(dialogs.next() == .silent)
+    dialogs.reset()
+    #expect(dialogs.next() == .show)
+}

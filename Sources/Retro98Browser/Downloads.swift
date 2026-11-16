@@ -73,8 +73,14 @@ final class DownloadCenter {
         do {
             onFinish?(try entry.file.finish().lastPathComponent)
         } catch {
-            entry.file.discard()
-            tellFailure(entry, message: error.localizedDescription)
+            // The file is complete: it stays under its ".download" name instead of being thrown away.
+            let part = entry.file.partURL
+            guard FileManager.default.fileExists(atPath: part.path) else {
+                tellFailure(entry, message: error.localizedDescription)
+                return
+            }
+            prompter.tell(BrowserText.downloadKeptAsPart(name: entry.file.name, part: part.lastPathComponent, languages),
+                          icon: .warning, languages: languages)
         }
     }
 

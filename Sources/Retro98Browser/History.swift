@@ -15,11 +15,15 @@ final class HistoryStore {
 
     private(set) var entries: [HistoryEntry]
     var onChange: (() -> Void)?
+    /// Where a file that couldn't be read was kept at launch, if that happened.
+    let damagedCopy: URL?
     private let storage: BrowserStorage<[HistoryEntry]>
 
     init(file: URL) {
         storage = BrowserStorage(file: file)
-        entries = storage.load() ?? []
+        let loaded = storage.loadReportingDamage()
+        entries = loaded.value ?? []
+        damagedCopy = loaded.damagedCopy
     }
 
     func record(url: URL, title: String, at date: Date) {

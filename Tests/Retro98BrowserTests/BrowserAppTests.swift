@@ -253,3 +253,40 @@ private let example = web("https://example.com/")
     bench.browser.favorites.add(title: "A", url: example)
     #expect(bench.windows[0].menuBar.menus[4].items().last?.title == "A")
 }
+
+// MARK: Review fixes
+
+@MainActor @Test func favoriteThatCannotBeSavedIsTold() throws {
+    let bench = try Bench()
+    defer {
+        try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: bench.browser.folder.appending(path: "Browser").path)
+        bench.cleanUp()
+    }
+    bench.launch()
+    bench.browser.favorites.add(title: "A", url: example)
+    #expect(bench.browser.prompter.told.isEmpty)
+    try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: bench.browser.folder.appending(path: "Browser").path)
+    bench.browser.pages[0].url = web("https://b.example/")
+    bench.windows[0].addFavorite(nil)
+    #expect(bench.browser.prompter.told.count == 1)
+    #expect(bench.browser.prompter.told[0].contains("Favoritos"))
+}
+
+@MainActor @Test func damagedFilesAreToldAtLaunch() throws {
+    let browser = try TestBrowser()
+    defer { browser.cleanUp() }
+    let data = browser.folder.appending(path: "Dados")
+    try FileManager.default.createDirectory(at: data, withIntermediateDirectories: true)
+    try Data("{not json".utf8).write(to: data.appending(path: "favorites.json"))
+    var services = browser.services
+    services.favorites = FavoritesStore(file: data.appending(path: "favorites.json"))
+    let downloads = DownloadCenter(folder: browser.folder.appending(path: "Downloads"), prompter: browser.prompter, languages: ["pt-BR"])
+    let app = AppDelegate(services: services, downloads: downloads, clearWebsiteData: { $0() }, openFolder: { _ in }, languages: ["pt-BR"])
+    app.presentsWindows = false
+    app.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+    #expect(app.windowControllers.count == 1)
+    #expect(browser.prompter.told.count == 1)
+    #expect(browser.prompter.told[0].contains("favorites-damaged.json"))
+    _ = app.applicationShouldHandleReopen(NSApplication.shared, hasVisibleWindows: true)
+    #expect(browser.prompter.told.count == 1)
+}

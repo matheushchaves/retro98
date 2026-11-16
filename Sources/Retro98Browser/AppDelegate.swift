@@ -50,6 +50,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, Browse
         self.openFolder = openFolder
         self.languages = languages
         super.init()
+        let prompter = services.prompter
+        services.favorites.onSaveFailure = {
+            prompter.tell(BrowserText.favoritesNotSaved(languages), icon: .warning, languages: languages)
+        }
         downloads.onFinish = { [weak self] name in
             guard let self else { return }
             for controller in controllers { controller.notice = BrowserText.downloadDone(name: name, languages) }
@@ -92,6 +96,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, Browse
     /// An address that launched the app may arrive before or after this; either way it gets the first window.
     func applicationDidFinishLaunching(_ notification: Notification) {
         if controllers.isEmpty { openWindow() }
+        tellDamagedFiles()
+    }
+
+    /// A favorites or history file that couldn't be read was kept aside and the list started empty: say so, once.
+    private func tellDamagedFiles() {
+        for copy in [services.favorites.damagedCopy, services.history.damagedCopy].compactMap({ $0 }) {
+            services.prompter.tell(BrowserText.damagedFile(copy: copy, languages), icon: .warning, languages: languages)
+        }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

@@ -161,3 +161,40 @@ private func date(_ seconds: TimeInterval) -> Date { Date(timeIntervalSince1970:
     preferences.homePage = "https://example.com/"
     #expect(preferences.homePage == "https://example.com/")
 }
+
+// MARK: Review fixes
+
+@MainActor @Test func damagedCopyIsReported() throws {
+    let folder = try temporaryFolder()
+    defer { try? FileManager.default.removeItem(at: folder) }
+    try Data("{not json".utf8).write(to: folder.appending(path: "favorites.json"))
+    try Data("[1".utf8).write(to: folder.appending(path: "history.json"))
+    #expect(FavoritesStore(file: folder.appending(path: "favorites.json")).damagedCopy == folder.appending(path: "favorites-damaged.json"))
+    #expect(HistoryStore(file: folder.appending(path: "history.json")).damagedCopy == folder.appending(path: "history-damaged.json"))
+    // Neither a missing file nor a good one is damage.
+    #expect(FavoritesStore(file: folder.appending(path: "outro.json")).damagedCopy == nil)
+    let good = FavoritesStore(file: folder.appending(path: "bom.json"))
+    good.add(title: "A", url: a)
+    #expect(FavoritesStore(file: folder.appending(path: "bom.json")).damagedCopy == nil)
+}
+
+@MainActor @Test func saveFailureIsReportedOnce() throws {
+    let folder = try temporaryFolder()
+    defer {
+        try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: folder.path)
+        try? FileManager.default.removeItem(at: folder)
+    }
+    let store = FavoritesStore(file: folder.appending(path: "favorites.json"))
+    var failures = 0
+    store.onSaveFailure = { failures += 1 }
+    store.add(title: "A", url: a)
+    #expect(failures == 0)
+    try FileManager.default.setAttributes([.posixPermissions: 0o500], ofItemAtPath: folder.path)
+    store.add(title: "B", url: b)
+    store.rename(at: 0, to: "Outro")
+    #expect(failures == 1 && !store.isSaved)
+    try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: folder.path)
+    store.rename(at: 0, to: "De novo")
+    #expect(store.isSaved)
+    #expect(FavoritesStore(file: folder.appending(path: "favorites.json")).items.count == 2)
+}

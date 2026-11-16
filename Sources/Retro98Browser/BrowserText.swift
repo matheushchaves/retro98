@@ -166,6 +166,11 @@ enum BrowserText {
         text(l, "Não foi possível baixar \(name).\n\n\(message)", "Couldn't download \(name).\n\n\(message)")
     }
 
+    static func downloadKeptAsPart(name: String, part: String, _ l: [String]) -> String {
+        text(l, "O download de \(name) terminou, mas o arquivo não pôde receber o nome final.\n\nEle ficou na pasta Downloads como \(part).",
+             "The download of \(name) finished, but the file couldn't get its final name.\n\nIt was left in the Downloads folder as \(part).")
+    }
+
     static func quitWithDownloads(_ l: [String]) -> String {
         text(l, "Há downloads em andamento. Sair cancela esses downloads.\n\nSair mesmo assim?",
              "There are downloads in progress. Quitting cancels them.\n\nQuit anyway?")
@@ -197,6 +202,30 @@ enum BrowserText {
     static func otherAppQuestion(scheme: String, _ l: [String]) -> String {
         let scheme = oneLine(scheme, limit: 40)
         return text(l, "Este link abre outro app (\(scheme)). Abrir?", "This link opens another app (\(scheme)). Open it?")
+    }
+
+    static func otherAppRefused(scheme: String, _ l: [String]) -> String {
+        let scheme = oneLine(scheme, limit: 40)
+        return text(l, "Link para outro app (\(scheme)) não aberto: você respondeu Não nesta página.",
+                    "Link to another app (\(scheme)) not opened: you answered No on this page.")
+    }
+
+    static func keepShowingMessages(_ l: [String]) -> String {
+        text(l, "Esta página já mostrou várias mensagens.\n\nContinuar mostrando as mensagens dela?",
+             "This page has shown several messages.\n\nKeep showing its messages?")
+    }
+    static func messagesSilenced(_ l: [String]) -> String {
+        text(l, "As mensagens desta página foram silenciadas.", "This page's messages were silenced.")
+    }
+
+    static func favoritesNotSaved(_ l: [String]) -> String {
+        text(l, "Não foi possível gravar os Favoritos. A mudança vale até você sair do Navegador, mas pode se perder depois.",
+             "Couldn't save the Favorites. The change holds until you quit the Browser, but may be lost after that.")
+    }
+
+    static func damagedFile(copy: URL, _ l: [String]) -> String {
+        text(l, "Um arquivo do Navegador não pôde ser lido e a lista começou vazia. O arquivo antigo foi guardado como:\n\n\(copy.path)",
+             "A Browser file couldn't be read and the list started empty. The old file was kept as:\n\n\(copy.path)")
     }
 
     /// What a page's alert or confirm shows: who is talking, then the page's words, cut short.

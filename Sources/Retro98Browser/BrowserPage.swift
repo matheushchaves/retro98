@@ -20,6 +20,8 @@ protocol BrowserPage: AnyObject {
     var onHover: ((String?) -> Void)? { get set }
     /// The page opened another page (a new tab): the new page, and whether it stays in the background.
     var onNewPage: ((BrowserPage, Bool) -> Void)? { get set }
+    /// Something the person should know, for the status bar (a link the page wasn't allowed to open, say).
+    var onNotice: ((String) -> Void)? { get set }
     /// The page asked to be closed.
     var onClose: (() -> Void)? { get set }
     func load(_ target: AddressTarget)

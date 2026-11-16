@@ -21,6 +21,15 @@ enum NavigationPolicy {
         return isCommandClick ? .newTab : .allow
     }
 
+    /// Whether a "no" to opening another app still holds after a navigation. It ends when the person follows a
+    /// link or sends a form to a web address in the main frame; a script moving the page doesn't end it, so a
+    /// page can't earn itself a new question.
+    static func refusedAfter(refused: Bool, scheme: String?, isMainFrame: Bool, isPersonAction: Bool) -> Bool {
+        guard refused else { return false }
+        guard isMainFrame, isPersonAction, let scheme = scheme?.lowercased(), webSchemes.contains(scheme) else { return true }
+        return false
+    }
+
     /// What WebKit can't show, and what the server sends as an attachment, is downloaded.
     static func decideResponse(canShow: Bool, isAttachment: Bool) -> NavigationDecision {
         canShow && !isAttachment ? .allow : .download
@@ -43,4 +52,36 @@ enum NavigationPolicy {
         let line = BrowserText.oneLine(text, limit: hoverLimit)
         return line.isEmpty ? nil : line
     }
+}
+
+/// Keeps a page from holding the app with one alert after another: after two message boxes, the next one
+/// first asks whether to keep showing them, and a "no" silences the page until the person navigates.
+struct PageDialogs: Equatable {
+    static let freeDialogs = 2
+
+    enum Step: Equatable {
+        /// Show the page's message.
+        case show
+        /// Ask first whether this page may keep showing messages.
+        case askFirst
+        /// Show nothing: the person said no.
+        case silent
+    }
+
+    private var shown = 0
+    private var isSilenced = false
+
+    mutating func next() -> Step {
+        if isSilenced { return .silent }
+        guard shown < Self.freeDialogs else { return .askFirst }
+        shown += 1
+        return .show
+    }
+
+    /// The answer to `askFirst`: a yes shows the pending message and starts counting again.
+    mutating func answer(keepShowing: Bool) {
+        if keepShowing { shown = 1 } else { isSilenced = true }
+    }
+
+    mutating func reset() { self = PageDialogs() }
 }

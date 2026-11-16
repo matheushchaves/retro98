@@ -15,6 +15,7 @@ import Retro98UI
     var onVisit: ((URL, String) -> Void)?
     var onHover: ((String?) -> Void)?
     var onNewPage: ((BrowserPage, Bool) -> Void)?
+    var onNotice: ((String) -> Void)?
     var onClose: (() -> Void)?
     var zoom = 1.0
 
