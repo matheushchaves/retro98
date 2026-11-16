@@ -1,12 +1,49 @@
-# Retro98
+<h1 align="center">Retro98</h1>
 
-**A Windows 98–style environment for macOS that never gets in the way of your work.**
+<p align="center"><strong>A Windows 98–style environment for macOS that never gets in the way of your work.</strong></p>
 
-[Leia em português](README.pt-BR.md)
+<p align="center">
+  <a href="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-008080">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-000080">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-808080"></a>
+</p>
 
-macOS does not allow system themes, so Retro98 isn't a theme. It's a set of reversible macOS tweaks plus original 98-style apps that run on top of macOS and live alongside it. Everything can be undone in one step.
+<p align="center"><a href="README.pt-BR.md">Leia em português</a></p>
 
-> Inspired by Windows 98. Not affiliated with or endorsed by Microsoft. All artwork and sounds are original.
+<p align="center"><img src="docs/images/en/desktop.png" alt="Retro98 windows over the teal desktop: the Browser, the Explorer and the Notepad, with the taskbar below" width="900"></p>
+
+macOS doesn't accept system themes, so Retro98 isn't a theme. It is a set of reversible macOS tweaks plus original 98-style apps that run on top of macOS and live alongside it. Everything can be undone in one step.
+
+> Inspired by Windows 98. Not affiliated with or endorsed by Microsoft. All images and sounds are original.
+
+## What you get
+
+- **A taskbar and a Start menu** with one button per open window, a clock, and your own apps under Programs.
+- **Retro apps that do real work:** a file manager, a terminal, a plain-text editor, a control panel and a web browser.
+- **Your Mac stays a Mac.** Finder, Terminal, Safari, the Dock and every shortcut keep working. Each piece can be turned off on its own.
+- **One command to go back:** `./uninstall.sh` restores every setting it changed.
+- **Built on your Mac** from source, with no developer account.
+
+| | |
+|---|---|
+| **Explorer** — browse, copy, move, rename and search your files, with the Recycle Bin and Properties.<br><img src="docs/images/en/explorer.png" alt="The Explorer on the Desktop view" width="430"> | **Browser** — a retro frame with tabs around the WebKit that comes with macOS.<br><img src="docs/images/en/browser.png" alt="The Browser on its home page" width="430"> |
+| **Notepad** — plain UTF-8 text in a crisp VGA font, with retro open and save dialogs.<br><img src="docs/images/en/notepad.png" alt="The Notepad with a short text" width="430"> | **Control Panel** — wallpaper, appearance, sounds, and a switch for each piece.<br><img src="docs/images/en/control-panel.png" alt="The Control Panel's window of icons" width="430"> |
+
+There is also a **Prompt** (a full terminal in the classic PC font) and **themes** for Chrome, Sublime Text and Terminal.
+
+<sub>The pictures are drawn off screen by `scripts/make-screenshots.sh` from the real app windows with made-up content. The first one is a composition of those windows over the desktop color, not a capture of a screen.</sub>
+
+## Quick start
+
+```bash
+git clone https://github.com/matheushchaves/retro98.git
+cd retro98
+./install.sh        # asks which pieces you want
+./uninstall.sh      # puts everything back
+```
+
+You need macOS 14 or newer and the Xcode Command Line Tools (`xcode-select --install`). The first build takes a few minutes.
 
 ## Status
 

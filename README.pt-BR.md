@@ -1,12 +1,49 @@
-# Retro98
+<h1 align="center">Retro98</h1>
 
-**Um ambiente estilo Windows 98 para macOS que nunca atrapalha o seu trabalho.**
+<p align="center"><strong>Um ambiente estilo Windows 98 para macOS que nunca atrapalha o seu trabalho.</strong></p>
 
-[Read in English](README.md)
+<p align="center">
+  <a href="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/matheushchaves/retro98/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-008080">
+  <img alt="Swift 6" src="https://img.shields.io/badge/Swift-6-000080">
+  <a href="LICENSE"><img alt="Licença MIT" src="https://img.shields.io/badge/licen%C3%A7a-MIT-808080"></a>
+</p>
+
+<p align="center"><a href="README.md">Read in English</a></p>
+
+<p align="center"><img src="docs/images/pt-BR/desktop.png" alt="Janelas do Retro98 sobre a área de trabalho verde-azulada: o Navegador, o Explorer e o Bloco de Notas, com a barra de tarefas embaixo" width="900"></p>
 
 O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um conjunto de ajustes reversíveis do macOS mais apps originais no estilo 98 que rodam por cima do macOS e convivem com ele. Tudo pode ser desfeito de uma vez.
 
 > Inspirado no Windows 98. Sem afiliação nem endosso da Microsoft. Todas as imagens e sons são originais.
+
+## O que você ganha
+
+- **Barra de tarefas e menu Iniciar**, com um botão por janela aberta, relógio e os seus apps em Programas.
+- **Apps retrô que trabalham de verdade:** gerenciador de arquivos, terminal, editor de texto puro, painel de controle e navegador.
+- **O Mac continua sendo um Mac.** Finder, Terminal, Safari, o Dock e todos os atalhos seguem funcionando. Cada peça pode ser desligada sozinha.
+- **Um comando para voltar:** `./uninstall.sh` devolve todos os ajustes que foram mudados.
+- **Compilado no seu Mac** a partir do código, sem conta de desenvolvedor.
+
+| | |
+|---|---|
+| **Explorer** — navegar, copiar, mover, renomear e procurar arquivos, com Lixeira e Propriedades.<br><img src="docs/images/pt-BR/explorer.png" alt="O Explorer na Área de Trabalho" width="430"> | **Navegador** — uma moldura retrô com abas em volta do WebKit que vem com o macOS.<br><img src="docs/images/pt-BR/browser.png" alt="O Navegador na página inicial" width="430"> |
+| **Bloco de Notas** — texto puro em UTF-8 numa fonte VGA nítida, com diálogos retrô de abrir e salvar.<br><img src="docs/images/pt-BR/notepad.png" alt="O Bloco de Notas com um texto curto" width="430"> | **Painel de Controle** — papel de parede, aparência, sons e um interruptor para cada peça.<br><img src="docs/images/pt-BR/control-panel.png" alt="A janela de ícones do Painel de Controle" width="430"> |
+
+Há também um **Prompt** (um terminal completo na fonte clássica de PC) e **temas** para Chrome, Sublime Text e Terminal.
+
+<sub>As imagens são desenhadas fora da tela pelo `scripts/make-screenshots.sh`, a partir das janelas reais dos apps com conteúdo inventado. A primeira é uma composição dessas janelas sobre a cor da área de trabalho, não a captura de uma tela.</sub>
+
+## Começo rápido
+
+```bash
+git clone https://github.com/matheushchaves/retro98.git
+cd retro98
+./install.sh        # pergunta quais peças você quer
+./uninstall.sh      # devolve tudo
+```
+
+Você precisa do macOS 14 ou mais novo e das Ferramentas de Linha de Comando do Xcode (`xcode-select --install`). A primeira compilação leva alguns minutos.
 
 ## Situação
 
