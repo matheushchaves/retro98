@@ -3,7 +3,7 @@ import Retro98Themes
 import Retro98UI
 
 /// Build-time helpers for the app bundles and the themes.
-///   retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad> <output.iconset>
+///   retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad|browser> <output.iconset>
 /// Writes every standard iconset PNG (16 to 1024, @1x and @2x), enlarging the pixel art without smoothing.
 ///   retro98-tools themes <font.ttf> <output folder>
 /// Writes the Chrome theme's frame pictures and the Terminal profile, which carries the font.
@@ -22,6 +22,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
     case "prompt": pixels >= 32 ? FileIcons.promptApp : FileIcons.promptAppSmall
     case "controlpanel": pixels >= 32 ? ControlPanelIcons.app : ControlPanelIcons.appSmall
     case "notepad": pixels >= 32 ? FileIcons.notepadApp : FileIcons.notepadAppSmall
+    case "browser": pixels >= 32 ? BrowserIcons.app : BrowserIcons.appSmall
     default: nil
     }
 }
@@ -72,7 +73,7 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
 }
 
 let usage = """
-usage: retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad> <output.iconset>
+usage: retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad|browser> <output.iconset>
        retro98-tools themes <font.ttf> <output folder>
 
 """
