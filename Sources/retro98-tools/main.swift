@@ -1,9 +1,12 @@
 import AppKit
+import Retro98Themes
 import Retro98UI
 
-/// Build-time helpers for the app bundles.
+/// Build-time helpers for the app bundles and the themes.
 ///   retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad> <output.iconset>
 /// Writes every standard iconset PNG (16 to 1024, @1x and @2x), enlarging the pixel art without smoothing.
+///   retro98-tools themes <font.ttf> <output folder>
+/// Writes the Chrome theme's frame pictures and the Terminal profile, which carries the font.
 
 let iconsetSizes: [(name: String, pixels: Int)] = [
     ("icon_16x16", 16), ("icon_16x16@2x", 32), ("icon_32x32", 32), ("icon_32x32@2x", 64),
@@ -54,12 +57,30 @@ let iconsetSizes: [(name: String, pixels: Int)] = [
     }
 }
 
-let arguments = CommandLine.arguments.dropFirst()
-guard arguments.count == 3, arguments.first == "iconset" else {
-    FileHandle.standardError.write(Data("usage: retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad> <output.iconset>\n".utf8))
+/// Writes the generated theme files (Chrome frame pictures, Terminal profile) into a folder.
+@MainActor func writeThemes(fontPath: String, to folder: URL) -> Int32 {
+    do {
+        try ThemeFiles.write(to: folder, fontURL: URL(filePath: fontPath))
+        return 0
+    } catch ThemeFiles.Failure.fontNotFound {
+        FileHandle.standardError.write(Data("retro98-tools: no font at '\(fontPath)'\n".utf8))
+        return 1
+    } catch {
+        FileHandle.standardError.write(Data("retro98-tools: \(error.localizedDescription)\n".utf8))
+        return 1
+    }
+}
+
+let usage = """
+usage: retro98-tools iconset <explorer|shell|prompt|controlpanel|notepad> <output.iconset>
+       retro98-tools themes <font.ttf> <output folder>
+
+"""
+let arguments = Array(CommandLine.arguments.dropFirst())
+switch (arguments.first, arguments.count) {
+case ("iconset", 3): exit(writeIconset(icon: arguments[1], to: URL(filePath: arguments[2])))
+case ("themes", 3): exit(writeThemes(fontPath: arguments[1], to: URL(filePath: arguments[2])))
+default:
+    FileHandle.standardError.write(Data(usage.utf8))
     exit(2)
 }
-let status = MainActor.assumeIsolated {
-    writeIconset(icon: arguments[arguments.startIndex + 1], to: URL(filePath: arguments[arguments.startIndex + 2]))
-}
-exit(status)
