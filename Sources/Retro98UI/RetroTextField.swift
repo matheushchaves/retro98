@@ -9,6 +9,8 @@ public final class RetroTextField: PixelView, NSTextFieldDelegate {
     public var onSubmit: (() -> Void)?
     /// Every edit the person makes.
     public var onChange: (() -> Void)?
+    /// Esc in the field; without it, Esc goes on to the window as usual.
+    public var onCancel: (() -> Void)?
 
     override public init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,6 +43,12 @@ public final class RetroTextField: PixelView, NSTextFieldDelegate {
     }
 
     public func controlTextDidChange(_ notification: Notification) { onChange?() }
+
+    public func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)), let onCancel else { return false }
+        onCancel()
+        return true
+    }
 
     @objc private func submit() { onSubmit?() }
 

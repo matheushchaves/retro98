@@ -52,6 +52,17 @@ enum BrowserText {
     static func favorites(_ l: [String]) -> String { text(l, "Favoritos", "Favorites") }
     static func history(_ l: [String]) -> String { text(l, "Histórico", "History") }
 
+    // MARK: Favorites
+
+    static func addFavorite(_ l: [String]) -> String { text(l, "Adicionar a Favoritos", "Add to Favorites") }
+    static func organizeFavorites(_ l: [String]) -> String { text(l, "Organizar Favoritos…", "Organize Favorites…") }
+    static func emptyList(_ l: [String]) -> String { text(l, "(vazio)", "(empty)") }
+    static func favoriteAdded(_ l: [String]) -> String { text(l, "Página adicionada aos Favoritos.", "Page added to Favorites.") }
+    static func favoriteAlreadyThere(_ l: [String]) -> String {
+        text(l, "Esta página já está nos Favoritos.", "This page is already in Favorites.")
+    }
+    static func homePageChanged(_ l: [String]) -> String { text(l, "Página inicial alterada.", "Home page changed.") }
+
     // MARK: Pages
 
     static func search(_ l: [String]) -> String { text(l, "Pesquisar", "Search") }
