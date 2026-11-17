@@ -11,7 +11,7 @@ private let screenshotFolder = ProcessInfo.processInfo.environment["RETRO98_SCRE
 /// The pictures' size: 16:9, four real pixels for each of Johnny's.
 private let pictureSize = CGSize(width: 1280, height: 720)
 
-/// 3D Pipes about a minute in, when a few pipes cross the screen.
+/// 3D Pipes about a minute in, its pipe lining the walls of the grid.
 @MainActor @Test(.enabled(if: screenshotFolder != nil))
 func screenshotScreensaverPipes() throws {
     let pipes = PipesRenderer()
