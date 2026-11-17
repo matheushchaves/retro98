@@ -16,7 +16,7 @@ public final class ScreensaverWindow {
         self.renderer = renderer
 
         guard let screen = NSScreen.main else { return }
-        let win = NSWindow(
+        let win = KeyableWindow(
             contentRect: screen.frame,
             styleMask: [.borderless],
             backing: .buffered,
@@ -29,12 +29,17 @@ public final class ScreensaverWindow {
         win.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         self.window = win
 
-        if let view = win.contentView {
-            renderer.start(in: view)
+        // DismissView sits behind the renderer view and captures all key/mouse events.
+        let dismissView = DismissView(frame: screen.frame)
+        dismissView.onDismiss = { [weak self] in
+            Task { @MainActor in self?.dismiss() }
         }
+        win.contentView = dismissView
+        renderer.start(in: dismissView)
 
         if presentsWindows {
             win.makeKeyAndOrderFront(nil)
+            win.makeFirstResponder(dismissView)
             installMonitors()
         }
     }
@@ -49,8 +54,8 @@ public final class ScreensaverWindow {
     }
 
     private func installMonitors() {
-        let mask: NSEvent.EventTypeMask = [.mouseMoved, .keyDown, .leftMouseDown, .rightMouseDown,
-                                           .otherMouseDown, .scrollWheel]
+        let mask: NSEvent.EventTypeMask = [.mouseMoved, .keyDown, .leftMouseDown,
+                                           .rightMouseDown, .otherMouseDown, .scrollWheel]
         let monitor = NSEvent.addGlobalMonitorForEvents(matching: mask) { [weak self] _ in
             Task { @MainActor in self?.dismiss() }
         }
@@ -66,4 +71,24 @@ public final class ScreensaverWindow {
         monitors.forEach { NSEvent.removeMonitor($0) }
         monitors.removeAll()
     }
+}
+
+// MARK: - Helpers
+
+/// NSWindow subclass that can become key so it receives keyboard events.
+private final class KeyableWindow: NSWindow {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+}
+
+/// Transparent overlay that dismisses the screensaver on any key or click.
+private final class DismissView: NSView {
+    var onDismiss: (() -> Void)?
+
+    override var acceptsFirstResponder: Bool { true }
+
+    override func keyDown(with event: NSEvent) { onDismiss?() }
+    override func mouseDown(with event: NSEvent) { onDismiss?() }
+    override func rightMouseDown(with event: NSEvent) { onDismiss?() }
+    override func scrollWheel(with event: NSEvent) { onDismiss?() }
 }
