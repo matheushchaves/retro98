@@ -3,7 +3,7 @@
 // Paleta original, inspirada em pixel art VGA do início dos anos 90:
 // poucas cores por material, com rampas curtas pensadas para dithering.
 
-enum JohnnyPalette {
+enum IslandPalette {
     // Céu (do zênite ao horizonte) e nuvens.
     static let sky: [PixelColor] = [
         0xFF2C6CCC, 0xFF3C80D8, 0xFF5498E4, 0xFF74B0EC, 0xFF98C8F4, 0xFFC0E0F8,
@@ -52,7 +52,7 @@ enum JohnnyPalette {
     static let coconut: PixelColor = 0xFF6C4018
     static let coconutLight: PixelColor = 0xFFA06C34
 
-    // Johnny.
+    // Náufrago.
     static let outline: PixelColor = 0xFF28140C
     static let skin: PixelColor = 0xFFECAC7C
     static let skinLight: PixelColor = 0xFFFCCC9C

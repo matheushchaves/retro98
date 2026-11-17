@@ -60,7 +60,7 @@ You need macOS 14 or newer and the Xcode Command Line Tools (`xcode-select --ins
 | 6 | Notepad | ✅ available |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | ✅ available |
 | 8 | Retro web browser (WebKit) | ✅ available |
-| 9 | Screen savers (3D Pipes, 3D Text, a castaway's island) | ✅ available |
+| 9 | Screen savers (3D Pipes, 3D Text, Desert Island) | ✅ available |
 
 ## Requirements
 
@@ -196,7 +196,7 @@ Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) turns
 - **Appearance:** each Phase 1 tweak on its own check box. The wallpaper is in Display and the pointer in Mouse.
 - **Mouse:** the white pointer with a black outline.
 - **Sounds:** Retro98's own sounds (taskbar startup, errors, warnings, emptying the Recycle Bin), made by the project, each with a Play button. You can turn them off, and you can make Retro98's alert the macOS alert sound: it goes to `~/Library/Sounds/Retro98.aiff` and shows as "Retro98" in System Settings › Sound.
-- **Screen Saver:** which screen saver, how long to wait, a Preview button and the castaway's sound; see [Screen savers](#screen-savers-phase-9).
+- **Screen Saver:** which screen saver, how long to wait, a Preview button and Desert Island's sound; see [Screen savers](#screen-savers-phase-9).
 - **Components:** the taskbar and Start menu, Explorer instead of Finder for "Show in Finder", and a hidden macOS menu bar (it shows when you move the pointer to the top). A piece that isn't installed is grayed out, with how to install it.
 - **Shortcuts to macOS:** Network, Printers, Keyboard, Date/Time, Users and System Settings open the matching panel.
 - **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. `./install.sh --yes` then keeps macOS normal; run `./install.sh` and answer Yes to bring the retro look back, or run `./uninstall.sh` to remove the apps too.
@@ -274,16 +274,16 @@ When the mouse and the keyboard sit still for a while, the taskbar covers every 
 | | |
 |---|---|
 | **3D Pipes**<br><img src="docs/images/screensavers/pipes.png" alt="3D Pipes: red, yellow, magenta, orange and blue pipes winding side by side across the black screen, with a ball at every turn" width="430"> | **3D Text**<br><img src="docs/images/screensavers/text.png" alt="3D Text: the word Retro98 in solid teal letters, turned to show their depth, on black" width="430"> |
-| **Johnny Castaway** fishing<br><img src="docs/images/screensavers/johnny-fishing.png" alt="Johnny Castaway: the bearded castaway sits on the sand of a tiny island with one palm tree, a fish on his line" width="430"> | Napping<br><img src="docs/images/screensavers/johnny-sleeping.png" alt="Johnny Castaway: the castaway asleep against the palm tree, three Z rising over his head" width="430"> |
-| A shark goes by<br><img src="docs/images/screensavers/johnny-shark.png" alt="Johnny Castaway: the castaway with his arms up in a panic as a shark fin crosses the water in front of the island" width="430"> | A gull goes by<br><img src="docs/images/screensavers/johnny-gull.png" alt="Johnny Castaway: the castaway standing on the island, watching a white gull fly across the sky" width="430"> |
+| **Desert Island** fishing<br><img src="docs/images/screensavers/island-fishing.png" alt="Desert Island: the bearded castaway sits on the sand of a tiny island with one palm tree, a fish on his line" width="430"> | Napping<br><img src="docs/images/screensavers/island-sleeping.png" alt="Desert Island: the castaway asleep against the palm tree, three Z rising over his head" width="430"> |
+| A shark goes by<br><img src="docs/images/screensavers/island-shark.png" alt="Desert Island: the castaway with his arms up in a panic as a shark fin crosses the water in front of the island" width="430"> | A gull goes by<br><img src="docs/images/screensavers/island-gull.png" alt="Desert Island: the castaway standing on the island, watching a white gull fly across the sky" width="430"> |
 
 - **3D Pipes** (the default): colored pipes grow through the dark until they fill most of the screen, then start over.
 - **3D Text:** "Retro98" in solid letters, slowly tumbling.
-- **Johnny Castaway:** a castaway on a tiny island with one palm tree. He naps, fishes, panics at a passing shark, watches a gull fly by and stretches, while the waves roll and the clouds drift. The character, the pixel art and the sounds were made for Retro98; nothing comes from the 1992 screen saver.
+- **Desert Island:** a castaway on a tiny island with one palm tree. He naps, fishes, panics at a passing shark, watches a gull fly by and stretches, while the waves roll and the clouds drift. The character, the pixel art and the sounds were made for Retro98.
 - **"(None)"** turns the screen saver off.
 - **Wait:** 1, 2, 5 (the default), 10, 15, 20 or 30 minutes without the mouse or the keyboard.
 - **Preview** shows the chosen screen saver right away, without waiting and without saving.
-- **With sound** (the castaway only, off by default): the surf in the background, plus a snore, the float's plop, a low suspense sting for the shark, the gull's cry and a yawn. It's separate from "Play Retro98 sounds", and every sound is synthesized by the project, with no recordings.
+- **With sound** (Desert Island only, off by default): the surf in the background, plus a snore, the float's plop, a low suspense sting for the shark, the gull's cry and a yawn. It's separate from "Play Retro98 sounds", and every sound is synthesized by the project, with no recordings.
 - **Leaving:** moving the mouse, pressing a key, clicking or scrolling brings your desktop back and stops the sound.
 
 The screen saver runs inside the taskbar (Retro98 Shell), so it needs the taskbar installed and on; changes count once you click Apply. It doesn't touch the macOS screen saver or the lock screen, which keep their own settings in System Settings.

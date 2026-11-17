@@ -136,7 +136,7 @@ extension ControlPanelText {
         case .none: text(l, "(nenhuma)", "(None)")
         case .pipes: text(l, "Tubulações 3D", "3D Pipes")
         case .text3d: text(l, "Texto 3D", "3D Text")
-        case .johnny: "Johnny Castaway"
+        case .island: text(l, "Ilha Deserta", "Desert Island")
         }
     }
 

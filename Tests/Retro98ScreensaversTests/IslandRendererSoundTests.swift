@@ -2,14 +2,14 @@ import AppKit
 import Testing
 @testable import Retro98Screensavers
 
-/// Records what Johnny would play, so the tests never touch the speakers.
+/// Records what the island would play, so the tests never touch the speakers.
 @MainActor
-private final class SoundRecorder: JohnnySoundOutput {
-    private(set) var played: [JohnnySoundEffect] = []
-    private(set) var looped: [JohnnySoundEffect] = []
+private final class SoundRecorder: IslandSoundOutput {
+    private(set) var played: [IslandSoundEffect] = []
+    private(set) var looped: [IslandSoundEffect] = []
     private(set) var stops = 0
 
-    func play(_ effect: JohnnySoundEffect, loops: Bool) {
+    func play(_ effect: IslandSoundEffect, loops: Bool) {
         played.append(effect)
         if loops { looped.append(effect) }
     }
@@ -19,15 +19,15 @@ private final class SoundRecorder: JohnnySoundOutput {
 
 /// What the renderer plays while `action` runs.
 @MainActor
-private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [JohnnySoundEffect] {
+private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [IslandSoundEffect] {
     let before = recorder.played.count
     action()
     return Array(recorder.played.dropFirst(before))
 }
 
-@MainActor @Test func johnnyStartsTheSurfOnALoopAndStopsEverything() {
+@MainActor @Test func islandStartsTheSurfOnALoopAndStopsEverything() {
     let recorder = SoundRecorder()
-    let renderer = JohnnyRenderer(output: recorder)
+    let renderer = IslandRenderer(output: recorder)
     renderer.start(in: NSView(frame: CGRect(x: 0, y: 0, width: 320, height: 180)))
     #expect(recorder.played == [.surf])
     #expect(recorder.looped == [.surf])
@@ -35,11 +35,11 @@ private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [J
     #expect(recorder.stops == 1)
 }
 
-@MainActor @Test func eachJohnnySceneMakesItsOwnSoundAsItBegins() {
+@MainActor @Test func eachIslandSceneMakesItsOwnSoundAsItBegins() {
     let recorder = SoundRecorder()
-    let renderer = JohnnyRenderer(output: recorder)
+    let renderer = IslandRenderer(output: recorder)
     renderer.startSceneForTesting()
-    var heard: [JohnnySceneKind: [JohnnySoundEffect]] = [:]
+    var heard: [IslandSceneKind: [IslandSoundEffect]] = [:]
     for _ in 0..<6 {
         let effects = sounds(of: recorder) { renderer.advanceSceneForTesting() }
         heard[renderer.currentSceneKind, default: []] += effects
@@ -49,9 +49,9 @@ private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [J
     #expect(recorder.looped.isEmpty)
 }
 
-@MainActor @Test func johnnySnoresOncePerRiseOfTheZs() {
+@MainActor @Test func theCastawaySnoresOncePerRiseOfTheZs() {
     let recorder = SoundRecorder()
-    let renderer = JohnnyRenderer(output: recorder)
+    let renderer = IslandRenderer(output: recorder)
     renderer.startSceneForTesting()
     renderer.advanceSceneForTesting()
     #expect(renderer.currentSceneKind == .sleeping)
@@ -62,12 +62,12 @@ private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [J
 
 @MainActor @Test func theFloatPlopsWhenTheFishBites() {
     let recorder = SoundRecorder()
-    let renderer = JohnnyRenderer(output: recorder)
+    let renderer = IslandRenderer(output: recorder)
     renderer.startSceneForTesting()
     renderer.advanceSceneForTesting()
     renderer.advanceSceneForTesting()
     #expect(renderer.currentSceneKind == .fishing)
-    var bites: [[JohnnySoundEffect]] = []
+    var bites: [[IslandSoundEffect]] = []
     for _ in 0..<99 {
         let before = renderer.currentFrame
         let effects = sounds(of: recorder) { renderer.tickFrameForTesting() }
@@ -77,8 +77,8 @@ private func sounds(of recorder: SoundRecorder, during action: () -> Void) -> [J
     #expect(bites == [[.plop], [.plop]])
 }
 
-@MainActor @Test func theSoundChoiceDecidesWhetherJohnnyHasSpeakers() {
-    #expect(!JohnnyRenderer().hasSoundForTesting)
-    #expect(!JohnnyRenderer(sound: false).hasSoundForTesting)
-    #expect(JohnnyRenderer(sound: true).hasSoundForTesting)
+@MainActor @Test func theSoundChoiceDecidesWhetherTheIslandHasSpeakers() {
+    #expect(!IslandRenderer().hasSoundForTesting)
+    #expect(!IslandRenderer(sound: false).hasSoundForTesting)
+    #expect(IslandRenderer(sound: true).hasSoundForTesting)
 }

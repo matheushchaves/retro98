@@ -7,13 +7,13 @@ enum CastawayHead {
     case normal, blink, asleep, surprised, yawn
 }
 
-enum JohnnySprites {
+enum IslandSprites {
     private static let headPalette: [Character: PixelColor] = [
-        "X": JohnnyPalette.outline,
-        "h": JohnnyPalette.hair, "H": JohnnyPalette.hairLight, "b": JohnnyPalette.hairDark,
-        "s": JohnnyPalette.skin, "S": JohnnyPalette.skinLight,
-        "n": JohnnyPalette.nose, "N": JohnnyPalette.noseLight,
-        "w": JohnnyPalette.eyeWhite, "k": JohnnyPalette.pupil, "r": JohnnyPalette.mouth,
+        "X": IslandPalette.outline,
+        "h": IslandPalette.hair, "H": IslandPalette.hairLight, "b": IslandPalette.hairDark,
+        "s": IslandPalette.skin, "S": IslandPalette.skinLight,
+        "n": IslandPalette.nose, "N": IslandPalette.noseLight,
+        "w": IslandPalette.eyeWhite, "k": IslandPalette.pupil, "r": IslandPalette.mouth,
     ]
 
     /// Ponto do sprite da cabeça que encaixa no pescoço do boneco.
@@ -74,8 +74,8 @@ enum JohnnySprites {
     // MARK: Gaivota
 
     private static let gullPalette: [Character: PixelColor] = [
-        "X": JohnnyPalette.gullOutline, "w": JohnnyPalette.gull, "g": JohnnyPalette.gullShade,
-        "k": JohnnyPalette.pupil, "o": JohnnyPalette.beak,
+        "X": IslandPalette.gullOutline, "w": IslandPalette.gull, "g": IslandPalette.gullShade,
+        "k": IslandPalette.pupil, "o": IslandPalette.beak,
     ]
 
     /// Ciclo de voo: asa para cima, estendida, para baixo, estendida.
@@ -129,7 +129,7 @@ enum JohnnySprites {
         ".XLfffffffX.",
         "XLLffffffffX",
     ], palette: [
-        "X": JohnnyPalette.sharkOutline, "f": JohnnyPalette.shark, "L": JohnnyPalette.sharkLight,
+        "X": IslandPalette.sharkOutline, "f": IslandPalette.shark, "L": IslandPalette.sharkLight,
     ])
 
     /// Peixinho pendurado no anzol (cabeça para cima).
@@ -143,19 +143,19 @@ enum JohnnySprites {
         "XfXfX",
         "XX.XX",
     ], palette: [
-        "X": JohnnyPalette.outline, "f": JohnnyPalette.fish, "L": JohnnyPalette.fishLight,
-        "k": JohnnyPalette.pupil,
+        "X": IslandPalette.outline, "f": IslandPalette.fish, "L": IslandPalette.fishLight,
+        "k": IslandPalette.pupil,
     ])
 
     static let bobber = PixelSprite([
         ".X.",
         "XwX",
         "XrX",
-    ], palette: ["X": JohnnyPalette.outline, "w": JohnnyPalette.eyeWhite, "r": JohnnyPalette.bobber])
+    ], palette: ["X": IslandPalette.outline, "w": IslandPalette.eyeWhite, "r": IslandPalette.bobber])
 
     // MARK: Ronco
 
-    private static let snorePalette: [Character: PixelColor] = ["Z": JohnnyPalette.snore]
+    private static let snorePalette: [Character: PixelColor] = ["Z": IslandPalette.snore]
 
     /// "z" pequeno, médio e grande, na ordem em que sobem.
     static let snoreGlyphs: [PixelSprite] = [

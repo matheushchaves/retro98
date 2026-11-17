@@ -31,7 +31,7 @@ private struct CloudShape {
     }
 }
 
-enum JohnnyBackdrop {
+enum IslandBackdrop {
     private static let clouds: [CloudShape] = [
         CloudShape(startFraction: 0.16, baseFraction: 0.34, ticksPerPixel: 10, puffs: [
             .init(dx: -22, dy: -3, radius: 6), .init(dx: -12, dy: -7, radius: 9),
@@ -57,7 +57,7 @@ enum JohnnyBackdrop {
     private static let cloudDitherRows = 5.0
     private static let cloudRimDepth = 2.0
 
-    static func draw(into canvas: inout PixelCanvas, layout: JohnnyLayout, tick: Int) {
+    static func draw(into canvas: inout PixelCanvas, layout: IslandLayout, tick: Int) {
         drawSky(into: &canvas, layout: layout)
         drawFarClouds(into: &canvas, layout: layout)
         for cloud in clouds { draw(cloud, into: &canvas, layout: layout, tick: tick) }
@@ -67,29 +67,29 @@ enum JohnnyBackdrop {
 
     // MARK: Sky
 
-    private static func drawSky(into canvas: inout PixelCanvas, layout: JohnnyLayout) {
+    private static func drawSky(into canvas: inout PixelCanvas, layout: IslandLayout) {
         for y in 0..<layout.horizonY {
             let t = Double(y) / Double(layout.horizonY)
             for x in 0..<layout.width {
-                canvas[x, y] = PixelDither.ramp(JohnnyPalette.sky, t: t, x: x, y: y)
+                canvas[x, y] = PixelDither.ramp(IslandPalette.sky, t: t, x: x, y: y)
             }
         }
     }
 
-    private static func drawFarClouds(into canvas: inout PixelCanvas, layout: JohnnyLayout) {
+    private static func drawFarClouds(into canvas: inout PixelCanvas, layout: IslandLayout) {
         for cloud in farClouds {
             let cx = Double(layout.width) * cloud.fraction
             canvas.fillEllipse(cx: cx, cy: Double(layout.horizonY),
                                rx: Double(cloud.halfWidth), ry: Double(cloud.height),
-                               color: JohnnyPalette.cloudFar)
+                               color: IslandPalette.cloudFar)
             canvas.fillEllipse(cx: cx - Double(cloud.halfWidth) * 0.3, cy: Double(layout.horizonY),
                                rx: Double(cloud.halfWidth) * 0.5, ry: Double(cloud.height) + 2,
-                               color: JohnnyPalette.cloudFar)
+                               color: IslandPalette.cloudFar)
         }
     }
 
     private static func draw(_ cloud: CloudShape, into canvas: inout PixelCanvas,
-                             layout: JohnnyLayout, tick: Int) {
+                             layout: IslandLayout, tick: Int) {
         let span = layout.width + cloud.halfWidth * 2
         let start = Int(Double(layout.width) * cloud.startFraction)
         let cx = (start + tick / cloud.ticksPerPixel + cloud.halfWidth) % span - cloud.halfWidth
@@ -108,34 +108,34 @@ enum JohnnyBackdrop {
     private static func cloudColor(_ cloud: CloudShape, dx: Double, dy: Double,
                                    x: Int, y: Int) -> PixelColor {
         let depth = -dy
-        if depth < cloudShadeRows { return JohnnyPalette.cloudShade }
+        if depth < cloudShadeRows { return IslandPalette.cloudShade }
         if depth < cloudDitherRows {
             let level = (cloudDitherRows - depth) / (cloudDitherRows - cloudShadeRows)
             return PixelDither.isOn(x: x, y: y, level: level * 0.8)
-                ? JohnnyPalette.cloudShade : JohnnyPalette.cloudBody
+                ? IslandPalette.cloudShade : IslandPalette.cloudBody
         }
         // Borda superior iluminada: logo acima deste pixel já é céu.
         let isRim = !cloud.contains(dx: dx - 1, dy: dy - cloudRimDepth)
-        return isRim ? JohnnyPalette.cloudLit : JohnnyPalette.cloudBody
+        return isRim ? IslandPalette.cloudLit : IslandPalette.cloudBody
     }
 
     // MARK: Sea
 
-    private static func drawSea(into canvas: inout PixelCanvas, layout: JohnnyLayout) {
+    private static func drawSea(into canvas: inout PixelCanvas, layout: IslandLayout) {
         let depth = Double(layout.height - layout.horizonY)
         for y in layout.horizonY..<layout.height {
             let t = Double(y - layout.horizonY) / depth
             for x in 0..<layout.width {
-                canvas[x, y] = PixelDither.ramp(JohnnyPalette.sea, t: t, x: x, y: y)
+                canvas[x, y] = PixelDither.ramp(IslandPalette.sea, t: t, x: x, y: y)
             }
         }
         canvas.fillRect(x: 0, y: layout.horizonY, width: layout.width, height: 1,
-                        color: JohnnyPalette.horizonLine)
+                        color: IslandPalette.horizonLine)
     }
 
     /// Faixas de ondulação: traços claros que deslizam e traços escuros de vale.
     /// Ficam mais longos e espaçados perto do observador (perspectiva).
-    private static func drawWaves(into canvas: inout PixelCanvas, layout: JohnnyLayout, tick: Int) {
+    private static func drawWaves(into canvas: inout PixelCanvas, layout: IslandLayout, tick: Int) {
         let depth = Double(layout.height - layout.horizonY)
         var y = layout.horizonY + 2
         var band = 0
@@ -147,7 +147,7 @@ enum JohnnyBackdrop {
         }
     }
 
-    private static func drawWaveBand(into canvas: inout PixelCanvas, layout: JohnnyLayout,
+    private static func drawWaveBand(into canvas: inout PixelCanvas, layout: IslandLayout,
                                      y: Int, t: Double, band: Int, tick: Int) {
         let cell = 10 + Int(t * 26)
         let dash = 3 + Int(t * 12)
@@ -161,13 +161,13 @@ enum JohnnyBackdrop {
             let x = cellIndex * cell + seed % cell + drift % cell
             let length = max(2, dash - (seed / 7) % 4)
             let sparkles = (seed / 31 + phase) % 5 == 0
-            canvas.fillRect(x: x, y: y, width: length, height: 1, color: JohnnyPalette.seaGlint)
+            canvas.fillRect(x: x, y: y, width: length, height: 1, color: IslandPalette.seaGlint)
             if sparkles {
                 canvas.fillRect(x: x + 1, y: y, width: max(1, length / 3), height: 1,
-                                color: JohnnyPalette.seaGlintBright)
+                                color: IslandPalette.seaGlintBright)
             }
             canvas.fillRect(x: x + length / 2, y: y + 1, width: length, height: 1,
-                            color: JohnnyPalette.seaTrough)
+                            color: IslandPalette.seaTrough)
         }
     }
 }

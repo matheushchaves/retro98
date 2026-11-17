@@ -8,7 +8,7 @@ import Testing
 /// Where `scripts/make-screenshots.sh` wants the README images; unset in normal test runs, which skip these.
 private let screenshotFolder = ProcessInfo.processInfo.environment["RETRO98_SCREENSHOTS"].map { URL(filePath: $0) }
 
-/// The pictures' size: 16:9, four real pixels for each of Johnny's.
+/// The pictures' size: 16:9, four real pixels for each of the island's.
 private let pictureSize = CGSize(width: 1280, height: 720)
 
 /// 3D Pipes some 15 seconds in, four pipes winding side by side across the screen.
@@ -33,24 +33,24 @@ func screenshotScreensaverText() throws {
     try savePicture(rendered(scene, size: pictureSize), as: "text")
 }
 
-/// Johnny's island at a telling moment of a scene.
+/// The desert island at a telling moment of a scene.
 @MainActor @Test(.enabled(if: screenshotFolder != nil), arguments: ["fishing", "sleeping", "shark", "gull"])
-func screenshotScreensaverJohnny(moment: String) throws {
-    let (scene, clock): (JohnnySceneKind, JohnnyClock) = switch moment {
+func screenshotScreensaverIsland(moment: String) throws {
+    let (scene, clock): (IslandSceneKind, IslandClock) = switch moment {
     // The fish on the hook.
-    case "fishing": (.fishing, JohnnyClock(frame: 2, sceneTick: 45, worldTick: 310))
+    case "fishing": (.fishing, IslandClock(frame: 2, sceneTick: 45, worldTick: 310))
     // All three Z up.
-    case "sleeping": (.sleeping, JohnnyClock(frame: 0, sceneTick: 20, worldTick: 120))
-    // The fin past the island, Johnny in a panic.
-    case "shark": (.shark, JohnnyClock(frame: 1, sceneTick: 30, worldTick: 540))
-    default: (.bird, JohnnyClock(frame: 0, sceneTick: 24, worldTick: 760))
+    case "sleeping": (.sleeping, IslandClock(frame: 0, sceneTick: 20, worldTick: 120))
+    // The fin past the island, the castaway in a panic.
+    case "shark": (.shark, IslandClock(frame: 1, sceneTick: 30, worldTick: 540))
+    default: (.bird, IslandClock(frame: 0, sceneTick: 24, worldTick: 760))
     }
-    let canvas = JohnnyScene.render(scene, clock: clock, width: Int(JohnnyScene.vw), height: Int(JohnnyScene.vh))
+    let canvas = IslandScene.render(scene, clock: clock, width: Int(IslandScene.vw), height: Int(IslandScene.vh))
     let pixels = try #require(canvas.makeImage())
-    try savePicture(enlarged(pixels), as: "johnny-\(moment)")
+    try savePicture(enlarged(pixels), as: "island-\(moment)")
 }
 
-/// Johnny's 320×180 pixels blown up to the picture's size, each one a sharp square.
+/// The island's 320×180 pixels blown up to the picture's size, each one a sharp square.
 private func enlarged(_ pixels: CGImage) throws -> NSImage {
     let context = try #require(CGContext(
         data: nil, width: Int(pictureSize.width), height: Int(pictureSize.height), bitsPerComponent: 8,

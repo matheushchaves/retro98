@@ -33,13 +33,18 @@ import Retro98Settings
 }
 
 @MainActor
-@Test func screensaverAppletSelectingJohnnySavesJohnny() throws {
+@Test func screensaverAppletSelectingTheIslandSavesTheIsland() throws {
     let services = TestServices()
     let p = ScriptedPrompter()
     let applet = ScreensaverApplet(model: ControlPanelModel(services: services), services: services, prompter: p)
-    applet.select(.johnny)
+    applet.select(.island)
     applet.applyForTesting()
-    #expect(services.choices.load().screensaver == .johnny)
+    #expect(services.choices.load().screensaver == .island)
+}
+
+@Test func theIslandHasAnOriginalNameInBothLanguages() {
+    #expect(ControlPanelText.screensaverKindName(.island, ["pt-BR"]) == "Ilha Deserta")
+    #expect(ControlPanelText.screensaverKindName(.island, ["en"]) == "Desert Island")
 }
 
 @MainActor

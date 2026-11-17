@@ -2,42 +2,42 @@ import AppKit
 
 // MARK: - Public renderer
 
-/// Johnny Castaway screensaver — pixel art original, não baseado em assets da Sierra.
-/// Este arquivo cuida do roteiro (cenas, frames, timer); a arte vive em `JohnnyScene`.
+/// Protetor Ilha Deserta — pixel art original, feita para o Retro98.
+/// Este arquivo cuida do roteiro (cenas, frames, timer); a arte vive em `IslandScene`.
 @MainActor
-public final class JohnnyRenderer: ScreensaverRenderer {
-    private var johnnyView: JohnnyView?
+public final class IslandRenderer: ScreensaverRenderer {
+    private var islandView: IslandView?
     private var timer: Timer?
 
-    public private(set) var currentSceneKind: JohnnySceneKind = .idle
+    public private(set) var currentSceneKind: IslandSceneKind = .idle
     public private(set) var currentFrame: Int = 0
     private var sceneElapsed: TimeInterval = 0
     private var frameElapsed: TimeInterval = 0
     /// Ticks desde o início da cena / do protetor: movem ondas, nuvens e bichos.
     private var sceneTick = 0
     private var worldTick = 0
-    private let tickInterval: TimeInterval = 1 / TimeInterval(JohnnyClock.ticksPerSecond)
-    private static let sceneSequence: [JohnnySceneKind] = [
+    private let tickInterval: TimeInterval = 1 / TimeInterval(IslandClock.ticksPerSecond)
+    private static let sceneSequence: [IslandSceneKind] = [
         .idle, .sleeping, .fishing, .shark, .idle, .bird, .stretching
     ]
     private var sceneIndex = 0
     /// Onde tocam os sons da ilha: nil quando o protetor está sem som.
-    private let sound: (any JohnnySoundOutput)?
+    private let sound: (any IslandSoundOutput)?
 
     public convenience init(sound: Bool = false) {
-        self.init(output: sound ? JohnnySpeaker() : nil)
+        self.init(output: sound ? IslandSpeaker() : nil)
     }
 
-    init(output: (any JohnnySoundOutput)?) {
+    init(output: (any IslandSoundOutput)?) {
         sound = output
     }
 
     public func start(in view: NSView) {
-        let jv = JohnnyView(frame: view.bounds)
+        let jv = IslandView(frame: view.bounds)
         jv.autoresizingMask = [.width, .height]
         jv.renderer = self
         view.addSubview(jv)
-        johnnyView = jv
+        islandView = jv
         startSceneForTesting()
         sound?.play(.surf, loops: true)
         timer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
@@ -49,8 +49,8 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         timer?.invalidate()
         timer = nil
         sound?.stopAll()
-        johnnyView?.removeFromSuperview()
-        johnnyView = nil
+        islandView?.removeFromSuperview()
+        islandView = nil
     }
 
     public func startSceneForTesting() {
@@ -80,13 +80,13 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         let img = NSImage(size: size)
         img.lockFocus()
         guard let ctx = NSGraphicsContext.current?.cgContext else { img.unlockFocus(); return nil }
-        JohnnyScene.draw(currentSceneKind, clock: clock, in: ctx, size: size)
+        IslandScene.draw(currentSceneKind, clock: clock, in: ctx, size: size)
         img.unlockFocus()
         return img
     }
 
-    var clock: JohnnyClock {
-        JohnnyClock(frame: currentFrame, sceneTick: sceneTick, worldTick: worldTick)
+    var clock: IslandClock {
+        IslandClock(frame: currentFrame, sceneTick: sceneTick, worldTick: worldTick)
     }
 
     private func tickInternal() {
@@ -95,7 +95,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         sceneTick += 1
         worldTick += 1
         let scene = currentSceneKind
-        if scene == .sleeping, sceneTick % JohnnyActing.snoreCycleTicks == 0 { play(.snore) }
+        if scene == .sleeping, sceneTick % IslandActing.snoreCycleTicks == 0 { play(.snore) }
         if frameElapsed >= scene.frameDuration {
             frameElapsed = 0
             currentFrame = (currentFrame + 1) % scene.frameCount
@@ -106,10 +106,10 @@ public final class JohnnyRenderer: ScreensaverRenderer {
             advanceSceneForTesting()
         }
         // O fundo (ondas, nuvens, folhas) anima a cada tick, não só na troca de frame.
-        johnnyView?.needsDisplay = true
+        islandView?.needsDisplay = true
     }
 
-    private func play(_ effect: JohnnySoundEffect?) {
+    private func play(_ effect: IslandSoundEffect?) {
         guard let effect else { return }
         sound?.play(effect, loops: false)
     }
@@ -117,7 +117,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
 
 // MARK: - Scene kind
 
-public enum JohnnySceneKind: CaseIterable {
+public enum IslandSceneKind: CaseIterable {
     case idle, sleeping, fishing, shark, bird, stretching
 
     var frameCount: Int {
@@ -139,7 +139,7 @@ public enum JohnnySceneKind: CaseIterable {
         }
     }
     /// O efeito que toca quando a cena começa (a pesca espera a mordida).
-    var openingSound: JohnnySoundEffect? {
+    var openingSound: IslandSoundEffect? {
         switch self {
         case .sleeping: .snore; case .shark: .shark; case .bird: .gull; case .stretching: .yawn
         case .idle, .fishing: nil
@@ -149,11 +149,11 @@ public enum JohnnySceneKind: CaseIterable {
 
 // MARK: - View
 
-final class JohnnyView: NSView {
-    weak var renderer: JohnnyRenderer?
+final class IslandView: NSView {
+    weak var renderer: IslandRenderer?
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext, let r = renderer else { return }
-        JohnnyScene.draw(r.currentSceneKind, clock: r.clock, in: ctx, size: bounds.size)
+        IslandScene.draw(r.currentSceneKind, clock: r.clock, in: ctx, size: bounds.size)
     }
 }

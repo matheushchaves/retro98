@@ -60,7 +60,7 @@ Você precisa do macOS 14 ou mais novo e das Ferramentas de Linha de Comando do 
 | 6 | Bloco de Notas | ✅ disponível |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | ✅ disponível |
 | 8 | Navegador retrô (WebKit) | ✅ disponível |
-| 9 | Proteção de tela (Tubulações 3D, Texto 3D, a ilha de um náufrago) | ✅ disponível |
+| 9 | Proteção de tela (Tubulações 3D, Texto 3D, Ilha Deserta) | ✅ disponível |
 
 ## Requisitos
 
@@ -196,7 +196,7 @@ O Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) lig
 - **Aparência:** cada ajuste da Fase 1 com sua caixa de ligar e desligar. O papel de parede fica em Vídeo e o ponteiro em Mouse.
 - **Mouse:** o ponteiro branco com contorno preto.
 - **Sons:** os sons do próprio Retro98 (início da barra, erro, aviso, esvaziar a Lixeira), criados pelo projeto, cada um com um botão Tocar. Dá para desligá-los e para usar o alerta do Retro98 como som de alerta do macOS: ele vai para `~/Library/Sounds/Retro98.aiff` e aparece como "Retro98" em Ajustes do Sistema › Som.
-- **Proteção de Tela:** qual proteção, quanto tempo esperar, um botão Ver e o som do náufrago; veja [Proteção de Tela](#proteção-de-tela-fase-9).
+- **Proteção de Tela:** qual proteção, quanto tempo esperar, um botão Ver e o som da Ilha Deserta; veja [Proteção de Tela](#proteção-de-tela-fase-9).
 - **Componentes:** a barra de tarefas e o menu Iniciar, o Explorer no lugar do Finder em "Mostrar no Finder" e a barra de menus do macOS escondida (ela aparece ao levar o ponteiro ao topo). Uma peça não instalada aparece em cinza, com o jeito de instalar.
 - **Atalhos do macOS:** Rede, Impressoras, Teclado, Data/Hora, Usuários e Ajustes do Sistema abrem o painel correspondente.
 - **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Depois disso, `./install.sh --yes` mantém o macOS normal; rode `./install.sh` e responda Sim para o visual retrô voltar, ou `./uninstall.sh` para remover os apps também.
@@ -274,16 +274,16 @@ Quando o mouse e o teclado ficam parados por um tempo, a barra de tarefas cobre 
 | | |
 |---|---|
 | **Tubulações 3D**<br><img src="docs/images/screensavers/pipes.png" alt="Tubulações 3D: canos vermelho, amarelo, magenta, laranja e azul serpenteando lado a lado pela tela preta, com uma bola em cada curva" width="430"> | **Texto 3D**<br><img src="docs/images/screensavers/text.png" alt="Texto 3D: a palavra Retro98 em letras sólidas verde-azuladas, giradas para mostrar a profundidade, sobre o preto" width="430"> |
-| **Johnny Castaway** pescando<br><img src="docs/images/screensavers/johnny-fishing.png" alt="Johnny Castaway: o náufrago barbudo sentado na areia de uma ilhota com um só coqueiro, com um peixe na linha" width="430"> | Cochilando<br><img src="docs/images/screensavers/johnny-sleeping.png" alt="Johnny Castaway: o náufrago dormindo encostado no coqueiro, com três Z subindo sobre a cabeça" width="430"> |
-| Passa um tubarão<br><img src="docs/images/screensavers/johnny-shark.png" alt="Johnny Castaway: o náufrago de braços para cima, apavorado, enquanto a barbatana de um tubarão cruza a água na frente da ilha" width="430"> | Passa uma gaivota<br><img src="docs/images/screensavers/johnny-gull.png" alt="Johnny Castaway: o náufrago em pé na ilha, olhando uma gaivota branca cruzar o céu" width="430"> |
+| **Ilha Deserta** pescando<br><img src="docs/images/screensavers/island-fishing.png" alt="Ilha Deserta: o náufrago barbudo sentado na areia de uma ilhota com um só coqueiro, com um peixe na linha" width="430"> | Cochilando<br><img src="docs/images/screensavers/island-sleeping.png" alt="Ilha Deserta: o náufrago dormindo encostado no coqueiro, com três Z subindo sobre a cabeça" width="430"> |
+| Passa um tubarão<br><img src="docs/images/screensavers/island-shark.png" alt="Ilha Deserta: o náufrago de braços para cima, apavorado, enquanto a barbatana de um tubarão cruza a água na frente da ilha" width="430"> | Passa uma gaivota<br><img src="docs/images/screensavers/island-gull.png" alt="Ilha Deserta: o náufrago em pé na ilha, olhando uma gaivota branca cruzar o céu" width="430"> |
 
 - **Tubulações 3D** (a padrão): canos coloridos crescem no escuro até encher boa parte da tela e então recomeçam.
 - **Texto 3D:** "Retro98" em letras sólidas, girando devagar.
-- **Johnny Castaway:** um náufrago numa ilhota com um só coqueiro. Ele cochila, pesca, se apavora com um tubarão que passa, olha uma gaivota voar e se espreguiça, enquanto as ondas vêm e as nuvens passam. O personagem, a pixel art e os sons foram feitos para o Retro98; nada vem da proteção de tela de 1992.
+- **Ilha Deserta:** um náufrago numa ilhota com um só coqueiro. Ele cochila, pesca, se apavora com um tubarão que passa, olha uma gaivota voar e se espreguiça, enquanto as ondas vêm e as nuvens passam. O personagem, a pixel art e os sons foram feitos para o Retro98.
 - **"(nenhuma)"** desliga a proteção de tela.
 - **Aguardar:** 1, 2, 5 (o padrão), 10, 15, 20 ou 30 minutos sem mouse nem teclado.
 - **Ver** mostra a proteção escolhida na hora, sem esperar e sem salvar.
-- **Com som** (só o náufrago, desligado por padrão): o mar ao fundo, mais um ronco, o ploc da boia, um suspense grave para o tubarão, o grito da gaivota e um bocejo. É separado de "Tocar os sons do Retro98", e todo som é sintetizado pelo projeto, sem gravações.
+- **Com som** (só a Ilha Deserta, desligado por padrão): o mar ao fundo, mais um ronco, o ploc da boia, um suspense grave para o tubarão, o grito da gaivota e um bocejo. É separado de "Tocar os sons do Retro98", e todo som é sintetizado pelo projeto, sem gravações.
 - **Sair:** mexer o mouse, apertar uma tecla, clicar ou rolar traz a mesa de volta e corta o som.
 
 A proteção de tela roda dentro da barra de tarefas (Retro98 Shell), então precisa da barra instalada e ligada; as mudanças valem depois de clicar em Aplicar. Ela não mexe na proteção de tela nem na tela de bloqueio do macOS, que continuam com os próprios ajustes em Ajustes do Sistema.

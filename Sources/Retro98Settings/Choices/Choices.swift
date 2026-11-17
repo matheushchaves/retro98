@@ -18,7 +18,7 @@ public struct Choices: Equatable, Sendable {
     public let screensaver: ScreensaverKind
     /// Idle timeout in minutes before the screensaver activates.
     public let screensaverTimeout: Int
-    /// Whether the screensaver plays its own sounds (Johnny's sea and effects). Separate from `soundsOn`,
+    /// Whether the screensaver plays its own sounds (the island's sea and effects). Separate from `soundsOn`,
     /// and off unless the person turns it on: a noisy screensaver shouldn't surprise anyone.
     public let screensaverSound: Bool
 
@@ -100,7 +100,7 @@ public struct ChoicesFile {
         else { return .standard }
         let names = plist["turnedOff"] as? [String] ?? []
         let screensaver = (plist["screensaver"] as? String)
-            .flatMap(ScreensaverKind.init(rawValue:)) ?? .standard
+            .flatMap(ScreensaverKind.init(saved:)) ?? .standard
         let screensaverTimeout = plist["screensaverTimeout"] as? Int ?? 5
         return Choices(
             wallpaper: Self.wallpaper(from: plist["wallpaper"] as? [String: Any]) ?? .standard,

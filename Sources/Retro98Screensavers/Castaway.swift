@@ -1,6 +1,6 @@
 // MARK: - Castaway puppet
 //
-// Johnny é um boneco articulado: membros magrelos traçados entre juntas,
+// O náufrago é um boneco articulado: membros magrelos traçados entre juntas,
 // cada parte com contorno próprio, e uma cabeça desenhada à mão por cima.
 // Coordenadas locais: origem no chão entre os pés, y negativo = para cima,
 // olhando para a direita.
@@ -114,7 +114,7 @@ extension CastawayPose {
     }()
 }
 
-enum JohnnyCastaway {
+enum Castaway {
     private static let layerWidth = 96
     private static let layerHeight = 88
     private static let origin = PixelPoint(x: 48, y: 72)
@@ -125,7 +125,7 @@ enum JohnnyCastaway {
     private static let thighBrush = 4
     private static let hipBrush = 6
 
-    /// Desenha Johnny com os pés (origem local) em `feet`.
+    /// Desenha o náufrago com os pés (origem local) em `feet`.
     static func draw(_ pose: CastawayPose, into canvas: inout PixelCanvas,
                      at feet: PixelPoint, facingLeft: Bool) {
         let layer = layer(for: pose)
@@ -140,18 +140,18 @@ enum JohnnyCastaway {
 
     private static func layer(for pose: CastawayPose) -> PixelCanvas {
         var layer = blank()
-        layer.draw(limbPart(pose.farArm, color: JohnnyPalette.skinShade), x: 0, y: 0)
-        layer.draw(limbPart(pose.farLeg, color: JohnnyPalette.skinShade), x: 0, y: 0)
-        layer.draw(limbPart(pose.nearLeg, color: JohnnyPalette.skin), x: 0, y: 0)
+        layer.draw(limbPart(pose.farArm, color: IslandPalette.skinShade), x: 0, y: 0)
+        layer.draw(limbPart(pose.farLeg, color: IslandPalette.skinShade), x: 0, y: 0)
+        layer.draw(limbPart(pose.nearLeg, color: IslandPalette.skin), x: 0, y: 0)
         layer.draw(shortsPart(pose), x: 0, y: 0)
         layer.draw(torsoPart(pose), x: 0, y: 0)
         if let tip = pose.rodTip { drawRod(into: &layer, pose: pose, tip: tip) }
         if !pose.nearArmOverHead {
-            layer.draw(limbPart(pose.nearArm, color: JohnnyPalette.skin), x: 0, y: 0)
+            layer.draw(limbPart(pose.nearArm, color: IslandPalette.skin), x: 0, y: 0)
         }
         drawHead(into: &layer, pose: pose)
         if pose.nearArmOverHead {
-            layer.draw(limbPart(pose.nearArm, color: JohnnyPalette.skin), x: 0, y: 0)
+            layer.draw(limbPart(pose.nearArm, color: IslandPalette.skin), x: 0, y: 0)
         }
         return layer
     }
@@ -170,22 +170,22 @@ enum JohnnyCastaway {
         } else {
             part.stamp(at: place(limb.end), color: color, brush: handBrush)
         }
-        return part.outlined(with: JohnnyPalette.outline)
+        return part.outlined(with: IslandPalette.outline)
     }
 
     /// Bermuda jeans rasgada: quadril + metade de cada coxa.
     private static func shortsPart(_ pose: CastawayPose) -> PixelCanvas {
         var part = blank()
-        for (leg, color) in [(pose.farLeg, JohnnyPalette.shortsDark), (pose.nearLeg, JohnnyPalette.shorts)] {
+        for (leg, color) in [(pose.farLeg, IslandPalette.shortsDark), (pose.nearLeg, IslandPalette.shorts)] {
             let mid = PixelPoint(x: (leg.from.x + leg.joint.x) / 2, y: (leg.from.y + leg.joint.y) / 2)
             part.line(from: place(leg.from), to: place(mid), color: color, brush: thighBrush)
         }
-        part.stamp(at: place(pose.hip), color: JohnnyPalette.shorts, brush: hipBrush)
+        part.stamp(at: place(pose.hip), color: IslandPalette.shorts, brush: hipBrush)
         let patch = place(pose.hip)
-        part[patch.x + 1, patch.y] = JohnnyPalette.shortsLight
-        part[patch.x + 1, patch.y - 1] = JohnnyPalette.shortsLight
-        part[patch.x - 2, patch.y + 1] = JohnnyPalette.shortsDark
-        return part.outlined(with: JohnnyPalette.outline)
+        part[patch.x + 1, patch.y] = IslandPalette.shortsLight
+        part[patch.x + 1, patch.y - 1] = IslandPalette.shortsLight
+        part[patch.x - 2, patch.y + 1] = IslandPalette.shortsDark
+        return part.outlined(with: IslandPalette.outline)
     }
 
     /// Tronco magro com luz no peito e costelas marcadas.
@@ -193,27 +193,27 @@ enum JohnnyCastaway {
         var part = blank()
         let neck = place(pose.neck), hip = place(pose.hip)
         let waist = PixelPoint(x: (neck.x + hip.x * 2) / 3, y: (neck.y + hip.y * 2) / 3)
-        part.line(from: neck, to: waist, color: JohnnyPalette.skin, brush: torsoBrush)
+        part.line(from: neck, to: waist, color: IslandPalette.skin, brush: torsoBrush)
         if pose.neck.x == pose.hip.x {
             for y in (neck.y - 1)...waist.y {
-                part[neck.x + 1, y] = JohnnyPalette.skinLight
-                part[neck.x - 2, y] = JohnnyPalette.skinShade
+                part[neck.x + 1, y] = IslandPalette.skinLight
+                part[neck.x - 2, y] = IslandPalette.skinShade
             }
-            for rib in [2, 4] { part[neck.x - 1, neck.y + rib] = JohnnyPalette.skinShade }
+            for rib in [2, 4] { part[neck.x - 1, neck.y + rib] = IslandPalette.skinShade }
         }
-        return part.outlined(with: JohnnyPalette.outline)
+        return part.outlined(with: IslandPalette.outline)
     }
 
     private static func drawRod(into layer: inout PixelCanvas, pose: CastawayPose, tip: PixelPoint) {
         let grip = pose.nearArm.end
         let butt = PixelPoint(x: grip.x - 4, y: grip.y + 2)
-        layer.line(from: place(butt), to: place(grip), color: JohnnyPalette.rod, brush: limbBrush)
-        layer.line(from: place(grip), to: place(tip), color: JohnnyPalette.rod)
+        layer.line(from: place(butt), to: place(grip), color: IslandPalette.rod, brush: limbBrush)
+        layer.line(from: place(grip), to: place(tip), color: IslandPalette.rod)
     }
 
     private static func drawHead(into layer: inout PixelCanvas, pose: CastawayPose) {
-        let sprite = JohnnySprites.head(pose.head)
-        let anchor = JohnnySprites.headNeckAnchor
+        let sprite = IslandSprites.head(pose.head)
+        let anchor = IslandSprites.headNeckAnchor
         let neck = place(pose.neck + pose.headOffset)
         layer.draw(sprite, x: neck.x - anchor.x, y: neck.y - anchor.y)
     }

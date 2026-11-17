@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: - Pixel primitives
 //
-// O protetor Johnny é pintado num framebuffer de baixa resolução (1 elemento =
+// O protetor Ilha Deserta é pintado num framebuffer de baixa resolução (1 elemento =
 // 1 pixel virtual) e só depois ampliado sem interpolação. Assim tudo — fundo
 // procedural, dithering, sprites — compartilha a mesma grade de pixels.
 

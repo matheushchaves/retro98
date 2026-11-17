@@ -11,10 +11,10 @@ private let url = URL(filePath: "/home/Library/Application Support/Retro98/choic
 
 @Test func screensaverRoundTrips() throws {
     let file = ChoicesFile(url: url, files: InMemoryFileStore())
-    let choices = Choices.standard.with(screensaver: .johnny).with(screensaverTimeout: 10)
+    let choices = Choices.standard.with(screensaver: .island).with(screensaverTimeout: 10)
     try file.save(choices)
     let back = file.load()
-    #expect(back.screensaver == .johnny)
+    #expect(back.screensaver == .island)
     #expect(back.screensaverTimeout == 10)
 }
 
@@ -45,7 +45,7 @@ private let url = URL(filePath: "/home/Library/Application Support/Retro98/choic
     #expect(all.contains(.none))
     #expect(all.contains(.pipes))
     #expect(all.contains(.text3d))
-    #expect(all.contains(.johnny))
+    #expect(all.contains(.island))
     #expect(all.count == 4)
 }
 
@@ -61,14 +61,30 @@ private let url = URL(filePath: "/home/Library/Application Support/Retro98/choic
 
 @Test func otherChoicesKeepScreensaverSound() {
     let choices = Choices.standard.with(screensaverSound: true)
-        .with(soundsOn: false).with(screensaver: .johnny).with(screensaverTimeout: 2)
+        .with(soundsOn: false).with(screensaver: .island).with(screensaverTimeout: 2)
         .with(wallpaper: .standard).turning(.pointer, on: false)
     #expect(choices.screensaverSound == true)
 }
 
 @Test func missingScreensaverSoundKeyMeansOff() throws {
     let files = InMemoryFileStore()
-    let plist: [String: Any] = ["screensaver": "johnny", "screensaverTimeout": 5]
+    let plist: [String: Any] = ["screensaver": "island", "screensaverTimeout": 5]
     try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
     #expect(ChoicesFile(url: url, files: files).load().screensaverSound == false)
+}
+
+@Test func islandIsSavedUnderItsOwnName() throws {
+    let files = InMemoryFileStore()
+    try ChoicesFile(url: url, files: files).save(Choices.standard.with(screensaver: .island))
+    let data = try #require(try files.read(url))
+    let plist = try #require(try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any])
+    #expect(plist["screensaver"] as? String == "island")
+}
+
+@Test func choiceSavedBeforeTheRenameStillShowsTheIsland() throws {
+    // Before 0.12.1 the island was saved as "johnny".
+    let files = InMemoryFileStore()
+    let plist: [String: Any] = ["screensaver": "johnny", "screensaverTimeout": 5]
+    try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
+    #expect(ChoicesFile(url: url, files: files).load().screensaver == .island)
 }

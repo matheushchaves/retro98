@@ -6,7 +6,7 @@ import Foundation
 // Copa: folhas procedurais (nervura em arco que cai com a "gravidade" e
 // folíolos serrilhados dos dois lados), cada uma com contorno próprio.
 
-enum JohnnyPalm {
+enum IslandPalm {
     /// Camada local onde a palmeira é montada antes de ir para a cena.
     private static let layerSize = 128
     private static let baseInLayer = PixelPoint(x: 64, y: 120)
@@ -51,7 +51,7 @@ enum JohnnyPalm {
 
     private static let coconutOffsets = [PixelPoint(x: -4, y: 3), PixelPoint(x: 3, y: 4), PixelPoint(x: -1, y: 6)]
 
-    static func draw(into canvas: inout PixelCanvas, layout: JohnnyLayout, tick: Int) {
+    static func draw(into canvas: inout PixelCanvas, layout: IslandLayout, tick: Int) {
         var layer = PixelCanvas(width: layerSize, height: layerSize)
         let crown = PixelPoint(x: baseInLayer.x + Int(trunkTop.x), y: baseInLayer.y + Int(trunkTop.y))
 
@@ -66,7 +66,7 @@ enum JohnnyPalm {
 
         let base = layout.palmBase
         canvas.fillEllipse(cx: Double(base.x) - 7, cy: Double(base.y) + 1, rx: 13, ry: 3,
-                           color: JohnnyPalette.sandShadow, level: 0.5)
+                           color: IslandPalette.sandShadow, level: 0.5)
         canvas.draw(layer, x: base.x - baseInLayer.x, y: base.y - baseInLayer.y)
     }
 
@@ -93,14 +93,14 @@ enum JohnnyPalm {
                 layer[x, y] = trunkColor(rel: rel, isRing: isRing)
             }
         }
-        return layer.outlined(with: JohnnyPalette.outline)
+        return layer.outlined(with: IslandPalette.outline)
     }
 
     private static func trunkColor(rel: Double, isRing: Bool) -> PixelColor {
-        if isRing { return rel < -0.5 ? JohnnyPalette.trunkDark : JohnnyPalette.trunkRing }
-        if rel < -0.35 { return JohnnyPalette.trunkLight }
-        if rel > 0.35 { return JohnnyPalette.trunkDark }
-        return JohnnyPalette.trunk
+        if isRing { return rel < -0.5 ? IslandPalette.trunkDark : IslandPalette.trunkRing }
+        if rel < -0.35 { return IslandPalette.trunkLight }
+        if rel > 0.35 { return IslandPalette.trunkDark }
+        return IslandPalette.trunk
     }
 
     // MARK: Fronds
@@ -112,9 +112,9 @@ enum JohnnyPalm {
         let reach = (x: cos(angle) * frond.length, y: -sin(angle) * frond.length)
         let droop = frond.droop + sway
         let samples = Int(frond.length * 2)
-        let upper = frond.isBack ? JohnnyPalette.leafBack : JohnnyPalette.leaf
-        let lower = frond.isBack ? JohnnyPalette.leafBackDark : JohnnyPalette.leafDark
-        let spine = frond.isBack ? JohnnyPalette.leafDark : JohnnyPalette.leafLight
+        let upper = frond.isBack ? IslandPalette.leafBack : IslandPalette.leaf
+        let lower = frond.isBack ? IslandPalette.leafBackDark : IslandPalette.leafDark
+        let spine = frond.isBack ? IslandPalette.leafDark : IslandPalette.leafLight
         var spinePoints: [PixelPoint] = []
 
         for step in 0...samples {
@@ -141,7 +141,7 @@ enum JohnnyPalm {
             layer.line(from: origin, to: up, color: upper)
         }
         for point in spinePoints { layer[point.x, point.y] = spine }
-        return layer.outlined(with: JohnnyPalette.leafOutline)
+        return layer.outlined(with: IslandPalette.leafOutline)
     }
 
     // MARK: Coconuts
@@ -153,7 +153,7 @@ enum JohnnyPalm {
         "XcccX",
         ".XXX.",
     ], palette: [
-        "X": JohnnyPalette.outline, "c": JohnnyPalette.coconut, "L": JohnnyPalette.coconutLight,
+        "X": IslandPalette.outline, "c": IslandPalette.coconut, "L": IslandPalette.coconutLight,
     ])
 
     private static func coconutLayer(crown: PixelPoint) -> PixelCanvas {

@@ -1,20 +1,20 @@
 import AppKit
 import Retro98UI
 
-/// The sounds of Johnny's island: one effect per scene and the surf behind them.
-enum JohnnySoundEffect: CaseIterable, Sendable {
+/// The desert island's sounds: one effect per scene and the surf behind them.
+enum IslandSoundEffect: CaseIterable, Sendable {
     case plop, snore, shark, gull, yawn, surf
 }
 
-/// Johnny's sounds, synthesized here like `RetroSound` (no recordings, no known tunes): 16-bit mono at 22,050 Hz.
-enum JohnnySound {
+/// The island's sounds, synthesized here like `RetroSound` (no recordings, no known tunes): 16-bit mono at 22,050 Hz.
+enum IslandSound {
     static let rate = Double(RetroSound.sampleRate)
     /// The surf loops for as long as the screensaver runs; one pass lasts this long.
     static let surfSeconds = 8
 
-    static func aiff(_ effect: JohnnySoundEffect) -> Data { RetroSound.aiff(samples: samples(effect)) }
+    static func aiff(_ effect: IslandSoundEffect) -> Data { RetroSound.aiff(samples: samples(effect)) }
 
-    static func samples(_ effect: JohnnySoundEffect) -> [Int16] {
+    static func samples(_ effect: IslandSoundEffect) -> [Int16] {
         let wave: [Double] = switch effect {
         case .plop: plop()
         case .snore: snore()
@@ -28,7 +28,7 @@ enum JohnnySound {
     }
 
     /// Loudest sample of each sound, as a fraction of full scale: the surf stays well under the effects.
-    private static func peak(_ effect: JohnnySoundEffect) -> Double {
+    private static func peak(_ effect: IslandSoundEffect) -> Double {
         switch effect {
         case .plop, .shark: 0.20
         case .yawn: 0.18
@@ -161,12 +161,12 @@ enum JohnnySound {
         var phase = 0.0
 
         mutating func next(_ frequency: Double) -> Double {
-            defer { phase = (phase + 2 * .pi * frequency / JohnnySound.rate).truncatingRemainder(dividingBy: 2 * .pi) }
+            defer { phase = (phase + 2 * .pi * frequency / IslandSound.rate).truncatingRemainder(dividingBy: 2 * .pi) }
             return phase
         }
     }
 
-    /// Deterministic white noise in -1..<1, with its own generator so Johnny never shifts Retro98's sounds.
+    /// Deterministic white noise in -1..<1, with its own generator so the island never shifts Retro98's sounds.
     private struct Noise {
         var state: UInt32
 
@@ -190,22 +190,22 @@ enum JohnnySound {
 
 // MARK: - Output
 
-/// Where Johnny's sounds go: the speakers, or a recorder in the tests.
+/// Where the island's sounds go: the speakers, or a recorder in the tests.
 @MainActor
-protocol JohnnySoundOutput: AnyObject {
-    func play(_ effect: JohnnySoundEffect, loops: Bool)
+protocol IslandSoundOutput: AnyObject {
+    func play(_ effect: IslandSoundEffect, loops: Bool)
     func stopAll()
 }
 
 /// Plays through the Mac's speakers, keeping each sound alive until it ends or is stopped.
 @MainActor
-final class JohnnySpeaker: JohnnySoundOutput {
-    private var files: [JohnnySoundEffect: Data] = [:]
+final class IslandSpeaker: IslandSoundOutput {
+    private var files: [IslandSoundEffect: Data] = [:]
     private var playing: [NSSound] = []
 
-    func play(_ effect: JohnnySoundEffect, loops: Bool) {
+    func play(_ effect: IslandSoundEffect, loops: Bool) {
         playing.removeAll { !$0.isPlaying }
-        let data = files[effect] ?? JohnnySound.aiff(effect)
+        let data = files[effect] ?? IslandSound.aiff(effect)
         files[effect] = data
         guard let sound = NSSound(data: data) else { return }
         sound.loops = loops
