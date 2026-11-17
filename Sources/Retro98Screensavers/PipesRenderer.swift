@@ -44,7 +44,7 @@ public final class PipesRenderer: ScreensaverRenderer {
     // MARK: - Internal (also used by tests via startForTesting)
 
     func startForTesting() {
-        scene = SCNScene()
+        scene = Self.makeScene()
         occupied.removeAll()
         activePipes.removeAll()
         segmentCount = 0
@@ -52,6 +52,8 @@ public final class PipesRenderer: ScreensaverRenderer {
     }
 
     func tickForTesting() { tick() }
+
+    var sceneForTesting: SCNScene? { scene }
 
     func blockCurrentPipeForTesting() {
         guard !activePipes.isEmpty else { return }
@@ -79,6 +81,14 @@ public final class PipesRenderer: ScreensaverRenderer {
     // MARK: - Private
 
     private func buildScene(in sv: SCNView) {
+        let s = Self.makeScene()
+        sv.scene = s
+        sv.isPlaying = true
+        scene = s
+    }
+
+    /// The empty stage: black background, the camera looking into the grid and its lights.
+    private static func makeScene() -> SCNScene {
         let s = SCNScene()
         s.background.contents = NSColor.black
 
@@ -106,10 +116,7 @@ public final class PipesRenderer: ScreensaverRenderer {
         dirNode.light = dir
         dirNode.position = SCNVector3(10, 20, 20)
         s.rootNode.addChildNode(dirNode)
-
-        sv.scene = s
-        sv.isPlaying = true
-        scene = s
+        return s
     }
 
     private func startPipe() {

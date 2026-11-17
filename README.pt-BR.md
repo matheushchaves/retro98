@@ -271,6 +271,12 @@ O Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) é uma moldura 
 
 Quando o mouse e o teclado ficam parados por um tempo, a barra de tarefas cobre todas as telas com uma proteção de tela. Escolha qual em Painel de Controle › Proteção de Tela.
 
+| | |
+|---|---|
+| **Tubulações 3D**<br><img src="docs/images/screensavers/pipes.png" alt="Tubulações 3D: um cano verde-azulado correndo pelas bordas de uma caixa escura, um túnel visto de frente" width="430"> | **Texto 3D**<br><img src="docs/images/screensavers/text.png" alt="Texto 3D: a palavra Retro98 em letras sólidas verde-azuladas, giradas para mostrar a profundidade, sobre o preto" width="430"> |
+| **Johnny Castaway** pescando<br><img src="docs/images/screensavers/johnny-fishing.png" alt="Johnny Castaway: o náufrago barbudo sentado na areia de uma ilhota com um só coqueiro, com um peixe na linha" width="430"> | Cochilando<br><img src="docs/images/screensavers/johnny-sleeping.png" alt="Johnny Castaway: o náufrago dormindo encostado no coqueiro, com três Z subindo sobre a cabeça" width="430"> |
+| Passa um tubarão<br><img src="docs/images/screensavers/johnny-shark.png" alt="Johnny Castaway: o náufrago de braços para cima, apavorado, enquanto a barbatana de um tubarão cruza a água na frente da ilha" width="430"> | Passa uma gaivota<br><img src="docs/images/screensavers/johnny-gull.png" alt="Johnny Castaway: o náufrago em pé na ilha, olhando uma gaivota branca cruzar o céu" width="430"> |
+
 - **Tubulações 3D** (a padrão): canos coloridos crescem no escuro até encher boa parte da tela e então recomeçam.
 - **Texto 3D:** "Retro98" em letras sólidas, girando devagar.
 - **Johnny Castaway:** um náufrago numa ilhota com um só coqueiro. Ele cochila, pesca, se apavora com um tubarão que passa, olha uma gaivota voar e se espreguiça, enquanto as ondas vêm e as nuvens passam. O personagem, a pixel art e os sons foram feitos para o Retro98; nada vem da proteção de tela de 1992.

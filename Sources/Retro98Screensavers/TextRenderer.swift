@@ -30,6 +30,8 @@ public final class TextRenderer: ScreensaverRenderer {
         buildScene(in: sv)
     }
 
+    var sceneForTesting: SCNScene? { scnView?.scene }
+
     private func buildScene(in sv: SCNView) {
         let scene = SCNScene()
         scene.background.contents = NSColor.black

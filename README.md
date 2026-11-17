@@ -271,6 +271,12 @@ Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) is a 98-style fra
 
 When the mouse and the keyboard sit still for a while, the taskbar covers every screen with a screen saver. Pick it in Control Panel › Screen Saver.
 
+| | |
+|---|---|
+| **3D Pipes**<br><img src="docs/images/screensavers/pipes.png" alt="3D Pipes: a teal pipe running along the edges of a dark box, a tunnel seen from the front" width="430"> | **3D Text**<br><img src="docs/images/screensavers/text.png" alt="3D Text: the word Retro98 in solid teal letters, turned to show their depth, on black" width="430"> |
+| **Johnny Castaway** fishing<br><img src="docs/images/screensavers/johnny-fishing.png" alt="Johnny Castaway: the bearded castaway sits on the sand of a tiny island with one palm tree, a fish on his line" width="430"> | Napping<br><img src="docs/images/screensavers/johnny-sleeping.png" alt="Johnny Castaway: the castaway asleep against the palm tree, three Z rising over his head" width="430"> |
+| A shark goes by<br><img src="docs/images/screensavers/johnny-shark.png" alt="Johnny Castaway: the castaway with his arms up in a panic as a shark fin crosses the water in front of the island" width="430"> | A gull goes by<br><img src="docs/images/screensavers/johnny-gull.png" alt="Johnny Castaway: the castaway standing on the island, watching a white gull fly across the sky" width="430"> |
+
 - **3D Pipes** (the default): colored pipes grow through the dark until they fill most of the screen, then start over.
 - **3D Text:** "Retro98" in solid letters, slowly tumbling.
 - **Johnny Castaway:** a castaway on a tiny island with one palm tree. He naps, fishes, panics at a passing shark, watches a gull fly by and stretches, while the waves roll and the clouds drift. The character, the pixel art and the sounds were made for Retro98; nothing comes from the 1992 screen saver.
