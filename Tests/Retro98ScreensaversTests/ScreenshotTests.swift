@@ -11,14 +11,14 @@ private let screenshotFolder = ProcessInfo.processInfo.environment["RETRO98_SCRE
 /// The pictures' size: 16:9, four real pixels for each of Johnny's.
 private let pictureSize = CGSize(width: 1280, height: 720)
 
-/// 3D Pipes about a minute in, its pipe lining the walls of the grid.
+/// 3D Pipes some 15 seconds in, four pipes winding side by side across the screen.
 @MainActor @Test(.enabled(if: screenshotFolder != nil))
 func screenshotScreensaverPipes() throws {
     let pipes = PipesRenderer()
     pipes.startForTesting()
-    for _ in 0..<700 { pipes.tickForTesting() }
+    for _ in 0..<180 { pipes.tickForTesting() }
     let scene = try #require(pipes.sceneForTesting)
-    try savePicture(snapshot(of: scene), as: "pipes")
+    try savePicture(rendered(scene, size: pictureSize), as: "pipes")
 }
 
 /// 3D Text turned a little toward the light, so the letters show their depth.
@@ -30,7 +30,7 @@ func screenshotScreensaverText() throws {
     node.removeAllActions()
     node.eulerAngles = SCNVector3(-0.25, 0.45, 0.05)
     let scene = try #require(text.sceneForTesting)
-    try savePicture(snapshot(of: scene), as: "text")
+    try savePicture(rendered(scene, size: pictureSize), as: "text")
 }
 
 /// Johnny's island at a telling moment of a scene.
@@ -48,14 +48,6 @@ func screenshotScreensaverJohnny(moment: String) throws {
     let canvas = JohnnyScene.render(scene, clock: clock, width: Int(JohnnyScene.vw), height: Int(JohnnyScene.vh))
     let pixels = try #require(canvas.makeImage())
     try savePicture(enlarged(pixels), as: "johnny-\(moment)")
-}
-
-/// Renders a SceneKit scene off screen through its camera.
-@MainActor private func snapshot(of scene: SCNScene) -> NSImage {
-    let renderer = SCNRenderer(device: MTLCreateSystemDefaultDevice(), options: nil)
-    renderer.scene = scene
-    renderer.pointOfView = scene.rootNode.childNodes.first { $0.camera != nil }
-    return renderer.snapshot(atTime: 0, with: pictureSize, antialiasingMode: .multisampling4X)
 }
 
 /// Johnny's 320×180 pixels blown up to the picture's size, each one a sharp square.

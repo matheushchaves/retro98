@@ -273,7 +273,7 @@ Quando o mouse e o teclado ficam parados por um tempo, a barra de tarefas cobre 
 
 | | |
 |---|---|
-| **Tubulações 3D**<br><img src="docs/images/screensavers/pipes.png" alt="Tubulações 3D: um cano verde-azulado correndo pelas bordas de uma caixa escura, um túnel visto de frente" width="430"> | **Texto 3D**<br><img src="docs/images/screensavers/text.png" alt="Texto 3D: a palavra Retro98 em letras sólidas verde-azuladas, giradas para mostrar a profundidade, sobre o preto" width="430"> |
+| **Tubulações 3D**<br><img src="docs/images/screensavers/pipes.png" alt="Tubulações 3D: canos vermelho, amarelo, magenta, laranja e azul serpenteando lado a lado pela tela preta, com uma bola em cada curva" width="430"> | **Texto 3D**<br><img src="docs/images/screensavers/text.png" alt="Texto 3D: a palavra Retro98 em letras sólidas verde-azuladas, giradas para mostrar a profundidade, sobre o preto" width="430"> |
 | **Johnny Castaway** pescando<br><img src="docs/images/screensavers/johnny-fishing.png" alt="Johnny Castaway: o náufrago barbudo sentado na areia de uma ilhota com um só coqueiro, com um peixe na linha" width="430"> | Cochilando<br><img src="docs/images/screensavers/johnny-sleeping.png" alt="Johnny Castaway: o náufrago dormindo encostado no coqueiro, com três Z subindo sobre a cabeça" width="430"> |
 | Passa um tubarão<br><img src="docs/images/screensavers/johnny-shark.png" alt="Johnny Castaway: o náufrago de braços para cima, apavorado, enquanto a barbatana de um tubarão cruza a água na frente da ilha" width="430"> | Passa uma gaivota<br><img src="docs/images/screensavers/johnny-gull.png" alt="Johnny Castaway: o náufrago em pé na ilha, olhando uma gaivota branca cruzar o céu" width="430"> |
 

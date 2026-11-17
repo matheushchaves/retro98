@@ -47,11 +47,11 @@ public final class TextRenderer: ScreensaverRenderer {
         scene.rootNode.addChildNode(camNode)
 
         // Lights
-        let ambient = SCNLight(); ambient.type = .ambient; ambient.intensity = 60
+        let ambient = SCNLight(); ambient.type = .ambient; ambient.intensity = 300
         let ambientNode = SCNNode(); ambientNode.light = ambient
         scene.rootNode.addChildNode(ambientNode)
 
-        let omni = SCNLight(); omni.type = .omni; omni.intensity = 120
+        let omni = SCNLight(); omni.type = .omni; omni.intensity = 1000
         let omniNode = SCNNode(); omniNode.light = omni; omniNode.position = SCNVector3(10, 10, 10)
         scene.rootNode.addChildNode(omniNode)
 
