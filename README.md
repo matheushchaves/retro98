@@ -27,7 +27,7 @@ macOS doesn't accept system themes, so Retro98 isn't a theme. It is a set of rev
 | | |
 |---|---|
 | **Explorer** — browse, copy, move, rename and search your files, with the Recycle Bin and Properties.<br><img src="docs/images/en/explorer.png" alt="The Explorer on the Desktop view" width="430"> | **Browser** — a retro frame with tabs around the WebKit that comes with macOS.<br><img src="docs/images/en/browser.png" alt="The Browser on its home page" width="430"> |
-| **Notepad** — plain UTF-8 text in a crisp VGA font, with retro open and save dialogs.<br><img src="docs/images/en/notepad.png" alt="The Notepad with a short text" width="430"> | **Control Panel** — wallpaper, appearance, sounds, and a switch for each piece.<br><img src="docs/images/en/control-panel.png" alt="The Control Panel's window of icons" width="430"> |
+| **Notepad** — plain UTF-8 text in a crisp VGA font, with retro open and save dialogs.<br><img src="docs/images/en/notepad.png" alt="The Notepad with a short text" width="430"> | **Control Panel** — wallpaper, appearance, sounds, screen saver, and a switch for each piece.<br><img src="docs/images/en/control-panel.png" alt="The Control Panel's window of icons" width="430"> |
 
 There is also a **Prompt** (a full terminal in the classic PC font) and **themes** for Chrome, Sublime Text and Terminal.
 
@@ -60,6 +60,7 @@ You need macOS 14 or newer and the Xcode Command Line Tools (`xcode-select --ins
 | 6 | Notepad | ✅ available |
 | 7 | Themes for Chrome, Sublime Text and Terminal.app | ✅ available |
 | 8 | Retro web browser (WebKit) | ✅ available |
+| 9 | Screen savers (3D Pipes, 3D Text, a castaway's island) | ✅ available |
 
 ## Requirements
 
@@ -195,6 +196,7 @@ Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) turns
 - **Appearance:** each Phase 1 tweak on its own check box. The wallpaper is in Display and the pointer in Mouse.
 - **Mouse:** the white pointer with a black outline.
 - **Sounds:** Retro98's own sounds (taskbar startup, errors, warnings, emptying the Recycle Bin), made by the project, each with a Play button. You can turn them off, and you can make Retro98's alert the macOS alert sound: it goes to `~/Library/Sounds/Retro98.aiff` and shows as "Retro98" in System Settings › Sound.
+- **Screen Saver:** which screen saver, how long to wait, a Preview button and the castaway's sound; see [Screen savers](#screen-savers-phase-9).
 - **Components:** the taskbar and Start menu, Explorer instead of Finder for "Show in Finder", and a hidden macOS menu bar (it shows when you move the pointer to the top). A piece that isn't installed is grayed out, with how to install it.
 - **Shortcuts to macOS:** Network, Printers, Keyboard, Date/Time, Users and System Settings open the matching panel.
 - **Back to macOS normal…** turns every piece off and restores every saved setting; Retro98's apps stay installed. `./install.sh --yes` then keeps macOS normal; run `./install.sh` and answer Yes to bring the retro look back, or run `./uninstall.sh` to remove the apps too.
@@ -264,6 +266,21 @@ Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) is a 98-style fra
 | Find on the page, find next | ⌘F · ⌘G |
 | Add to Favorites, History | ⌘D · ⌘Y |
 | Open the Downloads folder | ⌥⌘L |
+
+## Screen savers (Phase 9)
+
+When the mouse and the keyboard sit still for a while, the taskbar covers every screen with a screen saver. Pick it in Control Panel › Screen Saver.
+
+- **3D Pipes** (the default): colored pipes grow through the dark until they fill most of the screen, then start over.
+- **3D Text:** "Retro98" in solid letters, slowly tumbling.
+- **Johnny Castaway:** a castaway on a tiny island with one palm tree. He naps, fishes, panics at a passing shark, watches a gull fly by and stretches, while the waves roll and the clouds drift. The character, the pixel art and the sounds were made for Retro98; nothing comes from the 1992 screen saver.
+- **"(None)"** turns the screen saver off.
+- **Wait:** 1, 2, 5 (the default), 10, 15, 20 or 30 minutes without the mouse or the keyboard.
+- **Preview** shows the chosen screen saver right away, without waiting and without saving.
+- **With sound** (the castaway only, off by default): the surf in the background, plus a snore, the float's plop, a low suspense sting for the shark, the gull's cry and a yawn. It's separate from "Play Retro98 sounds", and every sound is synthesized by the project, with no recordings.
+- **Leaving:** moving the mouse, pressing a key, clicking or scrolling brings your desktop back and stops the sound.
+
+The screen saver runs inside the taskbar (Retro98 Shell), so it needs the taskbar installed and on; changes count once you click Apply. It doesn't touch the macOS screen saver or the lock screen, which keep their own settings in System Settings.
 
 ## What Phase 1 changes
 

@@ -27,7 +27,7 @@ O macOS não aceita temas de sistema, então o Retro98 não é um tema. É um co
 | | |
 |---|---|
 | **Explorer** — navegar, copiar, mover, renomear e procurar arquivos, com Lixeira e Propriedades.<br><img src="docs/images/pt-BR/explorer.png" alt="O Explorer na Área de Trabalho" width="430"> | **Navegador** — uma moldura retrô com abas em volta do WebKit que vem com o macOS.<br><img src="docs/images/pt-BR/browser.png" alt="O Navegador na página inicial" width="430"> |
-| **Bloco de Notas** — texto puro em UTF-8 numa fonte VGA nítida, com diálogos retrô de abrir e salvar.<br><img src="docs/images/pt-BR/notepad.png" alt="O Bloco de Notas com um texto curto" width="430"> | **Painel de Controle** — papel de parede, aparência, sons e um interruptor para cada peça.<br><img src="docs/images/pt-BR/control-panel.png" alt="A janela de ícones do Painel de Controle" width="430"> |
+| **Bloco de Notas** — texto puro em UTF-8 numa fonte VGA nítida, com diálogos retrô de abrir e salvar.<br><img src="docs/images/pt-BR/notepad.png" alt="O Bloco de Notas com um texto curto" width="430"> | **Painel de Controle** — papel de parede, aparência, sons, proteção de tela e um interruptor para cada peça.<br><img src="docs/images/pt-BR/control-panel.png" alt="A janela de ícones do Painel de Controle" width="430"> |
 
 Há também um **Prompt** (um terminal completo na fonte clássica de PC) e **temas** para Chrome, Sublime Text e Terminal.
 
@@ -60,6 +60,7 @@ Você precisa do macOS 14 ou mais novo e das Ferramentas de Linha de Comando do 
 | 6 | Bloco de Notas | ✅ disponível |
 | 7 | Temas para Chrome, Sublime Text e Terminal.app | ✅ disponível |
 | 8 | Navegador retrô (WebKit) | ✅ disponível |
+| 9 | Proteção de tela (Tubulações 3D, Texto 3D, a ilha de um náufrago) | ✅ disponível |
 
 ## Requisitos
 
@@ -195,6 +196,7 @@ O Retro98 Control Panel (`~/Applications/Retro98/Retro98 Control Panel.app`) lig
 - **Aparência:** cada ajuste da Fase 1 com sua caixa de ligar e desligar. O papel de parede fica em Vídeo e o ponteiro em Mouse.
 - **Mouse:** o ponteiro branco com contorno preto.
 - **Sons:** os sons do próprio Retro98 (início da barra, erro, aviso, esvaziar a Lixeira), criados pelo projeto, cada um com um botão Tocar. Dá para desligá-los e para usar o alerta do Retro98 como som de alerta do macOS: ele vai para `~/Library/Sounds/Retro98.aiff` e aparece como "Retro98" em Ajustes do Sistema › Som.
+- **Proteção de Tela:** qual proteção, quanto tempo esperar, um botão Ver e o som do náufrago; veja [Proteção de Tela](#proteção-de-tela-fase-9).
 - **Componentes:** a barra de tarefas e o menu Iniciar, o Explorer no lugar do Finder em "Mostrar no Finder" e a barra de menus do macOS escondida (ela aparece ao levar o ponteiro ao topo). Uma peça não instalada aparece em cinza, com o jeito de instalar.
 - **Atalhos do macOS:** Rede, Impressoras, Teclado, Data/Hora, Usuários e Ajustes do Sistema abrem o painel correspondente.
 - **Voltar ao macOS normal…** desliga todas as peças e restaura todos os ajustes guardados; os apps do Retro98 continuam instalados. Depois disso, `./install.sh --yes` mantém o macOS normal; rode `./install.sh` e responda Sim para o visual retrô voltar, ou `./uninstall.sh` para remover os apps também.
@@ -264,6 +266,21 @@ O Retro98 Browser (`~/Applications/Retro98/Retro98 Browser.app`) é uma moldura 
 | Localizar na página, localizar próxima | ⌘F · ⌘G |
 | Adicionar a Favoritos, Histórico | ⌘D · ⌘Y |
 | Abrir a pasta Downloads | ⌥⌘L |
+
+## Proteção de Tela (Fase 9)
+
+Quando o mouse e o teclado ficam parados por um tempo, a barra de tarefas cobre todas as telas com uma proteção de tela. Escolha qual em Painel de Controle › Proteção de Tela.
+
+- **Tubulações 3D** (a padrão): canos coloridos crescem no escuro até encher boa parte da tela e então recomeçam.
+- **Texto 3D:** "Retro98" em letras sólidas, girando devagar.
+- **Johnny Castaway:** um náufrago numa ilhota com um só coqueiro. Ele cochila, pesca, se apavora com um tubarão que passa, olha uma gaivota voar e se espreguiça, enquanto as ondas vêm e as nuvens passam. O personagem, a pixel art e os sons foram feitos para o Retro98; nada vem da proteção de tela de 1992.
+- **"(nenhuma)"** desliga a proteção de tela.
+- **Aguardar:** 1, 2, 5 (o padrão), 10, 15, 20 ou 30 minutos sem mouse nem teclado.
+- **Ver** mostra a proteção escolhida na hora, sem esperar e sem salvar.
+- **Com som** (só o náufrago, desligado por padrão): o mar ao fundo, mais um ronco, o ploc da boia, um suspense grave para o tubarão, o grito da gaivota e um bocejo. É separado de "Tocar os sons do Retro98", e todo som é sintetizado pelo projeto, sem gravações.
+- **Sair:** mexer o mouse, apertar uma tecla, clicar ou rolar traz a mesa de volta e corta o som.
+
+A proteção de tela roda dentro da barra de tarefas (Retro98 Shell), então precisa da barra instalada e ligada; as mudanças valem depois de clicar em Aplicar. Ela não mexe na proteção de tela nem na tela de bloqueio do macOS, que continuam com os próprios ajustes em Ajustes do Sistema.
 
 ## O que a Fase 1 muda
 

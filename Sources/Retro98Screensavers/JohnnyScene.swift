@@ -120,6 +120,9 @@ enum JohnnyActing {
         PixelPoint(x: -12, y: -30), PixelPoint(x: -18, y: -38), PixelPoint(x: -26, y: -48),
     ]
 
+    /// Ticks até os Z subirem todos e sumirem: cada volta começa com um ronco.
+    static var snoreCycleTicks: Int { snorePeriodTicks * (snoreRise.count + 1) }
+
     private static func drawSleeping(into canvas: inout PixelCanvas, layout: JohnnyLayout, clock: JohnnyClock) {
         let x = layout.palmBase.x + sleepOffsetFromPalm
         let seat = PixelPoint(x: x, y: layout.groundY(atX: x) + 3)

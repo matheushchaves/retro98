@@ -3,16 +3,19 @@ import Retro98Screensavers
 import Retro98Settings
 import Retro98UI
 
-/// The Screen Saver dialog: pick a screensaver and set the idle timeout.
+/// The Screen Saver dialog: pick a screensaver, set the idle timeout and whether it plays its own sounds.
 @MainActor
 final class ScreensaverApplet {
     static let width: CGFloat = 300
-    static let height: CGFloat = 130
+    private static let rowGap: CGFloat = AppletDialog.margin / 2
+    static let height: CGFloat = AppletDialog.margin + RetroDropDown.height + rowGap + RetroDropDown.height
+        + rowGap + 16 + AppletDialog.margin
 
     let dialog: AppletDialog
     private let kindDrop: RetroDropDown
     private let timeoutDrop: RetroDropDown
     private var previewBtn: RetroButton!
+    private var soundBox: RetroCheckBox!
     private let model: ControlPanelModel
     private let services: ControlPanelServices
     private var previewWin: ScreensaverWindow?
@@ -20,6 +23,7 @@ final class ScreensaverApplet {
     // Test seams
     private(set) var selectedKind: ScreensaverKind
     private(set) var selectedTimeout: Int
+    private(set) var selectedSound: Bool
 
     private static let timeouts = [1, 2, 5, 10, 15, 20, 30]
 
@@ -30,6 +34,7 @@ final class ScreensaverApplet {
         let choices = services.choices.load()
         selectedKind = choices.screensaver
         selectedTimeout = choices.screensaverTimeout
+        selectedSound = choices.screensaverSound
 
         dialog = AppletDialog(title: Applet.screensaver.title(l),
                               contentSize: CGSize(width: Self.width, height: Self.height),
@@ -37,24 +42,24 @@ final class ScreensaverApplet {
         let margin = AppletDialog.margin
         let content = dialog.contentView
 
-        // Screensaver row
+        // Screensaver row (the content view is flipped: rows go down from the top)
+        let lineHeight = CGFloat(PixelText.lineHeight)
+        let labelInset = ((RetroDropDown.height - lineHeight) / 2).rounded(.down)
         let kindLabel = RetroLabel(lines: [ControlPanelText.screensaverKindLabel(l)])
-        kindLabel.frame = CGRect(x: margin, y: Self.height - margin - CGFloat(PixelText.lineHeight),
-                                 width: 100, height: CGFloat(PixelText.lineHeight))
+        kindLabel.frame = CGRect(x: margin, y: margin + labelInset, width: 100, height: lineHeight)
         content.addSubview(kindLabel)
 
         kindDrop = RetroDropDown(items: { [] })
-        kindDrop.frame = CGRect(x: margin + 100, y: Self.height - margin - RetroDropDown.height,
+        kindDrop.frame = CGRect(x: margin + 100, y: margin,
                                 width: Self.width - margin * 2 - 100, height: RetroDropDown.height)
         content.addSubview(kindDrop)
 
-        // Timeout row
+        // Timeout row, with the Preview button
+        let timeoutY = kindDrop.frame.maxY + Self.rowGap
         let timeoutLabel = RetroLabel(lines: [ControlPanelText.screensaverTimeoutLabel(l)])
-        timeoutLabel.frame = CGRect(x: margin, y: kindDrop.frame.minY - margin / 2 - CGFloat(PixelText.lineHeight),
-                                    width: 100, height: CGFloat(PixelText.lineHeight))
+        timeoutLabel.frame = CGRect(x: margin, y: timeoutY + labelInset, width: 100, height: lineHeight)
         content.addSubview(timeoutLabel)
 
-        let timeoutY = kindDrop.frame.minY - margin / 2 - RetroDropDown.height
         timeoutDrop = RetroDropDown(items: { [] })
         timeoutDrop.frame = CGRect(x: margin + 100, y: timeoutY, width: 100, height: RetroDropDown.height)
         content.addSubview(timeoutDrop)
@@ -65,6 +70,13 @@ final class ScreensaverApplet {
         previewBtn.frame = CGRect(x: previewX, y: timeoutY,
                                   width: Self.width - margin - previewX, height: RetroButton.height)
         content.addSubview(previewBtn)
+
+        // Sound row
+        soundBox = RetroCheckBox(title: ControlPanelText.screensaverSound(l), isOn: selectedSound) { [weak self] isOn in
+            self?.selectedSound = isOn
+        }
+        soundBox.frame.origin = CGPoint(x: margin + 100, y: timeoutDrop.frame.maxY + Self.rowGap)
+        content.addSubview(soundBox)
 
         // Wire items now that self is fully initialized
         rebuildKindItems(l)
@@ -84,6 +96,11 @@ final class ScreensaverApplet {
         selectedTimeout = minutes
         rebuildTimeoutItems(services.languages)
         refresh(services.languages)
+    }
+
+    func setSound(_ isOn: Bool) {
+        selectedSound = isOn
+        soundBox.isOn = isOn
     }
 
     func applyForTesting() { apply() }
@@ -118,7 +135,7 @@ final class ScreensaverApplet {
 
     private func showPreview() {
         guard selectedKind != .none,
-              let renderer = ScreensaverRendererFactory.make(selectedKind) else { return }
+              let renderer = ScreensaverRendererFactory.make(selectedKind, sound: selectedSound) else { return }
         let win = ScreensaverWindow()
         previewWin = win
         win.onDismiss = { [weak self] in self?.previewWin = nil }
@@ -129,6 +146,7 @@ final class ScreensaverApplet {
         let updated = services.choices.load()
             .with(screensaver: selectedKind)
             .with(screensaverTimeout: selectedTimeout)
+            .with(screensaverSound: selectedSound)
         try? services.choices.save(updated)
     }
 }

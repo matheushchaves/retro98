@@ -21,8 +21,16 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         .idle, .sleeping, .fishing, .shark, .idle, .bird, .stretching
     ]
     private var sceneIndex = 0
+    /// Onde tocam os sons da ilha: nil quando o protetor está sem som.
+    private let sound: (any JohnnySoundOutput)?
 
-    public init() {}
+    public convenience init(sound: Bool = false) {
+        self.init(output: sound ? JohnnySpeaker() : nil)
+    }
+
+    init(output: (any JohnnySoundOutput)?) {
+        sound = output
+    }
 
     public func start(in view: NSView) {
         let jv = JohnnyView(frame: view.bounds)
@@ -31,6 +39,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         view.addSubview(jv)
         johnnyView = jv
         startSceneForTesting()
+        sound?.play(.surf, loops: true)
         timer = Timer.scheduledTimer(withTimeInterval: tickInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.tickInternal() }
         }
@@ -39,6 +48,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
     public func stop() {
         timer?.invalidate()
         timer = nil
+        sound?.stopAll()
         johnnyView?.removeFromSuperview()
         johnnyView = nil
     }
@@ -59,9 +69,12 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         sceneElapsed = 0
         frameElapsed = 0
         sceneTick = 0
+        play(currentSceneKind.openingSound)
     }
 
     public func tickFrameForTesting() { tickInternal() }
+
+    var hasSoundForTesting: Bool { sound != nil }
 
     public func renderFrameForTesting(size: CGSize) -> NSImage? {
         let img = NSImage(size: size)
@@ -82,15 +95,23 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         sceneTick += 1
         worldTick += 1
         let scene = currentSceneKind
+        if scene == .sleeping, sceneTick % JohnnyActing.snoreCycleTicks == 0 { play(.snore) }
         if frameElapsed >= scene.frameDuration {
             frameElapsed = 0
             currentFrame = (currentFrame + 1) % scene.frameCount
+            // O frame 1 da pesca é a mordida: a boia afunda.
+            if scene == .fishing, currentFrame == 1 { play(.plop) }
         }
         if sceneElapsed >= scene.sceneDuration {
             advanceSceneForTesting()
         }
         // O fundo (ondas, nuvens, folhas) anima a cada tick, não só na troca de frame.
         johnnyView?.needsDisplay = true
+    }
+
+    private func play(_ effect: JohnnySoundEffect?) {
+        guard let effect else { return }
+        sound?.play(effect, loops: false)
     }
 }
 
@@ -115,6 +136,13 @@ public enum JohnnySceneKind: CaseIterable {
         switch self {
         case .idle: 7; case .sleeping: 10; case .fishing: 10
         case .shark: 5; case .bird: 4; case .stretching: 3
+        }
+    }
+    /// O efeito que toca quando a cena começa (a pesca espera a mordida).
+    var openingSound: JohnnySoundEffect? {
+        switch self {
+        case .sleeping: .snore; case .shark: .shark; case .bird: .gull; case .stretching: .yawn
+        case .idle, .fishing: nil
         }
     }
 }

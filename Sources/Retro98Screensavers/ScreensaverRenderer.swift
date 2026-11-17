@@ -9,14 +9,15 @@ public protocol ScreensaverRenderer: AnyObject {
 }
 
 public enum ScreensaverRendererFactory {
-    /// Returns the renderer for `kind`, or nil when kind is `.none`.
+    /// Returns the renderer for `kind`, or nil when kind is `.none`. `sound` lets the screensavers that have
+    /// sounds play them (only Johnny Castaway does).
     @MainActor
-    public static func make(_ kind: ScreensaverKind) -> (any ScreensaverRenderer)? {
+    public static func make(_ kind: ScreensaverKind, sound: Bool = false) -> (any ScreensaverRenderer)? {
         switch kind {
         case .none: nil
         case .pipes: PipesRenderer()
         case .text3d: TextRenderer()
-        case .johnny: JohnnyRenderer()
+        case .johnny: JohnnyRenderer(sound: sound)
         }
     }
 }

@@ -48,3 +48,27 @@ private let url = URL(filePath: "/home/Library/Application Support/Retro98/choic
     #expect(all.contains(.johnny))
     #expect(all.count == 4)
 }
+
+@Test func screensaverSoundIsOffByDefault() {
+    #expect(Choices.standard.screensaverSound == false)
+}
+
+@Test func screensaverSoundRoundTrips() throws {
+    let file = ChoicesFile(url: url, files: InMemoryFileStore())
+    try file.save(Choices.standard.with(screensaverSound: true))
+    #expect(file.load().screensaverSound == true)
+}
+
+@Test func otherChoicesKeepScreensaverSound() {
+    let choices = Choices.standard.with(screensaverSound: true)
+        .with(soundsOn: false).with(screensaver: .johnny).with(screensaverTimeout: 2)
+        .with(wallpaper: .standard).turning(.pointer, on: false)
+    #expect(choices.screensaverSound == true)
+}
+
+@Test func missingScreensaverSoundKeyMeansOff() throws {
+    let files = InMemoryFileStore()
+    let plist: [String: Any] = ["screensaver": "johnny", "screensaverTimeout": 5]
+    try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
+    #expect(ChoicesFile(url: url, files: files).load().screensaverSound == false)
+}

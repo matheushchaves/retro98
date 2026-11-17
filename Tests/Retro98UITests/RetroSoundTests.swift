@@ -79,3 +79,9 @@ private func chunk(_ id: String, in data: Data) -> Int? {
     #expect(MessageBoxIcon.info.sound == nil)
     #expect(MessageBoxIcon.question.sound == nil)
 }
+
+@Test func aiffFromSamplesIsTheSameFile() {
+    for kind in RetroSoundKind.allCases {
+        #expect(RetroSound.aiff(samples: RetroSound.samples(kind)) == RetroSound.aiff(kind), "\(kind)")
+    }
+}

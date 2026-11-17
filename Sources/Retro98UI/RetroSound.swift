@@ -98,8 +98,10 @@ public enum RetroSound {
 
     // MARK: AIFF
 
-    public static func aiff(_ kind: RetroSoundKind) -> Data {
-        let samples = samples(kind)
+    public static func aiff(_ kind: RetroSoundKind) -> Data { aiff(samples: samples(kind)) }
+
+    /// Mono 16-bit AIFF at `sampleRate` holding `samples`: lets other parts of Retro98 synthesize their own sounds.
+    public static func aiff(samples: [Int16]) -> Data {
         var comm = Data()
         comm.append(bigEndian: UInt16(1))
         comm.append(bigEndian: UInt32(samples.count))

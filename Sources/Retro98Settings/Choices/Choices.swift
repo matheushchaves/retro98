@@ -18,45 +18,61 @@ public struct Choices: Equatable, Sendable {
     public let screensaver: ScreensaverKind
     /// Idle timeout in minutes before the screensaver activates.
     public let screensaverTimeout: Int
+    /// Whether the screensaver plays its own sounds (Johnny's sea and effects). Separate from `soundsOn`,
+    /// and off unless the person turns it on: a noisy screensaver shouldn't surprise anyone.
+    public let screensaverSound: Bool
 
     public static let standard = Choices(
         wallpaper: .standard, turnedOff: [], soundsOn: true,
-        screensaver: .standard, screensaverTimeout: 5
+        screensaver: .standard, screensaverTimeout: 5, screensaverSound: false
     )
 
     public init(wallpaper: WallpaperChoice, turnedOff: Set<TweakID>, soundsOn: Bool,
-                screensaver: ScreensaverKind = .standard, screensaverTimeout: Int = 5) {
+                screensaver: ScreensaverKind = .standard, screensaverTimeout: Int = 5,
+                screensaverSound: Bool = false) {
         self.wallpaper = wallpaper
         self.turnedOff = turnedOff
         self.soundsOn = soundsOn
         self.screensaver = screensaver
         self.screensaverTimeout = screensaverTimeout
+        self.screensaverSound = screensaverSound
     }
 
     public func with(wallpaper: WallpaperChoice) -> Choices {
         Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
-                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
     }
 
     public func with(soundsOn: Bool) -> Choices {
         Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
-                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
     }
 
     public func with(screensaver: ScreensaverKind) -> Choices {
         Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
-                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
     }
 
     public func with(screensaverTimeout: Int) -> Choices {
         Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
-                screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
+    }
+
+    public func with(screensaverSound: Bool) -> Choices {
+        Choices(wallpaper: wallpaper, turnedOff: turnedOff, soundsOn: soundsOn,
+                screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
     }
 
     public func turning(_ id: TweakID, on: Bool) -> Choices {
         Choices(wallpaper: wallpaper,
                 turnedOff: on ? turnedOff.subtracting([id]) : turnedOff.union([id]),
-                soundsOn: soundsOn, screensaver: screensaver, screensaverTimeout: screensaverTimeout)
+                soundsOn: soundsOn, screensaver: screensaver, screensaverTimeout: screensaverTimeout,
+                screensaverSound: screensaverSound)
     }
 }
 
@@ -91,7 +107,8 @@ public struct ChoicesFile {
             turnedOff: Set(names.compactMap(TweakID.init(rawValue:))),
             soundsOn: plist["soundsOn"] as? Bool ?? Choices.standard.soundsOn,
             screensaver: screensaver,
-            screensaverTimeout: screensaverTimeout
+            screensaverTimeout: screensaverTimeout,
+            screensaverSound: plist["screensaverSound"] as? Bool ?? Choices.standard.screensaverSound
         )
     }
 
@@ -106,6 +123,7 @@ public struct ChoicesFile {
             "soundsOn": choices.soundsOn,
             "screensaver": choices.screensaver.rawValue,
             "screensaverTimeout": choices.screensaverTimeout,
+            "screensaverSound": choices.screensaverSound,
         ]
         try files.write(try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0), to: url)
     }

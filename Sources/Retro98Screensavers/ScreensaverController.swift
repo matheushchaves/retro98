@@ -45,7 +45,7 @@ public final class ScreensaverController {
         let idle = overrideIdleSeconds ?? Self.idleSeconds()
         guard idle >= Double(c.screensaverTimeout * 60) else { return }
 
-        guard let renderer = ScreensaverRendererFactory.make(c.screensaver) else { return }
+        guard let renderer = ScreensaverRendererFactory.make(c.screensaver, sound: c.screensaverSound) else { return }
         isShowing = true
         showCount += 1
         win.present(renderer: renderer, presentsWindows: presentsWindows)

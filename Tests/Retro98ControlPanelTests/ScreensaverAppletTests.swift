@@ -61,3 +61,24 @@ import Retro98Settings
     #expect(applet.selectedKind == .text3d)
     #expect(applet.selectedTimeout == 15)
 }
+
+@MainActor
+@Test func screensaverAppletSoundBoxSavesChoice() {
+    let services = TestServices()
+    let applet = ScreensaverApplet(model: ControlPanelModel(services: services), services: services, prompter: ScriptedPrompter())
+    #expect(applet.selectedSound == false)
+    applet.setSound(true)
+    applet.applyForTesting()
+    #expect(services.choices.load().screensaverSound == true)
+}
+
+@MainActor
+@Test func screensaverAppletLoadsSavedSound() {
+    let services = TestServices()
+    try? services.choices.save(Choices.standard.with(screensaverSound: true))
+    let applet = ScreensaverApplet(model: ControlPanelModel(services: services), services: services, prompter: ScriptedPrompter())
+    #expect(applet.selectedSound == true)
+    applet.select(.pipes)
+    applet.applyForTesting()
+    #expect(services.choices.load().screensaverSound == true)
+}
