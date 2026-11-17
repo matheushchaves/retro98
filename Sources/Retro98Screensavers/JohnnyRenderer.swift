@@ -3,6 +3,7 @@ import AppKit
 // MARK: - Public renderer
 
 /// Johnny Castaway screensaver — pixel art original, não baseado em assets da Sierra.
+/// Este arquivo cuida do roteiro (cenas, frames, timer); a arte vive em `JohnnyScene`.
 @MainActor
 public final class JohnnyRenderer: ScreensaverRenderer {
     private var johnnyView: JohnnyView?
@@ -12,7 +13,10 @@ public final class JohnnyRenderer: ScreensaverRenderer {
     public private(set) var currentFrame: Int = 0
     private var sceneElapsed: TimeInterval = 0
     private var frameElapsed: TimeInterval = 0
-    private let tickInterval: TimeInterval = 0.1
+    /// Ticks desde o início da cena / do protetor: movem ondas, nuvens e bichos.
+    private var sceneTick = 0
+    private var worldTick = 0
+    private let tickInterval: TimeInterval = 1 / TimeInterval(JohnnyClock.ticksPerSecond)
     private static let sceneSequence: [JohnnySceneKind] = [
         .idle, .sleeping, .fishing, .shark, .idle, .bird, .stretching
     ]
@@ -45,6 +49,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         currentFrame = 0
         sceneElapsed = 0
         frameElapsed = 0
+        sceneTick = 0
     }
 
     public func advanceSceneForTesting() {
@@ -53,6 +58,7 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         currentFrame = 0
         sceneElapsed = 0
         frameElapsed = 0
+        sceneTick = 0
     }
 
     public func tickFrameForTesting() { tickInternal() }
@@ -61,24 +67,30 @@ public final class JohnnyRenderer: ScreensaverRenderer {
         let img = NSImage(size: size)
         img.lockFocus()
         guard let ctx = NSGraphicsContext.current?.cgContext else { img.unlockFocus(); return nil }
-        JohnnyScene.draw(currentSceneKind, frame: currentFrame, in: ctx, size: size)
+        JohnnyScene.draw(currentSceneKind, clock: clock, in: ctx, size: size)
         img.unlockFocus()
         return img
+    }
+
+    var clock: JohnnyClock {
+        JohnnyClock(frame: currentFrame, sceneTick: sceneTick, worldTick: worldTick)
     }
 
     private func tickInternal() {
         frameElapsed += tickInterval
         sceneElapsed += tickInterval
+        sceneTick += 1
+        worldTick += 1
         let scene = currentSceneKind
         if frameElapsed >= scene.frameDuration {
             frameElapsed = 0
             currentFrame = (currentFrame + 1) % scene.frameCount
-            johnnyView?.needsDisplay = true
         }
         if sceneElapsed >= scene.sceneDuration {
             advanceSceneForTesting()
-            johnnyView?.needsDisplay = true
         }
+        // O fundo (ondas, nuvens, folhas) anima a cada tick, não só na troca de frame.
+        johnnyView?.needsDisplay = true
     }
 }
 
@@ -114,403 +126,6 @@ final class JohnnyView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext, let r = renderer else { return }
-        JohnnyScene.draw(r.currentSceneKind, frame: r.currentFrame, in: ctx, size: bounds.size)
-    }
-}
-
-// MARK: - Pixel art engine
-//
-// Virtual canvas: 160 × 90 (16:9). One virtual pixel = ps real points.
-// After the y-flip transform, virtual y=0 is screen top.
-
-private let charToColor: [Character: UInt8] = [
-    " ": 0,
-    "O": 1, "o": 2, "~": 3,
-    "S": 4, "s": 5,
-    "k": 6, "K": 7,
-    "b": 8, "B": 9,
-    "p": 10, "P": 11,
-    "T": 12, "t": 13,
-    "g": 14, "G": 15,
-    "r": 16, "R": 17,
-    "w": 18, "#": 19,
-    "Z": 20, "z": 21,
-    "h": 22,
-]
-
-private let palette: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
-    (0.00, 0.00, 0.00, 0.00),  //  0 transparent
-    (0.00, 0.22, 0.42, 1.00),  //  1 ocean dark
-    (0.05, 0.38, 0.62, 1.00),  //  2 ocean mid
-    (0.15, 0.55, 0.80, 1.00),  //  3 ocean light
-    (0.85, 0.76, 0.52, 1.00),  //  4 sand
-    (0.70, 0.60, 0.38, 1.00),  //  5 sand dark
-    (0.92, 0.72, 0.52, 1.00),  //  6 skin
-    (0.75, 0.56, 0.36, 1.00),  //  7 skin shadow
-    (0.22, 0.32, 0.68, 1.00),  //  8 shirt blue
-    (0.14, 0.20, 0.50, 1.00),  //  9 shirt dark
-    (0.38, 0.24, 0.10, 1.00),  // 10 pants brown
-    (0.24, 0.14, 0.04, 1.00),  // 11 pants dark
-    (0.52, 0.35, 0.14, 1.00),  // 12 trunk brown
-    (0.36, 0.22, 0.06, 1.00),  // 13 trunk dark
-    (0.22, 0.58, 0.22, 1.00),  // 14 leaf green
-    (0.12, 0.40, 0.12, 1.00),  // 15 leaf dark
-    (0.54, 0.54, 0.58, 1.00),  // 16 rock
-    (0.38, 0.38, 0.42, 1.00),  // 17 rock dark
-    (1.00, 1.00, 1.00, 1.00),  // 18 white
-    (0.08, 0.08, 0.10, 1.00),  // 19 black/outline
-    (0.32, 0.32, 0.50, 1.00),  // 20 shark
-    (0.20, 0.20, 0.36, 1.00),  // 21 shark dark
-    (0.42, 0.26, 0.08, 1.00),  // 22 hair
-]
-
-private func palColor(_ idx: UInt8) -> CGColor {
-    guard Int(idx) < palette.count else { return CGColor.clear }
-    let (r, g, b, a) = palette[Int(idx)]
-    return CGColor(red: r, green: g, blue: b, alpha: a)
-}
-
-private func spr(_ rows: [String], vx: Int, vy: Int, ps: CGFloat, in ctx: CGContext) {
-    for (ri, row) in rows.enumerated() {
-        for (ci, ch) in row.enumerated() {
-            guard let idx = charToColor[ch], idx != 0 else { continue }
-            ctx.setFillColor(palColor(idx))
-            ctx.fill(CGRect(x: CGFloat(vx + ci) * ps, y: CGFloat(vy + ri) * ps,
-                            width: ps, height: ps))
-        }
-    }
-}
-
-// MARK: - Sprites
-
-// Palm tree — 12 wide × 24 tall; y=0 is frond tips, y=23 is root.
-private let sPalm: [String] = [
-    "   gg g     ",  //  0
-    "  gGggg     ",  //  1
-    " gGGGgg     ",  //  2
-    "  gGgg      ",  //  3
-    " gGGg  g    ",  //  4
-    "  Ggg gGg   ",  //  5
-    "   g gGGg   ",  //  6
-    "    gGGgg   ",  //  7
-    "    gGgg    ",  //  8
-    "    gGg     ",  //  9
-    "     tT     ",  // 10
-    "     tT     ",  // 11
-    "     Tt     ",  // 12
-    "     tT     ",  // 13
-    "     Tt     ",  // 14
-    "    tTt     ",  // 15
-    "     Tt     ",  // 16
-    "     Tt     ",  // 17
-    "    tTt     ",  // 18
-    "     TT     ",  // 19
-    "    tTT     ",  // 20
-    "     TT     ",  // 21
-    "    tTT     ",  // 22
-    "    tTT     ",  // 23
-]
-
-// Johnny standing, frame 0 — 12 wide × 20 tall.
-private let sJStand0: [String] = [
-    "  ##hhhh##  ",  //  0 head
-    " #hkkkkkk#  ",  //  1
-    " #kkkkkkk#  ",  //  2
-    " #KkKkkkk#  ",  //  3 eyes
-    " #kkkkkkk#  ",  //  4
-    "  ##hhhh##  ",  //  5 chin
-    "   ##kk##   ",  //  6 neck
-    " k##bbbb##k ",  //  7 shoulders+arms
-    " #kbbbbbbk# ",  //  8 shirt
-    " ##bBbbBb## ",  //  9
-    " ##BBBbbb## ",  // 10 belt
-    "  ##pppp##  ",  // 11 pants top
-    "  #pp  pp#  ",  // 12 legs split
-    "  #Pp  pp#  ",  // 13 frame 0: left behind
-    "  #pp  Pp#  ",  // 14
-    "  #pp  pp#  ",  // 15
-    "  #Pp  pp#  ",  // 16
-    "  #pp  Pp#  ",  // 17
-    "  ###  ###  ",  // 18 feet
-    "            ",  // 19 blank
-]
-
-// Johnny standing, frame 1 — 12 wide × 20 tall (legs swapped).
-private let sJStand1: [String] = [
-    "  ##hhhh##  ",
-    " #hkkkkkk#  ",
-    " #kkkkkkk#  ",
-    " #KkKkkkk#  ",
-    " #kkkkkkk#  ",
-    "  ##hhhh##  ",
-    "   ##kk##   ",
-    " k##bbbb##k ",
-    " #kbbbbbbk# ",
-    " ##bBbbBb## ",
-    " ##BBBbbb## ",
-    "  ##pppp##  ",
-    "  #pp  pp#  ",
-    "  #pp  Pp#  ",  // frame 1: right behind
-    "  #Pp  pp#  ",
-    "  #pp  pp#  ",
-    "  #pp  Pp#  ",
-    "  #Pp  pp#  ",
-    "  ###  ###  ",
-    "            ",
-]
-
-// Johnny sleeping, frame 0 — 22 wide × 8 tall.
-private let sJSleep0: [String] = [
-    "          ##hhhh##    ",
-    "####BB## #hkkkkkk#    ",
-    "#bbbbbbb##kkkkkkk#    ",
-    "#bBBBbbb##KkKkkkk##   ",
-    "####pppp####hhhh##    ",
-    "   #pppp#             ",
-    "   #####              ",
-    "                      ",
-]
-
-// Johnny sleeping, frame 1 — with Zzz floating.
-private let sJSleep1: [String] = [
-    "          ##hhhh##  ww",
-    "####BB## #hkkkkkk# w  ",
-    "#bbbbbbb##kkkkkkk# ww ",
-    "#bBBBbbb##KkKkkkk##   ",
-    "####pppp####hhhh##    ",
-    "   #pppp#             ",
-    "   #####              ",
-    "                      ",
-]
-
-// Johnny fishing, frame 0 — 20 wide × 20 tall.
-private let sJFish0: [String] = [
-    "  ##hhhh##          ",
-    " #hkkkkkk#          ",
-    " #kkkkkkk#          ",
-    " #KkKkkkk#          ",
-    " #kkkkkkk#          ",
-    "  ##hhhh##          ",
-    "   ##kk## T         ",
-    " k##bbbT##Tt        ",
-    " #kbbbbTbbTt        ",
-    " ##bBbbTbbb#        ",
-    " ##BBBbbb###        ",
-    "  ##pppp##          ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  ###  ###          ",
-    "                    ",
-]
-
-// Frame 1: line in water.
-private let sJFish1: [String] = [
-    "  ##hhhh##          ",
-    " #hkkkkkk#          ",
-    " #kkkkkkk#          ",
-    " #KkKkkkk#          ",
-    " #kkkkkkk#          ",
-    "  ##hhhh##          ",
-    "   ##kk## T         ",
-    " k##bbbT##Tt        ",
-    " #kbbbbTbbTt        ",
-    " ##bBbbTbbb# t      ",
-    " ##BBBbbb###  #     ",
-    "  ##pppp##          ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  ###  ###          ",
-    "                    ",
-]
-
-// Frame 2: fish on hook.
-private let sJFish2: [String] = [
-    "  ##hhhh##          ",
-    " #hkkkkkk#          ",
-    " #kkkkkkk#          ",
-    " #KkKkkkk#          ",
-    " #kkkkkkk#          ",
-    "  ##hhhh##          ",
-    "   ##kk## T         ",
-    " k##bbbT##Tt        ",
-    " #kbbbbTbbTt        ",
-    " ##bBbbTbbb# t      ",
-    " ##BBBbbb###  #     ",
-    "  ##pppp##    o     ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  #pp  pp#          ",
-    "  #Pp  pp#          ",
-    "  #pp  Pp#          ",
-    "  ###  ###          ",
-    "                    ",
-]
-
-// Shark fin — 12 wide × 6 tall.
-private let sSharkFin: [String] = [
-    "     Z      ",
-    "    zZZ     ",
-    "   zZZZz    ",
-    "  zZZZZZz   ",
-    " #ZZZZZZZ#  ",
-    " ########## ",
-]
-
-// Bird — 10 wide × 4 tall, 3 wing frames.
-private let sBird0: [String] = [
-    "   #  #   ",
-    "  ## ##   ",
-    " #k   k#  ",
-    "   ###    ",
-]
-
-private let sBird1: [String] = [
-    "          ",
-    " #k     k#",
-    "  ###  ## ",
-    "    ##    ",
-]
-
-private let sBird2: [String] = [
-    "    ##    ",
-    "  ##  ##  ",
-    " #k    k# ",
-    "          ",
-]
-
-// Johnny stretching, arms out — 14 wide × 20 tall.
-private let sJStretch0: [String] = [
-    "    ##hhhh##  ",  //  0
-    "   #hkkkkkk#  ",  //  1
-    "   #kkkkkkk#  ",  //  2
-    "   #KkKkkkk#  ",  //  3
-    "   #kkkkkkk#  ",  //  4
-    "    ##hhhh##  ",  //  5
-    "    ##kk##    ",  //  6
-    "kk k##bbbb##k ",  //  7
-    "#kkbbbbbbbbk##",  //  8
-    " ##bBbbBbbbb# ",  //  9
-    " ##BBBbbbbbb# ",  // 10
-    "  ##pppppp##  ",  // 11
-    "  #pp    pp#  ",  // 12
-    "  #Pp    pp#  ",  // 13
-    "  #pp    Pp#  ",  // 14
-    "  #pp    pp#  ",  // 15
-    "  #Pp    pp#  ",  // 16
-    "  #pp    Pp#  ",  // 17
-    "  ###    ###  ",  // 18
-    "              ",  // 19
-]
-
-// Johnny stretching, arms up — 14 wide × 20 tall.
-private let sJStretch1: [String] = [
-    "k    ##hhhh## ",  //  0
-    "#k  #hkkkkkk# ",  //  1
-    "##  #kkkkkkk# ",  //  2
-    "k#  #KkKkkkk# ",  //  3
-    "k    ##hhhh## ",  //  4
-    "    ##kk##    ",  //  5
-    "    ##bbbb##  ",  //  6
-    "   #bbbbbbbbb ",  //  7
-    "   ##bBbbBbb# ",  //  8
-    "   ##BBBbbbb# ",  //  9
-    "    ##pppppp##",  // 10
-    "    #pp    pp#",  // 11
-    "    #Pp    pp#",  // 12
-    "    #pp    Pp#",  // 13
-    "    #pp    pp#",  // 14
-    "    #Pp    pp#",  // 15
-    "    #pp    Pp#",  // 16
-    "    ###    ###",  // 17
-    "              ",  // 18
-    "              ",  // 19
-]
-
-// MARK: - Scene composition
-
-enum JohnnyScene {
-
-    static let vw: CGFloat = 160
-    static let vh: CGFloat = 90
-
-    static func draw(_ scene: JohnnySceneKind, frame: Int, in ctx: CGContext, size: CGSize) {
-        let ps = min(size.width / vw, size.height / vh)
-        let ox = (size.width  - vw * ps) / 2
-        let oy = (size.height - vh * ps) / 2
-
-        ctx.saveGState()
-        ctx.translateBy(x: ox, y: oy + vh * ps)
-        ctx.scaleBy(x: 1, y: -1)
-
-        drawBackground(ps: ps, in: ctx)
-        drawIsland(ps: ps, in: ctx)
-
-        // Palm: roots at vy=52+24=76, inside island (y=63-77).
-        spr(sPalm, vx: 83, vy: 52, ps: ps, in: ctx)
-
-        switch scene {
-        case .idle:
-            spr(frame == 0 ? sJStand0 : sJStand1, vx: 56, vy: 56, ps: ps, in: ctx)
-
-        case .sleeping:
-            spr(frame == 0 ? sJSleep0 : sJSleep1, vx: 44, vy: 68, ps: ps, in: ctx)
-
-        case .fishing:
-            let frames = [sJFish0, sJFish1, sJFish2]
-            spr(frames[frame % 3], vx: 50, vy: 56, ps: ps, in: ctx)
-
-        case .shark:
-            spr(sJStand0, vx: 56, vy: 56, ps: ps, in: ctx)
-            let finX = Int(CGFloat(frame) / 4.0 * vw) - 10
-            spr(sSharkFin, vx: finX, vy: 74, ps: ps, in: ctx)
-
-        case .bird:
-            spr(sJStand0, vx: 56, vy: 56, ps: ps, in: ctx)
-            let birdFrames = [sBird0, sBird1, sBird2]
-            let birdX = Int(CGFloat(frame) / 3.0 * (vw + 20)) - 10
-            spr(birdFrames[frame % 3], vx: birdX, vy: 42, ps: ps, in: ctx)
-
-        case .stretching:
-            spr(frame == 0 ? sJStretch0 : sJStretch1, vx: 54, vy: 56, ps: ps, in: ctx)
-        }
-
-        ctx.restoreGState()
-    }
-
-    private static func drawBackground(ps: CGFloat, in ctx: CGContext) {
-        ctx.setFillColor(palColor(1))
-        ctx.fill(CGRect(x: 0, y: 0, width: vw * ps, height: vh * ps))
-
-        ctx.setFillColor(palColor(2))
-        for vy in [50, 57, 64] {
-            ctx.fill(CGRect(x: 0, y: CGFloat(vy) * ps, width: vw * ps, height: 2 * ps))
-        }
-
-        ctx.setFillColor(palColor(3))
-        ctx.fill(CGRect(x: 0, y: 60 * ps, width: vw * ps, height: ps))
-    }
-
-    private static func drawIsland(ps: CGFloat, in ctx: CGContext) {
-        let cx: CGFloat = 80, cy: CGFloat = 70, iw: CGFloat = 60, ih: CGFloat = 14
-        ctx.setFillColor(palColor(5))
-        ctx.fillEllipse(in: CGRect(x: (cx - iw/2 - 2) * ps, y: (cy - ih/2 - 2) * ps,
-                                   width: (iw + 4) * ps, height: (ih + 4) * ps))
-        ctx.setFillColor(palColor(4))
-        ctx.fillEllipse(in: CGRect(x: (cx - iw/2) * ps, y: (cy - ih/2) * ps,
-                                   width: iw * ps, height: ih * ps))
-
-        ctx.setFillColor(palColor(17))
-        ctx.fillEllipse(in: CGRect(x: 56 * ps, y: 65 * ps, width: 7 * ps, height: 5 * ps))
-        ctx.setFillColor(palColor(16))
-        ctx.fillEllipse(in: CGRect(x: 57 * ps, y: 66 * ps, width: 5 * ps, height: 3 * ps))
+        JohnnyScene.draw(r.currentSceneKind, clock: r.clock, in: ctx, size: bounds.size)
     }
 }
